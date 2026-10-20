@@ -60,6 +60,83 @@ function cleanText(text) {
     .trim();
 }
 
+// 기사에 실제로 포함된 이미지 주소 찾기
+function extractImage(item) {
+  // 1. 미디어 태그: media:content, media:thumbnail
+  const mediaTags =
+    item.match(
+      /<(?:media:content|media:thumbnail|media:group)\b[^>]*>/gi
+    ) || [];
+
+  for (const tag of mediaTags) {
+    const urlMatch = tag.match(/\burl\s*=\s*(["'])(.*?)\1/i);
+    const typeMatch = tag.match(/\btype\s*=\s*(["'])(.*?)\1/i);
+
+    if (!urlMatch) continue;
+
+    const imageUrl = decodeXml(urlMatch[2].trim());
+    const mediaType = typeMatch?.[2]?.toLowerCase() || "";
+
+    if (
+      /^https?:\/\//i.test(imageUrl) &&
+      (!mediaType || mediaType.startsWith("image/"))
+    ) {
+      return imageUrl;
+    }
+  }
+
+  // 2. RSS enclosure: 이미지 파일인 경우만 사용
+  const enclosures =
+    item.match(/<enclosure\b[^>]*>/gi) || [];
+
+  for (const tag of enclosures) {
+    const urlMatch = tag.match(/\burl\s*=\s*(["'])(.*?)\1/i);
+    const typeMatch = tag.match(/\btype\s*=\s*(["'])(.*?)\1/i);
+
+    if (!urlMatch) continue;
+
+    const imageUrl = decodeXml(urlMatch[2].trim());
+    const mediaType = typeMatch?.[2]?.toLowerCase() || "";
+
+    if (
+      /^https?:\/\//i.test(imageUrl) &&
+      (
+        mediaType.startsWith("image/") ||
+        /\.(jpe?g|png|webp|gif|avif)(?:[?#].*)?$/i.test(imageUrl)
+      )
+    ) {
+      return imageUrl;
+    }
+  }
+
+  // 3. description 또는 content:encoded 속 HTML 이미지
+  const htmlFields = [
+    getTag(item, "description"),
+    getTag(item, "content:encoded")
+  ];
+
+  for (const html of htmlFields) {
+    const images =
+      html.match(/<img\b[^>]*>/gi) || [];
+
+    for (const img of images) {
+      const srcMatch = img.match(
+        /\b(?:src|data-src)\s*=\s*(["'])(.*?)\1/i
+      );
+
+      if (!srcMatch) continue;
+
+      const imageUrl = decodeXml(srcMatch[2].trim());
+
+      if (/^https?:\/\//i.test(imageUrl)) {
+        return imageUrl;
+      }
+    }
+  }
+
+  return "";
+}
+
 function isEconomyNews(article) {
   const text =
     `${article.title} ${article.description}`.toLowerCase();
@@ -91,13 +168,15 @@ async function readFeed(feed) {
     const link = getTag(item, "link");
     const description = cleanText(getTag(item, "description"));
     const date = getTag(item, "pubDate");
+    const image = extractImage(item);
 
     return {
       title,
       description,
       url: link,
       domain: feed.name,
-      date
+      date,
+      image
     };
   }).filter(article =>
     article.title &&
@@ -120,13 +199,16 @@ export default {
 
       try {
         const body = await request.json();
+
         const title = typeof body.title === "string"
           ? body.title.trim().slice(0, 500)
           : "";
+
         const description =
           typeof body.description === "string"
             ? body.description.trim().slice(0, 4000)
             : "";
+
         const source = typeof body.source === "string"
           ? body.source.trim().slice(0, 100)
           : "";
@@ -193,13 +275,16 @@ export default {
         console.error("AI summary error:", error);
 
         return Response.json(
-          { error: "AI 요약 중 문제가 생겼습니다. 잠시 후 다시 시도해 주세요." },
+          {
+            error:
+              "AI 요약 중 문제가 생겼습니다. 잠시 후 다시 시도해 주세요."
+          },
           { status: 500 }
         );
       }
     }
 
-    // 기존 뉴스 수집 기능
+    // 뉴스 수집
     if (url.pathname === "/api/news") {
       if (request.method !== "GET") {
         return Response.json(
