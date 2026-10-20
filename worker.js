@@ -60,9 +60,8 @@ function cleanText(text) {
     .trim();
 }
 
-// 기사에 실제로 포함된 이미지 주소 찾기
+// 기사 원문에 포함된 이미지 주소 찾기
 function extractImage(item) {
-  // 1. 미디어 태그: media:content, media:thumbnail
   const mediaTags =
     item.match(
       /<(?:media:content|media:thumbnail|media:group)\b[^>]*>/gi
@@ -85,7 +84,6 @@ function extractImage(item) {
     }
   }
 
-  // 2. RSS enclosure: 이미지 파일인 경우만 사용
   const enclosures =
     item.match(/<enclosure\b[^>]*>/gi) || [];
 
@@ -109,15 +107,13 @@ function extractImage(item) {
     }
   }
 
-  // 3. description 또는 content:encoded 속 HTML 이미지
   const htmlFields = [
     getTag(item, "description"),
     getTag(item, "content:encoded")
   ];
 
   for (const html of htmlFields) {
-    const images =
-      html.match(/<img\b[^>]*>/gi) || [];
+    const images = html.match(/<img\b[^>]*>/gi) || [];
 
     for (const img of images) {
       const srcMatch = img.match(
@@ -163,22 +159,14 @@ async function readFeed(feed) {
   const items =
     xml.match(/<item(?:\s[^>]*)?>[\s\S]*?<\/item>/gi) || [];
 
-  return items.map(item => {
-    const title = cleanText(getTag(item, "title"));
-    const link = getTag(item, "link");
-    const description = cleanText(getTag(item, "description"));
-    const date = getTag(item, "pubDate");
-    const image = extractImage(item);
-
-    return {
-      title,
-      description,
-      url: link,
-      domain: feed.name,
-      date,
-      image
-    };
-  }).filter(article =>
+  return items.map(item => ({
+    title: cleanText(getTag(item, "title")),
+    description: cleanText(getTag(item, "description")),
+    url: getTag(item, "link"),
+    domain: feed.name,
+    date: getTag(item, "pubDate"),
+    image: extractImage(item)
+  })).filter(article =>
     article.title &&
     /^https?:\/\//i.test(article.url)
   );
@@ -187,6 +175,122 @@ async function readFeed(feed) {
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
+
+    // AI 기사 이미지 생성
+    if (url.pathname === "/api/generate-image") {
+      if (request.method !== "POST") {
+        return Response.json(
+          { error: "POST 요청만 사용할 수 있습니다." },
+          { status: 405 }
+        );
+      }
+
+      if (!env.AI) {
+        return Response.json(
+          { error: "Cloudflare AI 연결을 확인해 주세요." },
+          { status: 500 }
+        );
+      }
+
+      try {
+        const body = await request.json();
+
+        const title = typeof body.title === "string"
+          ? body.title.trim().slice(0, 300)
+          : "";
+
+        const description =
+          typeof body.description === "string"
+            ? body.description.trim().slice(0, 1000)
+            : "";
+
+        if (!title) {
+          return Response.json(
+            { error: "뉴스 제목이 필요합니다." },
+            { status: 400 }
+          );
+        }
+
+        // 제목과 설명이 같은 기사는 같은 캐시 키를 사용해요.
+        const keyText = title + "\n" + description;
+        const digest = await crypto.subtle.digest(
+          "SHA-256",
+          new TextEncoder().encode(keyText)
+        );
+
+        const hash = Array.from(new Uint8Array(digest))
+          .map(byte => byte.toString(16).padStart(2, "0"))
+          .join("");
+
+        const cache = caches.default;
+        const imageCacheRequest = new Request(
+          `https://mango-news-cache.internal/api/generated-image/${hash}`
+        );
+
+        const cachedImage = await cache.match(imageCacheRequest);
+
+        if (cachedImage) {
+          return new Response(cachedImage.body, {
+            status: cachedImage.status,
+            headers: cachedImage.headers
+          });
+        }
+
+        // 뉴스 내용을 바탕으로 일러스트를 만들어요.
+        const prompt =
+          "Create a polished, friendly editorial illustration for a " +
+          "Korean children's economics news website. " +
+          "Create a visual metaphor that matches the news topic. " +
+          "Use clear shapes, appealing colors, professional composition, " +
+          "and a wide landscape layout suitable for a news article. " +
+          "Do not include any text, letters, numbers, watermarks, logos, " +
+          "captions, or fake newspaper headlines. " +
+          "This is an illustration, not a documentary photograph. " +
+          "News headline: " + title + ". " +
+          "News context: " + (description || "No additional description.");
+
+        const result = await env.AI.run(
+          "@cf/black-forest-labs/flux-1-schnell",
+          {
+            prompt: prompt.slice(0, 2048),
+            steps: 4
+          }
+        );
+
+        if (
+          typeof result?.image !== "string" ||
+          !result.image.trim()
+        ) {
+          throw new Error("이미지 모델이 그림을 반환하지 않았습니다.");
+        }
+
+        const imageResponse = Response.json(
+          { image: "data:image/jpeg;base64," + result.image },
+          {
+            headers: {
+              "Cache-Control": "public, max-age=86400"
+            }
+          }
+        );
+
+        // 생성한 그림을 Cloudflare 캐시에 보관해 재생성을 줄여요.
+        ctx.waitUntil(
+          cache.put(imageCacheRequest, imageResponse.clone())
+        );
+
+        return imageResponse;
+      } catch (error) {
+        console.error("AI image error:", error);
+
+        return Response.json(
+          {
+            error:
+              "AI 그림을 만들지 못했어요. 잠시 후 다시 시도해 주세요."
+          },
+          { status: 500 }
+        );
+      }
+    }
 
     // AI 쉬운 뉴스 요약
     if (url.pathname === "/api/summarize") {
