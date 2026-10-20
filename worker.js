@@ -3,22 +3,10 @@ const CACHE_KEY = "https://mango-news-cache.internal/api/news";
 const CACHE_SECONDS = 120;
 
 const FEEDS = [
-  {
-    name: "연합뉴스",
-    url: "https://www.yna.co.kr/rss/news.xml"
-  },
-  {
-    name: "뉴시스",
-    url: "https://www.newsis.com/RSS/sokbo.xml"
-  },
-  {
-    name: "BBC News",
-    url: "https://feeds.bbci.co.uk/news/business/rss.xml"
-  },
-  {
-    name: "Korea.net",
-    url: "https://www.korea.net/koreanet/rss/news/2"
-  }
+  { name: "연합뉴스", url: "https://www.yna.co.kr/rss/news.xml" },
+  { name: "뉴시스", url: "https://www.newsis.com/RSS/sokbo.xml" },
+  { name: "BBC News", url: "https://feeds.bbci.co.uk/news/business/rss.xml" },
+  { name: "Korea.net", url: "https://www.korea.net/koreanet/rss/news/2" }
 ];
 
 const ECONOMY_KEYWORDS = [
@@ -121,6 +109,97 @@ export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
 
+    // AI 쉬운 뉴스 요약
+    if (url.pathname === "/api/summarize") {
+      if (request.method !== "POST") {
+        return Response.json(
+          { error: "POST 요청만 사용할 수 있습니다." },
+          { status: 405 }
+        );
+      }
+
+      try {
+        const body = await request.json();
+        const title = typeof body.title === "string"
+          ? body.title.trim().slice(0, 500)
+          : "";
+        const description =
+          typeof body.description === "string"
+            ? body.description.trim().slice(0, 4000)
+            : "";
+        const source = typeof body.source === "string"
+          ? body.source.trim().slice(0, 100)
+          : "";
+
+        if (!title || !description) {
+          return Response.json(
+            { error: "뉴스 제목과 설명이 필요합니다." },
+            { status: 400 }
+          );
+        }
+
+        const result = await env.AI.run(
+          "@cf/meta/llama-3.1-8b-instruct-fp8",
+          {
+            messages: [
+              {
+                role: "system",
+                content:
+                  "너는 MANGO NEWS의 어린이용 경제 뉴스 설명 도우미다. " +
+                  "반드시 자연스러운 한국어로 초등학생도 이해하기 쉽게 작성한다. " +
+                  "제공된 제목과 설명에 있는 사실만 사용한다. " +
+                  "모르는 사실, 숫자, 원인, 결과를 지어내지 않는다. " +
+                  "정보가 부족하면 부족하다고 솔직하게 밝힌다. " +
+                  "투자를 권하거나 주식 매수·매도를 추천하지 않는다. " +
+                  "짧고 읽기 쉬운 문장과 제목을 사용한다."
+              },
+              {
+                role: "user",
+                content:
+                  "다음 뉴스의 제목과 설명만 참고해서 쉽게 풀어 줘.\n" +
+                  "출처: " + (source || "알 수 없음") + "\n" +
+                  "제목: " + title + "\n" +
+                  "뉴스 설명: " + description + "\n\n" +
+                  "아래 세 항목으로 작성해 줘.\n" +
+                  "1. 무슨 일이야? (핵심 내용 2~3문장)\n" +
+                  "2. 어려운 말 풀이 (있을 때만)\n" +
+                  "3. 우리 생활과 무슨 관계가 있어? (자료에 근거해 설명하고, " +
+                  "근거가 부족하면 단정하지 말 것)\n\n" +
+                  "제공된 설명만으로 알 수 없는 내용은 추측하지 마."
+              }
+            ],
+            max_tokens: 500
+          }
+        );
+
+        const summary = result?.response;
+
+        if (typeof summary !== "string" || !summary.trim()) {
+          return Response.json(
+            { error: "AI가 요약을 만들지 못했습니다. 다시 시도해 주세요." },
+            { status: 502 }
+          );
+        }
+
+        return Response.json(
+          { summary: summary.trim() },
+          {
+            headers: {
+              "Cache-Control": "no-store"
+            }
+          }
+        );
+      } catch (error) {
+        console.error("AI summary error:", error);
+
+        return Response.json(
+          { error: "AI 요약 중 문제가 생겼습니다. 잠시 후 다시 시도해 주세요." },
+          { status: 500 }
+        );
+      }
+    }
+
+    // 기존 뉴스 수집 기능
     if (url.pathname === "/api/news") {
       if (request.method !== "GET") {
         return Response.json(
