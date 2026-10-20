@@ -1,798 +1,467 @@
 
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#ffc928">
-  <title>MANGO NEWS | 경제와 주식을 쉽게 읽다</title>
-  <style>
-    :root {
-      --mango: #ffc928;
-      --ink: #242424;
-      --paper: #fffdf5;
-      --muted: #777;
-      --line: #eee6d2;
-    }
-
-    * { box-sizing: border-box; }
-
-    body {
-      margin: 0;
-      color: var(--ink);
-      background: var(--paper);
-      font-family: Arial, "Malgun Gothic", sans-serif;
-    }
-
-    header {
-      background: var(--mango);
-      padding: 22px 20px 26px;
-      border-bottom: 3px solid var(--ink);
-    }
-
-    .top, main {
-      width: min(100% - 32px, 1000px);
-      margin: auto;
-    }
-
-    .brand {
-      font-size: 30px;
-      font-weight: 900;
-      letter-spacing: -1px;
-      cursor: pointer;
-    }
-
-    .tagline {
-      margin-top: 7px;
-      font-size: 14px;
-    }
-
-    .hero { padding: 34px 0 22px; }
-
-    .hero h1 {
-      font-size: clamp(27px, 5vw, 43px);
-      line-height: 1.3;
-      margin: 0 0 12px;
-    }
-
-    .hero p {
-      color: #554a2b;
-      line-height: 1.8;
-      margin: 0;
-    }
-
-    .toolbar {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      align-items: center;
-      justify-content: space-between;
-      margin: 12px 0 20px;
-    }
-
-    .toolbar h2 {
-      font-size: 23px;
-      margin: 0;
-    }
-
-    button, .button-link {
-      display: inline-block;
-      border: 2px solid var(--ink);
-      border-radius: 10px;
-      padding: 11px 15px;
-      background: var(--mango);
-      color: var(--ink);
-      font-weight: bold;
-      font-size: 14px;
-      cursor: pointer;
-      text-decoration: none;
-    }
-
-    button:disabled {
-      opacity: .6;
-      cursor: wait;
-    }
-
-    #status {
-      padding: 14px;
-      border-radius: 10px;
-      background: #fff4c9;
-      line-height: 1.7;
-      margin-bottom: 18px;
-    }
-
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 15px;
-    }
-
-    .article {
-      background: white;
-      border: 1px solid var(--line);
-      border-radius: 15px;
-      padding: 20px;
-      min-width: 0;
-      overflow: hidden;
-    }
-
-    /* 뉴스 목록 이미지 */
-    .article-image {
-      display: block;
-      width: 100%;
-      aspect-ratio: 16 / 9;
-      object-fit: cover;
-      border-radius: 10px;
-      margin-bottom: 16px;
-      background: #fff9e5;
-    }
-
-    .source {
-      color: #715700;
-      font-size: 12px;
-      font-weight: bold;
-      margin-bottom: 10px;
-      overflow-wrap: anywhere;
-    }
-
-    .article-title {
-      display: block;
-      width: 100%;
-      border: 0;
-      padding: 0;
-      background: transparent;
-      text-align: left;
-      font-size: 19px;
-      line-height: 1.65;
-      font-weight: 800;
-      overflow-wrap: anywhere;
-      cursor: pointer;
-    }
-
-    .article-title:hover {
-      text-decoration: underline;
-      text-underline-offset: 4px;
-    }
-
-    .date {
-      color: var(--muted);
-      font-size: 12px;
-      line-height: 1.6;
-      margin-top: 14px;
-    }
-
-    .note {
-      margin: 25px 0;
-      color: var(--muted);
-      font-size: 13px;
-      line-height: 1.8;
-    }
-
-    .detail-page {
-      max-width: 760px;
-      margin: 28px auto 45px;
-      background: white;
-      border: 1px solid var(--line);
-      border-radius: 18px;
-      padding: clamp(20px, 5vw, 38px);
-    }
-
-    .back-button {
-      margin-bottom: 25px;
-      background: white;
-    }
-
-    .detail-source {
-      display: inline-block;
-      padding: 6px 10px;
-      background: #fff4c9;
-      border-radius: 7px;
-      color: #715700;
-      font-size: 13px;
-      font-weight: bold;
-      margin-bottom: 16px;
-    }
-
-    /* 기사 상세 화면 이미지 */
-    .detail-image {
-      display: block;
-      width: 100%;
-      aspect-ratio: 16 / 9;
-      object-fit: contain;
-      border-radius: 12px;
-      margin: 0 0 22px;
-      background: #fffdf5;
-    }
-
-    .detail-title {
-      font-size: clamp(25px, 5vw, 36px);
-      line-height: 1.45;
-      margin: 0 0 16px;
-      overflow-wrap: anywhere;
-    }
-
-    .detail-date {
-      color: var(--muted);
-      font-size: 13px;
-      line-height: 1.7;
-      padding-bottom: 22px;
-      border-bottom: 1px solid var(--line);
-    }
-
-    .section-heading {
-      font-size: 20px;
-      margin: 26px 0 12px;
-    }
-
-    .detail-content {
-      font-size: 17px;
-      line-height: 2;
-      overflow-wrap: anywhere;
-      white-space: pre-line;
-    }
-
-    .detail-content.empty {
-      color: var(--muted);
-      font-size: 15px;
-    }
-
-    .ai-box {
-      background: #fff9e5;
-      border: 1px solid #f1df9b;
-      border-radius: 14px;
-      padding: 18px;
-      margin-top: 26px;
-    }
-
-    .ai-box h2 {
-      font-size: 21px;
-      margin: 0 0 10px;
-    }
-
-    .ai-description {
-      font-size: 14px;
-      color: #665a37;
-      line-height: 1.8;
-      margin: 0 0 15px;
-    }
-
-    #aiStatus {
-      font-size: 14px;
-      line-height: 1.8;
-      margin-top: 12px;
-    }
-
-    #aiSummary {
-      white-space: pre-wrap;
-      overflow-wrap: anywhere;
-      font-size: 16px;
-      line-height: 1.9;
-      margin-top: 16px;
-    }
-
-    .explain-box {
-      background: #fff9e5;
-      border-radius: 12px;
-      padding: 18px;
-      margin-top: 25px;
-      line-height: 1.9;
-      font-size: 15px;
-    }
-
-    .explain-box strong {
-      display: block;
-      font-size: 17px;
-      margin-bottom: 6px;
-    }
-
-    .detail-actions {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin-top: 28px;
-    }
-
-    .original-link { background: var(--mango); }
-
-    .hidden { display: none !important; }
-
-    footer {
-      margin-top: 38px;
-      padding: 24px 16px;
-      text-align: center;
-      border-top: 1px solid var(--line);
-      color: var(--muted);
-      font-size: 12px;
-      line-height: 1.8;
-    }
-
-    @media (max-width: 600px) {
-      .grid { grid-template-columns: 1fr; }
-      .brand { font-size: 26px; }
-      .article { padding: 18px; }
-      .detail-content { font-size: 16px; }
-    }
-  </style>
-</head>
-
-<body>
-  <header>
-    <div class="top">
-      <div class="brand" id="homeBrand" role="button" tabindex="0">
-        🥭 MANGO NEWS
-      </div>
-      <div class="tagline">경제와 주식, 누구나 쉽게 이해하도록!</div>
-    </div>
-  </header>
-
-  <main>
-    <section id="homePage">
-      <section class="hero">
-        <h1>돈과 경제의 세상,<br>쉽게 읽어 보자.</h1>
-        <p>
-          국내외 경제와 주식 관련 뉴스를 모아요.<br>
-          제목을 누르면 해당 기사의 상세 화면이 열려요.
-        </p>
-      </section>
-
-      <section>
-        <div class="toolbar">
-          <h2>경제·주식 뉴스 📰</h2>
-          <button id="refresh">↻ 뉴스 새로고침</button>
-        </div>
-
-        <div id="status" role="status" aria-live="polite">
-          뉴스를 불러오고 있어요...
-        </div>
-
-        <div id="articles" class="grid"></div>
-
-        <p class="note">
-          기사 상세 화면에서 출처가 제공한 설명과 AI 쉬운 요약을 확인할 수 있어요.
-          AI 요약은 제공된 뉴스 제목과 설명을 바탕으로 만들어져요.
-          정확한 내용은 원문 기사에서도 확인해 주세요.
-        </p>
-      </section>
-    </section>
-
-    <section id="detailPage" class="hidden">
-      <article class="detail-page">
-        <button id="backButton" class="back-button">
-          ← 홈으로 돌아가기
-        </button>
-
-        <div id="detailSource" class="detail-source"></div>
-
-        <!-- 기사의 원본 이미지가 있을 때만 표시 -->
-        <img
-          id="detailImage"
-          class="detail-image hidden"
-          alt=""
-          loading="lazy"
-        >
-
-        <h1 id="detailTitle" class="detail-title"></h1>
-        <div id="detailDate" class="detail-date"></div>
-
-        <h2 class="section-heading">📰 기사 내용</h2>
-        <div id="detailContent" class="detail-content"></div>
-
-        <section class="ai-box" aria-labelledby="aiHeading">
-          <h2 id="aiHeading">🥭 AI로 쉽게 요약하기</h2>
-
-          <p class="ai-description">
-            어려운 경제 뉴스를 쉬운 말로 풀어 봐요.
-            요약은 뉴스 제목과 출처가 제공한 설명을 바탕으로 만들어져요.
-          </p>
-
-          <button id="summarizeButton" type="button">
-            ✨ 쉬운 요약 만들기
-          </button>
-
-          <div id="aiStatus" role="status" aria-live="polite"></div>
-          <div id="aiSummary" class="hidden"></div>
-        </section>
-
-        <div class="explain-box">
-          <strong>💡 경제를 이해하는 팁</strong>
-          기업 실적, 금리, 환율 등의 변화는 경제와 주식시장에 영향을 줄 수 있어요.
-          하지만 기사 하나만으로 주가가 오를지 내릴지 확실하게 알 수는 없어요.
-        </div>
-
-        <div class="detail-actions">
-          <a
-            id="originalLink"
-            class="button-link original-link"
-            href="#"
-            target="_blank"
-            rel="noopener noreferrer"
-          >원문 기사 읽기 ↗</a>
-
-          <button id="backButtonBottom">← 뉴스 목록으로</button>
-        </div>
-      </article>
-    </section>
-  </main>
-
-  <footer>
-    🥭 MANGO NEWS · 경제와 주식을 쉽게 읽다<br>
-    기사 출처와 저작권은 각 뉴스 제공자에게 있습니다.
-  </footer>
-
-  <script>
-    const statusBox = document.getElementById('status');
-    const articlesBox = document.getElementById('articles');
-    const refreshButton = document.getElementById('refresh');
-    const homePage = document.getElementById('homePage');
-    const detailPage = document.getElementById('detailPage');
-
-    const detailSource = document.getElementById('detailSource');
-    const detailImage = document.getElementById('detailImage');
-    const detailTitle = document.getElementById('detailTitle');
-    const detailDate = document.getElementById('detailDate');
-    const detailContent = document.getElementById('detailContent');
-
-    const originalLink = document.getElementById('originalLink');
-    const summarizeButton = document.getElementById('summarizeButton');
-    const aiStatus = document.getElementById('aiStatus');
-    const aiSummary = document.getElementById('aiSummary');
-
-    let newsArticles = [];
-    let currentArticle = null;
-    let summaryRequestId = 0;
-
-    function makeElement(tag, className, text) {
-      const element = document.createElement(tag);
-
-      if (className) element.className = className;
-      if (text !== undefined) element.textContent = text;
-
-      return element;
-    }
-
-    /*
-      이미지 주소가 안전한 HTTP 또는 HTTPS 주소인지 확인해요.
-      이미지가 없거나 불러오기에 실패하면 숨겨요.
-    */
-    function setArticleImage(imageElement, imageUrl, title) {
-      imageElement.classList.add('hidden');
-      imageElement.removeAttribute('src');
-      imageElement.alt = '';
-
-      if (typeof imageUrl !== 'string' || !imageUrl.trim()) {
-        return;
-      }
-
-      let parsedUrl;
-
-      try {
-        parsedUrl = new URL(imageUrl.trim(), window.location.origin);
-      } catch {
-        return;
-      }
-
-      if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
-        return;
-      }
-
-      imageElement.alt = title
-        ? title + ' 관련 이미지'
-        : '기사 관련 이미지';
-
-      imageElement.onerror = () => {
-        imageElement.classList.add('hidden');
-        imageElement.removeAttribute('src');
-      };
-
-      imageElement.onload = () => {
-        imageElement.classList.remove('hidden');
-      };
-
-      imageElement.src = parsedUrl.href;
-    }
-
-    function showHome(pushHistory = true) {
-      homePage.classList.remove('hidden');
-      detailPage.classList.add('hidden');
-
-      if (pushHistory && location.hash !== '#home') {
-        history.pushState({ page: 'home' }, '', '#home');
-      }
-
-      window.scrollTo(0, 0);
-    }
-
-    function showArticle(article, pushHistory = true) {
-      currentArticle = article;
-      summaryRequestId++;
-
-      detailSource.textContent = article.domain || '뉴스 출처';
-      detailTitle.textContent = article.title || '제목 없음';
-
-      detailDate.textContent = article.date
-        ? '보도 날짜: ' + article.date
-        : '보도 날짜 정보 없음';
-
-      // 상세 화면에 해당 기사의 이미지를 표시해요.
-      setArticleImage(
-        detailImage,
-        article.image,
-        article.title || ''
-      );
-
-      const description = (article.description || '').trim();
-
-      detailContent.replaceChildren();
-
-      if (description) {
-        detailContent.classList.remove('empty');
-        detailContent.textContent = description;
-      } else {
-        detailContent.classList.add('empty');
-        detailContent.textContent =
-          '이 뉴스에는 제공된 기사 설명이 없어요. ' +
-          '아래 원문 기사 읽기 버튼을 눌러 자세한 내용을 확인해 주세요.';
-      }
-
-      aiSummary.textContent = '';
-      aiSummary.classList.add('hidden');
-      aiStatus.textContent = '';
-
-      summarizeButton.disabled = false;
-      summarizeButton.textContent = '✨ 쉬운 요약 만들기';
-
-      // 원문 주소도 HTTP 또는 HTTPS만 허용해요.
-      let articleUrl = '#';
-
-      try {
-        const parsedUrl = new URL(
-          article.url || '',
-          window.location.origin
-        );
-
-        if (['http:', 'https:'].includes(parsedUrl.protocol)) {
-          articleUrl = parsedUrl.href;
-        }
-      } catch {
-        articleUrl = '#';
-      }
-
-      originalLink.href = articleUrl;
-
-      homePage.classList.add('hidden');
-      detailPage.classList.remove('hidden');
-
-      if (pushHistory) {
-        history.pushState(
-          { page: 'article', url: article.url },
-          '',
-          '#article'
+const CACHE_SECONDS = 120;
+
+const RSS_FEEDS = [
+  {
+    name: "연합뉴스",
+    url: "https://www.yna.co.kr/rss/news.xml"
+  },
+  {
+    name: "뉴시스",
+    url: "https://www.newsis.com/RSS/sokbo.xml"
+  },
+  {
+    name: "BBC News",
+    url: "https://feeds.bbci.co.uk/news/business/rss.xml"
+  },
+  {
+    name: "Korea.net",
+    url: "https://www.korea.net/koreanet/rss/news/2"
+  }
+];
+
+const ECONOMY_KEYWORDS = [
+  "경제", "금융", "주식", "증시", "코스피", "코스닥",
+  "환율", "금리", "물가", "부동산", "기업", "산업",
+  "수출", "수입", "무역", "은행", "투자", "고용",
+  "취업", "일자리", "소비", "시장", "성장", "무역",
+  "경제성장", "실업", "인플레이션", "반도체", "배터리",
+  "원화", "달러", "유가", "재정", "세금", "예산",
+  "경제정책", "비트코인", "가상자산", "GDP", "경제협력",
+  "business", "economy", "economic", "stock", "market",
+  "finance", "financial", "inflation", "trade", "bank",
+  "interest rate", "investment", "employment"
+];
+
+const NEWS_CACHE_KEY = new Request(
+  "https://mango-news-cache.internal/api/news"
+);
+
+export default {
+  async fetch(request, env, ctx) {
+    const url = new URL(request.url);
+
+    if (url.pathname === "/api/news") {
+      if (request.method !== "GET") {
+        return jsonResponse(
+          { error: "GET 요청만 사용할 수 있어요." },
+          405
         );
       }
 
-      window.scrollTo(0, 0);
-    }
+      const cache = caches.default;
+      const cached = await cache.match(NEWS_CACHE_KEY);
 
-    async function summarizeArticle() {
-      if (!currentArticle) return;
-
-      if (
-        !currentArticle.description ||
-        !currentArticle.description.trim()
-      ) {
-        aiStatus.textContent =
-          '이 뉴스에는 요약할 설명이 없어요. 원문 기사를 확인해 주세요.';
-        return;
+      if (cached) {
+        return cached;
       }
 
-      const requestId = ++summaryRequestId;
-
-      summarizeButton.disabled = true;
-      summarizeButton.textContent = '요약 만드는 중...';
-
-      aiStatus.textContent =
-        '🥭 AI가 쉬운 말로 설명하고 있어요. 잠시만 기다려 주세요.';
-
-      aiSummary.textContent = '';
-      aiSummary.classList.add('hidden');
-
       try {
-        const response = await fetch('/api/summarize', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            title: currentArticle.title || '',
-            description: currentArticle.description || '',
-            source: currentArticle.domain || ''
-          })
-        });
+        const articles = await collectNews();
 
-        const data = await response.json();
+        const response = jsonResponse(
+          {
+            articles,
+            updatedAt: new Date().toISOString()
+          },
+          200,
+          { "Cache-Control": `public, max-age=${CACHE_SECONDS}` }
+        );
 
-        // 다른 기사를 열었다면 이전 요약 결과는 표시하지 않아요.
-        if (requestId !== summaryRequestId) return;
+        ctx.waitUntil(
+          cache.put(NEWS_CACHE_KEY, response.clone())
+        );
 
-        if (!response.ok) {
-          throw new Error(data.error || '요약 요청에 실패했어요.');
-        }
-
-        if (
-          typeof data.summary !== 'string' ||
-          !data.summary.trim()
-        ) {
-          throw new Error('AI가 요약을 보내지 않았어요.');
-        }
-
-        aiSummary.textContent = data.summary.trim();
-        aiSummary.classList.remove('hidden');
-
-        aiStatus.textContent =
-          '완성했어요! 어려운 내용은 원문 기사와 함께 확인해 보세요.';
-
-        summarizeButton.textContent = '↻ 다시 요약하기';
-
+        return response;
       } catch (error) {
-        if (requestId !== summaryRequestId) return;
-
-        aiStatus.textContent =
-          '요약을 만들지 못했어요. 잠시 후 다시 시도해 주세요. (' +
-          error.message + ')';
-
-        summarizeButton.textContent = '↻ 다시 시도하기';
-
-      } finally {
-        if (requestId === summaryRequestId) {
-          summarizeButton.disabled = false;
-        }
+        return jsonResponse(
+          {
+            error: "뉴스를 불러오지 못했어요.",
+            details: String(error),
+            articles: []
+          },
+          502
+        );
       }
     }
 
-    function renderNews(articles) {
-      articlesBox.replaceChildren();
-
-      for (const article of articles) {
-        const card = makeElement('article', 'article');
-
-        // 이미지가 있는 기사에만 이미지 요소를 만들어요.
-        if (
-          typeof article.image === 'string' &&
-          article.image.trim()
-        ) {
-          const image = makeElement('img', 'article-image');
-
-          image.loading = 'lazy';
-          image.decoding = 'async';
-
-          setArticleImage(
-            image,
-            article.image,
-            article.title || ''
-          );
-
-          card.append(image);
-        }
-
-        const source = makeElement(
-          'div',
-          'source',
-          article.domain || '뉴스 출처'
+    if (url.pathname === "/api/summarize") {
+      if (request.method !== "POST") {
+        return jsonResponse(
+          { error: "POST 요청만 사용할 수 있어요." },
+          405
         );
-
-        const title = makeElement(
-          'button',
-          'article-title',
-          article.title || '제목 없음'
-        );
-
-        title.type = 'button';
-        title.addEventListener('click', () => {
-          showArticle(article);
-        });
-
-        const date = makeElement(
-          'div',
-          'date',
-          article.date ? '보도 날짜: ' + article.date : ''
-        );
-
-        card.append(source, title, date);
-        articlesBox.append(card);
       }
-    }
 
-    async function loadNews() {
-      refreshButton.disabled = true;
-
-      statusBox.textContent =
-        '최신 경제·주식 뉴스를 불러오고 있어요...';
-
-      articlesBox.replaceChildren();
+      if (!env.AI) {
+        return jsonResponse(
+          { error: "Cloudflare AI 바인딩을 찾을 수 없어요." },
+          500
+        );
+      }
 
       try {
-        const response = await fetch('/api/news', {
-          headers: { 'Accept': 'application/json' }
-        });
+        const body = await request.json();
+        const title = String(body.title || "").slice(0, 500);
+        const description = String(body.description || "").slice(0, 5000);
 
-        if (!response.ok) {
-          throw new Error(
-            '뉴스 서버 응답 오류 (' + response.status + ')'
+        if (!title && !description) {
+          return jsonResponse(
+            { error: "요약할 기사 내용이 없어요." },
+            400
           );
         }
 
-        const data = await response.json();
+        const prompt = `
+너는 초등학생도 이해할 수 있게 경제 뉴스를 설명하는 한국어 선생님이야.
 
-        if (
-          !Array.isArray(data.articles) ||
-          data.articles.length === 0
-        ) {
-          statusBox.textContent =
-            '아직 표시할 뉴스가 없어요. 잠시 후 다시 시도해 주세요.';
-          return;
+아래 뉴스 정보를 바탕으로 기사를 쉽게 설명해 줘.
+
+[기사 제목]
+${title}
+
+[기사 설명]
+${description}
+
+작성 규칙:
+1. 어려운 경제 용어는 쉬운 말로 풀어 줘.
+2. 기사에 없는 사실을 지어내지 마.
+3. 제목만 보고 알 수 없는 내용을 확정해서 말하지 마.
+4. 핵심 내용을 2~4개의 짧은 문단으로 설명해 줘.
+5. 마지막에 "왜 중요할까요?"라는 소제목과 함께 의미를 설명해 줘.
+6. 기사 내용이 부족하면 부족하다고 알려 줘.
+7. 한국어로 답해 줘.
+`;
+
+        const result = await env.AI.run(
+          "@cf/meta/llama-3.1-8b-instruct-fp8",
+          {
+            messages: [
+              {
+                role: "system",
+                content:
+                  "너는 정확하고 친절한 경제 뉴스 설명 도우미야. 근거 없는 내용을 만들어내지 마."
+              },
+              {
+                role: "user",
+                content: prompt
+              }
+            ],
+            max_tokens: 700
+          }
+        );
+
+        const summary =
+          result?.response ||
+          result?.result?.response ||
+          "";
+
+        if (!summary) {
+          return jsonResponse(
+            { error: "AI가 요약을 만들지 못했어요." },
+            502
+          );
         }
 
-        newsArticles = data.articles;
-
-        renderNews(newsArticles);
-
-        statusBox.textContent =
-          '경제·주식 뉴스 ' + newsArticles.length +
-          '개를 불러왔어요. 제목을 눌러 기사 내용을 읽어 보세요.';
-
+        return jsonResponse({ summary });
       } catch (error) {
-        statusBox.textContent =
-          '뉴스를 불러오지 못했어요. 서버 연결을 확인한 뒤 다시 시도해 주세요. (' +
-          error.message + ')';
-
-      } finally {
-        refreshButton.disabled = false;
+        return jsonResponse(
+          {
+            error: "AI 요약 중 문제가 생겼어요.",
+            details: String(error)
+          },
+          500
+        );
       }
     }
 
-    document
-      .getElementById('backButton')
-      .addEventListener('click', showHome);
+    if (url.pathname === "/api/generate-image") {
+      if (request.method !== "POST") {
+        return jsonResponse(
+          { error: "POST 요청만 사용할 수 있어요." },
+          405
+        );
+      }
 
-    document
-      .getElementById('backButtonBottom')
-      .addEventListener('click', showHome);
+      if (!env.AI) {
+        return jsonResponse(
+          { error: "Cloudflare AI 바인딩을 찾을 수 없어요." },
+          500
+        );
+      }
 
-    document
-      .getElementById('homeBrand')
-      .addEventListener('click', showHome);
+      try {
+        const body = await request.json();
+        const title = String(body.title || "").slice(0, 300);
+        const description = String(body.description || "").slice(0, 1500);
 
-    document
-      .getElementById('homeBrand')
-      .addEventListener('keydown', event => {
-        if (event.key === 'Enter' || event.key === ' ') {
-          event.preventDefault();
-          showHome();
+        if (!title && !description) {
+          return jsonResponse(
+            { error: "그림을 만들 기사 정보가 없어요." },
+            400
+          );
         }
+
+        const cache = caches.default;
+        const cacheText = `${title}\n${description}`;
+        const hashBuffer = await crypto.subtle.digest(
+          "SHA-256",
+          new TextEncoder().encode(cacheText)
+        );
+
+        const hash = Array.from(new Uint8Array(hashBuffer))
+          .map((byte) => byte.toString(16).padStart(2, "0"))
+          .join("");
+
+        const imageCacheRequest = new Request(
+          `https://mango-news-cache.internal/api/generated-image/${hash}`
+        );
+
+        const cachedImage = await cache.match(imageCacheRequest);
+
+        if (cachedImage) {
+          return cachedImage;
+        }
+
+        const prompt = `
+Create a polished editorial illustration for a Korean educational
+economy news website called MANGO NEWS.
+
+The illustration should visually represent the following news.
+News title: ${title}
+News description: ${description}
+
+Visual requirements:
+- Clear, friendly, modern editorial illustration.
+- Appropriate for students and general readers.
+- Show the main idea using recognizable objects and visual metaphors.
+- Warm mango-yellow accents with a clean, balanced composition.
+- Professional news illustration, not a photograph.
+- No written words, letters, numbers, captions, watermarks, or logos.
+- Do not depict a specific real person unless necessary.
+- No misleading charts, statistics, or invented readable text.
+- Landscape composition, 16:9 aspect ratio.
+`;
+
+        const result = await env.AI.run(
+          "@cf/black-forest-labs/flux-1-schnell",
+          {
+            prompt,
+            steps: 4
+          }
+        );
+
+        if (!result || !result.image) {
+          return jsonResponse(
+            { error: "AI가 그림을 만들지 못했어요." },
+            502
+          );
+        }
+
+        const imageResponse = jsonResponse(
+          {
+            image: `data:image/jpeg;base64,${result.image}`
+          },
+          200,
+          { "Cache-Control": "public, max-age=86400" }
+        );
+
+        ctx.waitUntil(
+          cache.put(imageCacheRequest, imageResponse.clone())
+        );
+
+        return imageResponse;
+      } catch (error) {
+        return jsonResponse(
+          {
+            error: "AI 그림 생성 중 문제가 생겼어요.",
+            details: String(error)
+          },
+          500
+        );
+      }
+    }
+
+    // 나머지 요청은 public 폴더의 파일로 처리해요.
+    return env.ASSETS.fetch(request);
+  }
+};
+
+async function collectNews() {
+  const feedResults = await Promise.allSettled(
+    RSS_FEEDS.map(async (feed) => {
+      const response = await fetch(feed.url, {
+        headers: {
+          "User-Agent": "MANGO-NEWS/1.0",
+          "Accept": "application/rss+xml, application/xml, text/xml"
+        },
+        signal: AbortSignal.timeout(12000)
       });
 
-    window.addEventListener('popstate', () => {
-      if (location.hash === '#article') {
-        const article = newsArticles.find(
-          item => item.url === history.state?.url
-        );
-
-        if (article) {
-          showArticle(article, false);
-        } else {
-          showHome(false);
-        }
-      } else {
-        showHome(false);
+      if (!response.ok) {
+        throw new Error(`${feed.name} 응답 오류: ${response.status}`);
       }
-    });
 
-    summarizeButton.addEventListener(
-      'click',
-      summarizeArticle
+      const xml = await response.text();
+      return parseFeed(xml, feed.name);
+    })
+  );
+
+  const allArticles = [];
+
+  for (const result of feedResults) {
+    if (result.status === "fulfilled") {
+      allArticles.push(...result.value);
+    }
+  }
+
+  if (allArticles.length === 0) {
+    throw new Error("사용할 수 있는 뉴스 RSS가 없어요.");
+  }
+
+  const seen = new Set();
+
+  const uniqueArticles = allArticles.filter((article) => {
+    const key = article.link || article.title;
+
+    if (!key || seen.has(key)) {
+      return false;
+    }
+
+    seen.add(key);
+    return true;
+  });
+
+  const economyArticles = uniqueArticles.filter((article) => {
+    const text = `${article.title} ${article.description}`.toLowerCase();
+
+    return ECONOMY_KEYWORDS.some((keyword) =>
+      text.includes(keyword.toLowerCase())
+    );
+  });
+
+  const articles = (economyArticles.length > 0
+    ? economyArticles
+    : uniqueArticles
+  )
+    .sort((a, b) => {
+      return new Date(b.pubDate || 0) - new Date(a.pubDate || 0);
+    })
+    .slice(0, 40);
+
+  return articles;
+}
+
+function parseFeed(xml, source) {
+  const blocks = xml.match(/<(item|entry)\b[\s\S]*?<\/\1>/gi) || [];
+
+  return blocks.map((block) => {
+    const title = cleanText(
+      getTag(block, "title")
     );
 
-    refreshButton.addEventListener('click', loadNews);
+    const description = cleanText(
+      getTag(block, "description") ||
+      getTag(block, "summary") ||
+      getTag(block, "content:encoded") ||
+      getTag(block, "content")
+    );
 
-    loadNews();
-  </script>
-</body>
-</html>
+    let link = getTag(block, "link");
+
+    // Atom 형식의 link href도 지원해요.
+    if (!link) {
+      const linkMatch = block.match(
+        /<link\b[^>]*href=["']([^"']+)["'][^>]*\/?>/i
+      );
+      link = linkMatch ? linkMatch[1] : "";
+    }
+
+    const pubDate =
+      getTag(block, "pubDate") ||
+      getTag(block, "published") ||
+      getTag(block, "updated") ||
+      getTag(block, "dc:date");
+
+    const image =
+      getTag(block, "media:content", "url") ||
+      getTag(block, "media:thumbnail", "url") ||
+      getTag(block, "enclosure", "url") ||
+      findImage(description);
+
+    return {
+      title,
+      description: description.slice(0, 4000),
+      link: decodeEntities(link).trim(),
+      pubDate: cleanText(pubDate),
+      image: image || "",
+      source
+    };
+  }).filter((article) => article.title && article.link);
+}
+
+function getTag(xml, tagName, attributeName = null) {
+  const escapedTag = tagName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+  if (attributeName) {
+    const regex = new RegExp(
+      `<${escapedTag}\\b[^>]*\\b${attributeName}=["']([^"']+)["'][^>]*>`,
+      "i"
+    );
+    const match = xml.match(regex);
+    return match ? decodeEntities(match[1]) : "";
+  }
+
+  const regex = new RegExp(
+    `<${escapedTag}\\b[^>]*>([\\s\\S]*?)<\\/${escapedTag}\\s*>`,
+    "i"
+  );
+
+  const match = xml.match(regex);
+  return match ? match[1] : "";
+}
+
+function findImage(text) {
+  const match = text.match(
+    /<img\b[^>]*\bsrc=["']([^"']+)["']/i
+  );
+
+  return match ? decodeEntities(match[1]) : "";
+}
+
+function cleanText(value) {
+  return decodeEntities(String(value || ""))
+    .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1")
+    .replace(/<script\b[\s\S]*?<\/script>/gi, " ")
+    .replace(/<style\b[\s\S]*?<\/style>/gi, " ")
+    .replace(/<[^>]*>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function decodeEntities(value) {
+  return String(value || "")
+    .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;|&apos;/g, "'")
+    .replace(/&#(\d+);/g, (_, number) =>
+      String.fromCodePoint(Number(number))
+    )
+    .replace(/&#x([0-9a-f]+);/gi, (_, number) =>
+      String.fromCodePoint(parseInt(number, 16))
+    );
+}
+
+function jsonResponse(data, status = 200, extraHeaders = {}) {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: {
+      "Content-Type": "application/json; charset=utf-8",
+      "Cache-Control": "no-store",
+      ...extraHeaders
+    }
+  });
+}
