@@ -39,6 +39,7 @@
       font-size: 30px;
       font-weight: 900;
       letter-spacing: -1px;
+      cursor: pointer;
     }
 
     .tagline {
@@ -50,13 +51,13 @@
 
     .hero h1 {
       font-size: clamp(27px, 5vw, 43px);
-      line-height: 1.25;
+      line-height: 1.3;
       margin: 0 0 12px;
     }
 
     .hero p {
       color: #554a2b;
-      line-height: 1.7;
+      line-height: 1.8;
       margin: 0;
     }
 
@@ -74,14 +75,17 @@
       margin: 0;
     }
 
-    button {
+    button, .button-link {
+      display: inline-block;
       border: 2px solid var(--ink);
       border-radius: 10px;
-      padding: 10px 15px;
+      padding: 11px 15px;
       background: var(--mango);
       color: var(--ink);
       font-weight: bold;
+      font-size: 14px;
       cursor: pointer;
+      text-decoration: none;
     }
 
     button:disabled {
@@ -93,7 +97,7 @@
       padding: 14px;
       border-radius: 10px;
       background: #fff4c9;
-      line-height: 1.6;
+      line-height: 1.7;
       margin-bottom: 18px;
     }
 
@@ -104,10 +108,6 @@
     }
 
     .article {
-      display: flex;
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 10px;
       background: white;
       border: 1px solid var(--line);
       border-radius: 15px;
@@ -119,65 +119,127 @@
       color: #715700;
       font-size: 12px;
       font-weight: bold;
+      margin-bottom: 10px;
       overflow-wrap: anywhere;
     }
 
-    .article h3 {
+    .article-title {
+      display: block;
+      width: 100%;
+      border: 0;
+      padding: 0;
+      background: transparent;
+      text-align: left;
       font-size: 19px;
-      line-height: 1.55;
-      margin: 0;
+      line-height: 1.65;
+      font-weight: 800;
       overflow-wrap: anywhere;
+      cursor: pointer;
+    }
+
+    .article-title:hover {
+      text-decoration: underline;
+      text-underline-offset: 4px;
     }
 
     .date {
       color: var(--muted);
       font-size: 12px;
-      margin-top: auto;
       line-height: 1.6;
-    }
-
-    .detail {
-      width: 100%;
-      border-top: 1px solid var(--line);
-      padding-top: 12px;
-      line-height: 1.8;
-      overflow-wrap: anywhere;
-    }
-
-    .detail h4 {
-      margin: 10px 0 4px;
-      font-size: 15px;
-    }
-
-    .detail p {
-      margin: 0 0 10px;
-      font-size: 14px;
-    }
-
-    .explain-label {
-      display: inline-block;
-      background: #fff4c9;
-      padding: 4px 8px;
-      border-radius: 6px;
-      font-size: 12px;
-      font-weight: bold;
-    }
-
-    .read {
-      display: inline-block;
-      color: #222;
-      font-weight: bold;
-      text-decoration-thickness: 2px;
-      text-underline-offset: 3px;
-      margin-top: 5px;
+      margin-top: 14px;
     }
 
     .note {
       margin: 25px 0;
       color: var(--muted);
       font-size: 13px;
-      line-height: 1.7;
+      line-height: 1.8;
     }
+
+    .detail-page {
+      max-width: 760px;
+      margin: 28px auto 45px;
+      background: white;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: clamp(20px, 5vw, 38px);
+    }
+
+    .back-button {
+      margin-bottom: 25px;
+      background: white;
+    }
+
+    .detail-source {
+      display: inline-block;
+      padding: 6px 10px;
+      background: #fff4c9;
+      border-radius: 7px;
+      color: #715700;
+      font-size: 13px;
+      font-weight: bold;
+      margin-bottom: 16px;
+    }
+
+    .detail-title {
+      font-size: clamp(25px, 5vw, 36px);
+      line-height: 1.45;
+      margin: 0 0 16px;
+      overflow-wrap: anywhere;
+    }
+
+    .detail-date {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.7;
+      padding-bottom: 22px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .section-heading {
+      font-size: 20px;
+      margin: 26px 0 12px;
+    }
+
+    .detail-content {
+      font-size: 17px;
+      line-height: 2;
+      overflow-wrap: anywhere;
+      white-space: pre-line;
+    }
+
+    .detail-content.empty {
+      color: var(--muted);
+      font-size: 15px;
+    }
+
+    .explain-box {
+      background: #fff9e5;
+      border-radius: 12px;
+      padding: 18px;
+      margin-top: 25px;
+      line-height: 1.9;
+      font-size: 15px;
+    }
+
+    .explain-box strong {
+      display: block;
+      font-size: 17px;
+      margin-bottom: 6px;
+    }
+
+    .detail-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 28px;
+    }
+
+    .original-link {
+      background: var(--mango);
+    }
+
+    .hidden { display: none !important; }
 
     footer {
       margin-top: 38px;
@@ -192,43 +254,75 @@
     @media (max-width: 600px) {
       .grid { grid-template-columns: 1fr; }
       .brand { font-size: 26px; }
+      .article { padding: 18px; }
+      .detail-content { font-size: 16px; }
     }
   </style>
 </head>
 <body>
   <header>
     <div class="top">
-      <div class="brand">🥭 MANGO NEWS</div>
+      <div class="brand" id="homeBrand" role="button" tabindex="0">
+        🥭 MANGO NEWS
+      </div>
       <div class="tagline">경제와 주식, 누구나 쉽게 이해하도록!</div>
     </div>
   </header>
 
   <main>
-    <section class="hero">
-      <h1>돈과 경제의 세상,<br>쉽게 읽어 보자.</h1>
-      <p>
-        국내외 경제와 주식 관련 뉴스를 모아요.<br>
-        제목을 누르면 핵심 내용과 쉬운 설명을 볼 수 있어요.
-      </p>
+    <section id="homePage">
+      <section class="hero">
+        <h1>돈과 경제의 세상,<br>쉽게 읽어 보자.</h1>
+        <p>
+          국내외 경제와 주식 관련 뉴스를 모아요.<br>
+          제목을 누르면 해당 기사의 상세 화면이 열려요.
+        </p>
+      </section>
+
+      <section>
+        <div class="toolbar">
+          <h2>경제·주식 뉴스 📰</h2>
+          <button id="refresh">↻ 뉴스 새로고침</button>
+        </div>
+
+        <div id="status" role="status" aria-live="polite">
+          뉴스를 불러오고 있어요...
+        </div>
+        <div id="articles" class="grid"></div>
+
+        <p class="note">
+          기사의 상세 화면에서는 뉴스 출처가 제공한 설명을 확인할 수 있어요.
+          AI 요약 기능은 아직 준비 중이에요.
+          정확한 내용과 추가 정보는 원문 기사에서 확인해 주세요.
+        </p>
+      </section>
     </section>
 
-    <section>
-      <div class="toolbar">
-        <h2>경제·주식 뉴스 📰</h2>
-        <button id="refresh">↻ 뉴스 새로고침</button>
-      </div>
+    <section id="detailPage" class="hidden">
+      <article class="detail-page">
+        <button id="backButton" class="back-button">← 홈으로 돌아가기</button>
 
-      <div id="status" role="status" aria-live="polite">
-        뉴스를 불러오고 있어요...
-      </div>
-      <div id="articles" class="grid"></div>
+        <div id="detailSource" class="detail-source"></div>
+        <h1 id="detailTitle" class="detail-title"></h1>
+        <div id="detailDate" class="detail-date"></div>
 
-      <p class="note">
-        뉴스 설명은 제공된 제목과 요약을 바탕으로 표시합니다.
-        짧은 설명만 있는 경우에는 제목을 쉽게 풀어 설명합니다.
-        자세한 사실은 원문 기사에서 확인해 주세요.
-        이 사이트는 투자 추천 서비스가 아닙니다.
-      </p>
+        <h2 class="section-heading">📰 기사 내용</h2>
+        <div id="detailContent" class="detail-content"></div>
+
+        <div class="explain-box">
+          <strong>💡 경제를 이해하는 팁</strong>
+          기업 실적, 금리, 환율 등의 변화는 경제와 주식시장에 영향을 줄 수 있어요.
+          하지만 기사 하나만으로 주가가 오를지 내릴지 확실하게 알 수는 없어요.
+        </div>
+
+        <div class="detail-actions">
+          <a id="originalLink" class="button-link original-link"
+             href="#" target="_blank" rel="noopener noreferrer">
+            원문 기사 읽기 ↗
+          </a>
+          <button id="backButtonBottom">← 뉴스 목록으로</button>
+        </div>
+      </article>
     </section>
   </main>
 
@@ -241,6 +335,16 @@
     const statusBox = document.getElementById('status');
     const articlesBox = document.getElementById('articles');
     const refreshButton = document.getElementById('refresh');
+    const homePage = document.getElementById('homePage');
+    const detailPage = document.getElementById('detailPage');
+
+    const detailSource = document.getElementById('detailSource');
+    const detailTitle = document.getElementById('detailTitle');
+    const detailDate = document.getElementById('detailDate');
+    const detailContent = document.getElementById('detailContent');
+    const originalLink = document.getElementById('originalLink');
+
+    let newsArticles = [];
 
     function makeElement(tag, className, text) {
       const element = document.createElement(tag);
@@ -249,52 +353,83 @@
       return element;
     }
 
-    function easyExplanation(article) {
-      const title = article.title || '제목 없음';
+    function showHome(pushHistory = true) {
+      homePage.classList.remove('hidden');
+      detailPage.classList.add('hidden');
+
+      if (pushHistory && location.hash !== '#home') {
+        history.pushState({ page: 'home' }, '', '#home');
+      }
+
+      window.scrollTo(0, 0);
+    }
+
+    function showArticle(article, pushHistory = true) {
+      detailSource.textContent = article.domain || '뉴스 출처';
+      detailTitle.textContent = article.title || '제목 없음';
+      detailDate.textContent = article.date
+        ? '보도 날짜: ' + article.date
+        : '보도 날짜 정보 없음';
+
       const description = (article.description || '').trim();
 
-      const detail = makeElement('div', 'detail');
-      detail.hidden = true;
-
-      detail.append(
-        makeElement('span', 'explain-label', '쉬운 뉴스 풀이')
-      );
-
-      detail.append(
-        makeElement('h4', '', '📰 무슨 일이야?')
-      );
+      detailContent.replaceChildren();
 
       if (description) {
-        detail.append(makeElement('p', '', description));
+        detailContent.classList.remove('empty');
+        detailContent.textContent = description;
       } else {
-        detail.append(
-          makeElement(
-            'p',
-            '',
-            '제공된 기사 설명이 없어서 제목을 중심으로 소개할게요. 정확한 사건 내용은 원문 기사에서 확인해 주세요.'
-          )
+        detailContent.classList.add('empty');
+        detailContent.textContent =
+          '이 뉴스에는 제공된 기사 설명이 없어요. 아래 원문 기사 읽기 버튼을 눌러 자세한 내용을 확인해 주세요.';
+      }
+
+      originalLink.href = article.url || '#';
+
+      homePage.classList.add('hidden');
+      detailPage.classList.remove('hidden');
+
+      if (pushHistory) {
+        history.pushState(
+          { page: 'article', url: article.url },
+          '',
+          '#article'
         );
       }
 
-      detail.append(
-        makeElement('h4', '', '💡 쉽게 이해하기')
-      );
+      window.scrollTo(0, 0);
+    }
 
-      detail.append(
-        makeElement(
-          'p',
-          '',
-          '이 뉴스가 경제나 주식시장과 어떤 관련이 있는지 살펴보세요. 기업 실적, 금리, 환율 같은 변화는 주가에 영향을 줄 수 있지만, 뉴스 하나만으로 주가의 방향을 확실히 예측할 수는 없어요.'
-        )
-      );
+    function renderNews(articles) {
+      articlesBox.replaceChildren();
 
-      const link = makeElement('a', 'read', '기사 원문 읽기 ↗');
-      link.href = article.url;
-      link.target = '_blank';
-      link.rel = 'noopener noreferrer';
-      detail.append(link);
+      for (const article of articles) {
+        const card = makeElement('article', 'article');
 
-      return detail;
+        const source = makeElement(
+          'div',
+          'source',
+          article.domain || '뉴스 출처'
+        );
+
+        const title = makeElement(
+          'button',
+          'article-title',
+          article.title || '제목 없음'
+        );
+
+        title.type = 'button';
+        title.addEventListener('click', () => showArticle(article));
+
+        const date = makeElement(
+          'div',
+          'date',
+          article.date ? '보도 날짜: ' + article.date : ''
+        );
+
+        card.append(source, title, date);
+        articlesBox.append(card);
+      }
     }
 
     async function loadNews() {
@@ -319,49 +454,12 @@
           return;
         }
 
-        for (const article of data.articles) {
-          const card = makeElement('article', 'article');
-
-          const source = makeElement(
-            'div',
-            'source',
-            article.domain || '뉴스 출처'
-          );
-
-          const title = makeElement(
-            'h3',
-            '',
-            article.title || '제목 없음'
-          );
-
-          const date = makeElement(
-            'div',
-            'date',
-            article.date ? '보도 날짜: ' + article.date : ''
-          );
-
-          const toggle = makeElement('button', 'toggle', '쉬운 설명 보기 ＋');
-          toggle.type = 'button';
-          toggle.setAttribute('aria-expanded', 'false');
-
-          const detail = easyExplanation(article);
-
-          toggle.addEventListener('click', () => {
-            const opening = detail.hidden;
-            detail.hidden = !opening;
-            toggle.textContent = opening
-              ? '쉬운 설명 접기 −'
-              : '쉬운 설명 보기 ＋';
-            toggle.setAttribute('aria-expanded', String(opening));
-          });
-
-          card.append(source, title, date, toggle, detail);
-          articlesBox.append(card);
-        }
+        newsArticles = data.articles;
+        renderNews(newsArticles);
 
         statusBox.textContent =
-          '경제·주식 뉴스 ' + data.articles.length +
-          '개를 불러왔어요! 제목 아래 버튼을 눌러 쉬운 설명을 확인해 보세요.';
+          '경제·주식 뉴스 ' + newsArticles.length +
+          '개를 불러왔어요. 제목을 눌러 기사 내용을 읽어 보세요.';
       } catch (error) {
         statusBox.textContent =
           '뉴스를 불러오지 못했어요. 서버 연결을 확인한 뒤 다시 시도해 주세요. (' +
@@ -370,6 +468,30 @@
         refreshButton.disabled = false;
       }
     }
+
+    document.getElementById('backButton').addEventListener('click', showHome);
+    document.getElementById('backButtonBottom').addEventListener('click', showHome);
+    document.getElementById('homeBrand').addEventListener('click', showHome);
+
+    document.getElementById('homeBrand').addEventListener('keydown', event => {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        showHome();
+      }
+    });
+
+    window.addEventListener('popstate', () => {
+      if (location.hash === '#article') {
+        const article = newsArticles.find(item => item.url === history.state?.url);
+        if (article) {
+          showArticle(article, false);
+        } else {
+          showHome(false);
+        }
+      } else {
+        showHome(false);
+      }
+    });
 
     refreshButton.addEventListener('click', loadNews);
     loadNews();
