@@ -1,328 +1,137 @@
 
-const CACHE_KEY = "https://mango-news-cache.internal/api/news";
 const CACHE_SECONDS = 120;
 
-const FEEDS = [
-  { name: "연합뉴스", url: "https://www.yna.co.kr/rss/news.xml" },
-  { name: "뉴시스", url: "https://www.newsis.com/RSS/sokbo.xml" },
-  { name: "BBC News", url: "https://feeds.bbci.co.uk/news/business/rss.xml" },
-  { name: "Korea.net", url: "https://www.korea.net/koreanet/rss/news/2" }
+const RSS_FEEDS = [
+  {
+    name: "연합뉴스",
+    url: "https://www.yna.co.kr/rss/news.xml"
+  },
+  {
+    name: "뉴시스",
+    url: "https://www.newsis.com/RSS/sokbo.xml"
+  },
+  {
+    name: "BBC News",
+    url: "https://feeds.bbci.co.uk/news/business/rss.xml"
+  },
+  {
+    name: "Korea.net",
+    url: "https://www.korea.net/koreanet/rss/news/2"
+  }
 ];
 
 const ECONOMY_KEYWORDS = [
-  "경제", "주식", "증시", "코스피", "코스닥",
-  "나스닥", "다우", "주가", "상장", "실적",
-  "매출", "영업이익", "순이익", "기업", "투자",
-  "금리", "환율", "물가", "인플레이션", "수출",
-  "수입", "무역", "고용", "실업", "부동산",
-  "은행", "금융", "반도체", "배당", "채권",
-  "시장", "관세", "중앙은행", "기준금리",
-  "market", "stock", "stocks", "share price",
-  "economy", "economic", "business", "finance",
-  "inflation", "interest rate", "earnings",
-  "revenue", "trade", "tariff", "nasdaq",
-  "dow jones", "s&p 500", "ipo", "semiconductor",
-  "wall street", "shares", "investor", "investors",
-  "profit", "losses", "bond", "currency", "forex",
-  "central bank", "gdp", "jobs report"
+  "경제", "금융", "주식", "증시", "코스피", "코스닥",
+  "환율", "금리", "물가", "부동산", "기업", "산업",
+  "수출", "수입", "무역", "은행", "투자", "고용",
+  "취업", "일자리", "소비", "시장", "성장", "무역",
+  "경제성장", "실업", "인플레이션", "반도체", "배터리",
+  "원화", "달러", "유가", "재정", "세금", "예산",
+  "경제정책", "비트코인", "가상자산", "GDP", "경제협력",
+  "business", "economy", "economic", "stock", "market",
+  "finance", "financial", "inflation", "trade", "bank",
+  "interest rate", "investment", "employment"
 ];
 
-function decodeXml(text) {
-  return text
-    .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1")
-    .replace(/&#x([0-9a-f]+);/gi, (_, n) =>
-      String.fromCodePoint(parseInt(n, 16)))
-    .replace(/&#(\d+);/g, (_, n) =>
-      String.fromCodePoint(parseInt(n, 10)))
-    .replace(/&amp;/g, "&")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/&quot;/g, '"')
-    .replace(/&apos;/g, "'");
-}
-
-function getTag(xml, tag) {
-  const match = xml.match(
-    new RegExp(
-      "<" + tag + "(?:\\s[^>]*)?>([\\s\\S]*?)</" +
-      tag + "\\s*>",
-      "i"
-    )
-  );
-
-  return match ? decodeXml(match[1]).trim() : "";
-}
-
-function cleanText(text) {
-  return text
-    .replace(/<[^>]*>/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
-// 기사 원문에 포함된 이미지 주소 찾기
-function extractImage(item) {
-  const mediaTags =
-    item.match(
-      /<(?:media:content|media:thumbnail|media:group)\b[^>]*>/gi
-    ) || [];
-
-  for (const tag of mediaTags) {
-    const urlMatch = tag.match(/\burl\s*=\s*(["'])(.*?)\1/i);
-    const typeMatch = tag.match(/\btype\s*=\s*(["'])(.*?)\1/i);
-
-    if (!urlMatch) continue;
-
-    const imageUrl = decodeXml(urlMatch[2].trim());
-    const mediaType = typeMatch?.[2]?.toLowerCase() || "";
-
-    if (
-      /^https?:\/\//i.test(imageUrl) &&
-      (!mediaType || mediaType.startsWith("image/"))
-    ) {
-      return imageUrl;
-    }
-  }
-
-  const enclosures =
-    item.match(/<enclosure\b[^>]*>/gi) || [];
-
-  for (const tag of enclosures) {
-    const urlMatch = tag.match(/\burl\s*=\s*(["'])(.*?)\1/i);
-    const typeMatch = tag.match(/\btype\s*=\s*(["'])(.*?)\1/i);
-
-    if (!urlMatch) continue;
-
-    const imageUrl = decodeXml(urlMatch[2].trim());
-    const mediaType = typeMatch?.[2]?.toLowerCase() || "";
-
-    if (
-      /^https?:\/\//i.test(imageUrl) &&
-      (
-        mediaType.startsWith("image/") ||
-        /\.(jpe?g|png|webp|gif|avif)(?:[?#].*)?$/i.test(imageUrl)
-      )
-    ) {
-      return imageUrl;
-    }
-  }
-
-  const htmlFields = [
-    getTag(item, "description"),
-    getTag(item, "content:encoded")
-  ];
-
-  for (const html of htmlFields) {
-    const images = html.match(/<img\b[^>]*>/gi) || [];
-
-    for (const img of images) {
-      const srcMatch = img.match(
-        /\b(?:src|data-src)\s*=\s*(["'])(.*?)\1/i
-      );
-
-      if (!srcMatch) continue;
-
-      const imageUrl = decodeXml(srcMatch[2].trim());
-
-      if (/^https?:\/\//i.test(imageUrl)) {
-        return imageUrl;
-      }
-    }
-  }
-
-  return "";
-}
-
-function isEconomyNews(article) {
-  const text =
-    `${article.title} ${article.description}`.toLowerCase();
-
-  return ECONOMY_KEYWORDS.some(keyword =>
-    text.includes(keyword.toLowerCase())
-  );
-}
-
-async function readFeed(feed) {
-  const response = await fetch(feed.url, {
-    headers: {
-      "User-Agent": "MANGO-NEWS/1.0",
-      "Accept": "application/rss+xml, application/xml, text/xml"
-    },
-    signal: AbortSignal.timeout(8000)
-  });
-
-  if (!response.ok) {
-    throw new Error(feed.name + " returned " + response.status);
-  }
-
-  const xml = await response.text();
-  const items =
-    xml.match(/<item(?:\s[^>]*)?>[\s\S]*?<\/item>/gi) || [];
-
-  return items.map(item => ({
-    title: cleanText(getTag(item, "title")),
-    description: cleanText(getTag(item, "description")),
-    url: getTag(item, "link"),
-    domain: feed.name,
-    date: getTag(item, "pubDate"),
-    image: extractImage(item)
-  })).filter(article =>
-    article.title &&
-    /^https?:\/\//i.test(article.url)
-  );
-}
+const NEWS_CACHE_KEY = new Request(
+  "https://mango-news-cache.internal/api/news"
+);
 
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
 
-    // AI 기사 이미지 생성
-    if (url.pathname === "/api/generate-image") {
-      if (request.method !== "POST") {
-        return Response.json(
-          { error: "POST 요청만 사용할 수 있습니다." },
-          { status: 405 }
+    if (url.pathname === "/api/news") {
+      if (request.method !== "GET") {
+        return jsonResponse(
+          { error: "GET 요청만 사용할 수 있어요." },
+          405
         );
       }
 
-      if (!env.AI) {
-        return Response.json(
-          { error: "Cloudflare AI 연결을 확인해 주세요." },
-          { status: 500 }
-        );
+      const cache = caches.default;
+      const cached = await cache.match(NEWS_CACHE_KEY);
+
+      if (cached) {
+        return cached;
       }
 
       try {
-        const body = await request.json();
+        const articles = await collectNews();
 
-        const title = typeof body.title === "string"
-          ? body.title.trim().slice(0, 300)
-          : "";
-
-        const description =
-          typeof body.description === "string"
-            ? body.description.trim().slice(0, 1000)
-            : "";
-
-        if (!title) {
-          return Response.json(
-            { error: "뉴스 제목이 필요합니다." },
-            { status: 400 }
-          );
-        }
-
-        // 제목과 설명이 같은 기사는 같은 캐시 키를 사용해요.
-        const keyText = title + "\n" + description;
-        const digest = await crypto.subtle.digest(
-          "SHA-256",
-          new TextEncoder().encode(keyText)
-        );
-
-        const hash = Array.from(new Uint8Array(digest))
-          .map(byte => byte.toString(16).padStart(2, "0"))
-          .join("");
-
-        const cache = caches.default;
-        const imageCacheRequest = new Request(
-          `https://mango-news-cache.internal/api/generated-image/${hash}`
-        );
-
-        const cachedImage = await cache.match(imageCacheRequest);
-
-        if (cachedImage) {
-          return new Response(cachedImage.body, {
-            status: cachedImage.status,
-            headers: cachedImage.headers
-          });
-        }
-
-        // 뉴스 내용을 바탕으로 일러스트를 만들어요.
-        const prompt =
-          "Create a polished, friendly editorial illustration for a " +
-          "Korean children's economics news website. " +
-          "Create a visual metaphor that matches the news topic. " +
-          "Use clear shapes, appealing colors, professional composition, " +
-          "and a wide landscape layout suitable for a news article. " +
-          "Do not include any text, letters, numbers, watermarks, logos, " +
-          "captions, or fake newspaper headlines. " +
-          "This is an illustration, not a documentary photograph. " +
-          "News headline: " + title + ". " +
-          "News context: " + (description || "No additional description.");
-
-        const result = await env.AI.run(
-          "@cf/black-forest-labs/flux-1-schnell",
+        const response = jsonResponse(
           {
-            prompt: prompt.slice(0, 2048),
-            steps: 4
-          }
-        );
-
-        if (
-          typeof result?.image !== "string" ||
-          !result.image.trim()
-        ) {
-          throw new Error("이미지 모델이 그림을 반환하지 않았습니다.");
-        }
-
-        const imageResponse = Response.json(
-          { image: "data:image/jpeg;base64," + result.image },
-          {
-            headers: {
-              "Cache-Control": "public, max-age=86400"
-            }
-          }
-        );
-
-        // 생성한 그림을 Cloudflare 캐시에 보관해 재생성을 줄여요.
-        ctx.waitUntil(
-          cache.put(imageCacheRequest, imageResponse.clone())
-        );
-
-        return imageResponse;
-      } catch (error) {
-        console.error("AI image error:", error);
-
-        return Response.json(
-          {
-            error:
-              "AI 그림을 만들지 못했어요. 잠시 후 다시 시도해 주세요."
+            articles,
+            updatedAt: new Date().toISOString()
           },
-          { status: 500 }
+          200,
+          { "Cache-Control": `public, max-age=${CACHE_SECONDS}` }
+        );
+
+        ctx.waitUntil(
+          cache.put(NEWS_CACHE_KEY, response.clone())
+        );
+
+        return response;
+      } catch (error) {
+        return jsonResponse(
+          {
+            error: "뉴스를 불러오지 못했어요.",
+            details: String(error),
+            articles: []
+          },
+          502
         );
       }
     }
 
-    // AI 쉬운 뉴스 요약
     if (url.pathname === "/api/summarize") {
       if (request.method !== "POST") {
-        return Response.json(
-          { error: "POST 요청만 사용할 수 있습니다." },
-          { status: 405 }
+        return jsonResponse(
+          { error: "POST 요청만 사용할 수 있어요." },
+          405
+        );
+      }
+
+      if (!env.AI) {
+        return jsonResponse(
+          { error: "Cloudflare AI 바인딩을 찾을 수 없어요." },
+          500
         );
       }
 
       try {
         const body = await request.json();
+        const title = String(body.title || "").slice(0, 500);
+        const description = String(body.description || "").slice(0, 5000);
 
-        const title = typeof body.title === "string"
-          ? body.title.trim().slice(0, 500)
-          : "";
-
-        const description =
-          typeof body.description === "string"
-            ? body.description.trim().slice(0, 4000)
-            : "";
-
-        const source = typeof body.source === "string"
-          ? body.source.trim().slice(0, 100)
-          : "";
-
-        if (!title || !description) {
-          return Response.json(
-            { error: "뉴스 제목과 설명이 필요합니다." },
-            { status: 400 }
+        if (!title && !description) {
+          return jsonResponse(
+            { error: "요약할 기사 내용이 없어요." },
+            400
           );
         }
+
+        const prompt = `
+너는 초등학생도 이해할 수 있게 경제 뉴스를 설명하는 한국어 선생님이야.
+
+아래 뉴스 정보를 바탕으로 기사를 쉽게 설명해 줘.
+
+[기사 제목]
+${title}
+
+[기사 설명]
+${description}
+
+작성 규칙:
+1. 어려운 경제 용어는 쉬운 말로 풀어 줘.
+2. 기사에 없는 사실을 지어내지 마.
+3. 제목만 보고 알 수 없는 내용을 확정해서 말하지 마.
+4. 핵심 내용을 2~4개의 짧은 문단으로 설명해 줘.
+5. 마지막에 "왜 중요할까요?"라는 소제목과 함께 의미를 설명해 줘.
+6. 기사 내용이 부족하면 부족하다고 알려 줘.
+7. 한국어로 답해 줘.
+`;
 
         const result = await env.AI.run(
           "@cf/meta/llama-3.1-8b-instruct-fp8",
@@ -331,127 +140,328 @@ export default {
               {
                 role: "system",
                 content:
-                  "너는 MANGO NEWS의 어린이용 경제 뉴스 설명 도우미다. " +
-                  "반드시 자연스러운 한국어로 초등학생도 이해하기 쉽게 작성한다. " +
-                  "제공된 제목과 설명에 있는 사실만 사용한다. " +
-                  "모르는 사실, 숫자, 원인, 결과를 지어내지 않는다. " +
-                  "정보가 부족하면 부족하다고 솔직하게 밝힌다. " +
-                  "투자를 권하거나 주식 매수·매도를 추천하지 않는다. " +
-                  "짧고 읽기 쉬운 문장과 제목을 사용한다."
+                  "너는 정확하고 친절한 경제 뉴스 설명 도우미야. 근거 없는 내용을 만들어내지 마."
               },
               {
                 role: "user",
-                content:
-                  "다음 뉴스의 제목과 설명만 참고해서 쉽게 풀어 줘.\n" +
-                  "출처: " + (source || "알 수 없음") + "\n" +
-                  "제목: " + title + "\n" +
-                  "뉴스 설명: " + description + "\n\n" +
-                  "아래 세 항목으로 작성해 줘.\n" +
-                  "1. 무슨 일이야? (핵심 내용 2~3문장)\n" +
-                  "2. 어려운 말 풀이 (있을 때만)\n" +
-                  "3. 우리 생활과 무슨 관계가 있어? (자료에 근거해 설명하고, " +
-                  "근거가 부족하면 단정하지 말 것)\n\n" +
-                  "제공된 설명만으로 알 수 없는 내용은 추측하지 마."
+                content: prompt
               }
             ],
-            max_tokens: 500
+            max_tokens: 700
           }
         );
 
-        const summary = result?.response;
+        const summary =
+          result?.response ||
+          result?.result?.response ||
+          "";
 
-        if (typeof summary !== "string" || !summary.trim()) {
-          return Response.json(
-            { error: "AI가 요약을 만들지 못했습니다. 다시 시도해 주세요." },
-            { status: 502 }
+        if (!summary) {
+          return jsonResponse(
+            { error: "AI가 요약을 만들지 못했어요." },
+            502
           );
         }
 
-        return Response.json(
-          { summary: summary.trim() },
-          {
-            headers: {
-              "Cache-Control": "no-store"
-            }
-          }
-        );
+        return jsonResponse({ summary });
       } catch (error) {
-        console.error("AI summary error:", error);
-
-        return Response.json(
+        return jsonResponse(
           {
-            error:
-              "AI 요약 중 문제가 생겼습니다. 잠시 후 다시 시도해 주세요."
+            error: "AI 요약 중 문제가 생겼어요.",
+            details: String(error)
           },
-          { status: 500 }
+          500
         );
       }
     }
 
-    // 뉴스 수집
-    if (url.pathname === "/api/news") {
-      if (request.method !== "GET") {
-        return Response.json(
-          { error: "Method not allowed" },
-          { status: 405 }
+    if (url.pathname === "/api/generate-image") {
+      if (request.method !== "POST") {
+        return jsonResponse(
+          { error: "POST 요청만 사용할 수 있어요." },
+          405
         );
       }
 
-      const cache = caches.default;
-      const cacheRequest = new Request(CACHE_KEY);
-      const cached = await cache.match(cacheRequest);
-
-      if (cached) {
-        return new Response(cached.body, {
-          status: cached.status,
-          headers: cached.headers
-        });
-      }
-
-      const results = await Promise.allSettled(
-        FEEDS.map(readFeed)
-      );
-
-      const articles = results
-        .filter(result => result.status === "fulfilled")
-        .flatMap(result => result.value);
-
-      const unique = [
-        ...new Map(
-          articles.map(article => [article.url, article])
-        ).values()
-      ]
-        .filter(isEconomyNews)
-        .sort((a, b) => {
-          const da = Date.parse(a.date) || 0;
-          const db = Date.parse(b.date) || 0;
-          return db - da;
-        })
-        .slice(0, 40);
-
-      if (unique.length === 0) {
-        return Response.json(
-          {
-            error:
-              "경제·주식 뉴스가 없거나 뉴스 출처에 연결할 수 없습니다. 잠시 후 다시 시도해 주세요."
-          },
-          { status: 502 }
+      if (!env.AI) {
+        return jsonResponse(
+          { error: "Cloudflare AI 바인딩을 찾을 수 없어요." },
+          500
         );
       }
 
-      const result = Response.json(
-        { articles: unique },
-        {
-          headers: {
-            "Cache-Control": "public, max-age=120"
-          }
+      try {
+        const body = await request.json();
+        const title = String(body.title || "").slice(0, 300);
+        const description = String(body.description || "").slice(0, 1500);
+
+        if (!title && !description) {
+          return jsonResponse(
+            { error: "그림을 만들 기사 정보가 없어요." },
+            400
+          );
         }
-      );
 
-      ctx.waitUntil(cache.put(cacheRequest, result.clone()));
-      return result;
+        const cache = caches.default;
+        const cacheText = `${title}\n${description}`;
+        const hashBuffer = await crypto.subtle.digest(
+          "SHA-256",
+          new TextEncoder().encode(cacheText)
+        );
+
+        const hash = Array.from(new Uint8Array(hashBuffer))
+          .map((byte) => byte.toString(16).padStart(2, "0"))
+          .join("");
+
+        const imageCacheRequest = new Request(
+          `https://mango-news-cache.internal/api/generated-image/${hash}`
+        );
+
+        const cachedImage = await cache.match(imageCacheRequest);
+
+        if (cachedImage) {
+          return cachedImage;
+        }
+
+        const prompt = `
+Create a polished editorial illustration for a Korean educational
+economy news website called MANGO NEWS.
+
+The illustration should visually represent the following news.
+News title: ${title}
+News description: ${description}
+
+Visual requirements:
+- Clear, friendly, modern editorial illustration.
+- Appropriate for students and general readers.
+- Show the main idea using recognizable objects and visual metaphors.
+- Warm mango-yellow accents with a clean, balanced composition.
+- Professional news illustration, not a photograph.
+- No written words, letters, numbers, captions, watermarks, or logos.
+- Do not depict a specific real person unless necessary.
+- No misleading charts, statistics, or invented readable text.
+- Landscape composition, 16:9 aspect ratio.
+`;
+
+        const result = await env.AI.run(
+          "@cf/black-forest-labs/flux-1-schnell",
+          {
+            prompt,
+            steps: 4
+          }
+        );
+
+        if (!result || !result.image) {
+          return jsonResponse(
+            { error: "AI가 그림을 만들지 못했어요." },
+            502
+          );
+        }
+
+        const imageResponse = jsonResponse(
+          {
+            image: `data:image/jpeg;base64,${result.image}`
+          },
+          200,
+          { "Cache-Control": "public, max-age=86400" }
+        );
+
+        ctx.waitUntil(
+          cache.put(imageCacheRequest, imageResponse.clone())
+        );
+
+        return imageResponse;
+      } catch (error) {
+        return jsonResponse(
+          {
+            error: "AI 그림 생성 중 문제가 생겼어요.",
+            details: String(error)
+          },
+          500
+        );
+      }
     }
 
+    // 나머지 요청은 public 폴더의 파일로 처리해요.
     return env.ASSETS.fetch(request);
   }
 };
+
+async function collectNews() {
+  const feedResults = await Promise.allSettled(
+    RSS_FEEDS.map(async (feed) => {
+      const response = await fetch(feed.url, {
+        headers: {
+          "User-Agent": "MANGO-NEWS/1.0",
+          "Accept": "application/rss+xml, application/xml, text/xml"
+        },
+        signal: AbortSignal.timeout(12000)
+      });
+
+      if (!response.ok) {
+        throw new Error(`${feed.name} 응답 오류: ${response.status}`);
+      }
+
+      const xml = await response.text();
+      return parseFeed(xml, feed.name);
+    })
+  );
+
+  const allArticles = [];
+
+  for (const result of feedResults) {
+    if (result.status === "fulfilled") {
+      allArticles.push(...result.value);
+    }
+  }
+
+  if (allArticles.length === 0) {
+    throw new Error("사용할 수 있는 뉴스 RSS가 없어요.");
+  }
+
+  const seen = new Set();
+
+  const uniqueArticles = allArticles.filter((article) => {
+    const key = article.link || article.title;
+
+    if (!key || seen.has(key)) {
+      return false;
+    }
+
+    seen.add(key);
+    return true;
+  });
+
+  const economyArticles = uniqueArticles.filter((article) => {
+    const text = `${article.title} ${article.description}`.toLowerCase();
+
+    return ECONOMY_KEYWORDS.some((keyword) =>
+      text.includes(keyword.toLowerCase())
+    );
+  });
+
+  const articles = (economyArticles.length > 0
+    ? economyArticles
+    : uniqueArticles
+  )
+    .sort((a, b) => {
+      return new Date(b.pubDate || 0) - new Date(a.pubDate || 0);
+    })
+    .slice(0, 40);
+
+  return articles;
+}
+
+function parseFeed(xml, source) {
+  const blocks = xml.match(/<(item|entry)\b[\s\S]*?<\/\1>/gi) || [];
+
+  return blocks.map((block) => {
+    const title = cleanText(
+      getTag(block, "title")
+    );
+
+    const description = cleanText(
+      getTag(block, "description") ||
+      getTag(block, "summary") ||
+      getTag(block, "content:encoded") ||
+      getTag(block, "content")
+    );
+
+    let link = getTag(block, "link");
+
+    // Atom 형식의 link href도 지원해요.
+    if (!link) {
+      const linkMatch = block.match(
+        /<link\b[^>]*href=["']([^"']+)["'][^>]*\/?>/i
+      );
+      link = linkMatch ? linkMatch[1] : "";
+    }
+
+    const pubDate =
+      getTag(block, "pubDate") ||
+      getTag(block, "published") ||
+      getTag(block, "updated") ||
+      getTag(block, "dc:date");
+
+    const image =
+      getTag(block, "media:content", "url") ||
+      getTag(block, "media:thumbnail", "url") ||
+      getTag(block, "enclosure", "url") ||
+      findImage(description);
+
+    return {
+      title,
+      description: description.slice(0, 4000),
+      link: decodeEntities(link).trim(),
+      pubDate: cleanText(pubDate),
+      image: image || "",
+      source
+    };
+  }).filter((article) => article.title && article.link);
+}
+
+function getTag(xml, tagName, attributeName = null) {
+  const escapedTag = tagName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+  if (attributeName) {
+    const regex = new RegExp(
+      `<${escapedTag}\\b[^>]*\\b${attributeName}=["']([^"']+)["'][^>]*>`,
+      "i"
+    );
+    const match = xml.match(regex);
+    return match ? decodeEntities(match[1]) : "";
+  }
+
+  const regex = new RegExp(
+    `<${escapedTag}\\b[^>]*>([\\s\\S]*?)<\\/${escapedTag}\\s*>`,
+    "i"
+  );
+
+  const match = xml.match(regex);
+  return match ? match[1] : "";
+}
+
+function findImage(text) {
+  const match = text.match(
+    /<img\b[^>]*\bsrc=["']([^"']+)["']/i
+  );
+
+  return match ? decodeEntities(match[1]) : "";
+}
+
+function cleanText(value) {
+  return decodeEntities(String(value || ""))
+    .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1")
+    .replace(/<script\b[\s\S]*?<\/script>/gi, " ")
+    .replace(/<style\b[\s\S]*?<\/style>/gi, " ")
+    .replace(/<[^>]*>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function decodeEntities(value) {
+  return String(value || "")
+    .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;|&apos;/g, "'")
+    .replace(/&#(\d+);/g, (_, number) =>
+      String.fromCodePoint(Number(number))
+    )
+    .replace(/&#x([0-9a-f]+);/gi, (_, number) =>
+      String.fromCodePoint(parseInt(number, 16))
+    );
+}
+
+function jsonResponse(data, status = 200, extraHeaders = {}) {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: {
+      "Content-Type": "application/json; charset=utf-8",
+      "Cache-Control": "no-store",
+      ...extraHeaders
+    }
+  });
+}
