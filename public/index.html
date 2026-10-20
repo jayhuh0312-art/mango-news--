@@ -1,467 +1,1167 @@
 
-const CACHE_SECONDS = 120;
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#ffc928">
 
-const RSS_FEEDS = [
-  {
-    name: "연합뉴스",
-    url: "https://www.yna.co.kr/rss/news.xml"
-  },
-  {
-    name: "뉴시스",
-    url: "https://www.newsis.com/RSS/sokbo.xml"
-  },
-  {
-    name: "BBC News",
-    url: "https://feeds.bbci.co.uk/news/business/rss.xml"
-  },
-  {
-    name: "Korea.net",
-    url: "https://www.korea.net/koreanet/rss/news/2"
-  }
-];
+  <title>MANGO NEWS | 경제와 주식을 쉽게 읽다</title>
 
-const ECONOMY_KEYWORDS = [
-  "경제", "금융", "주식", "증시", "코스피", "코스닥",
-  "환율", "금리", "물가", "부동산", "기업", "산업",
-  "수출", "수입", "무역", "은행", "투자", "고용",
-  "취업", "일자리", "소비", "시장", "성장", "무역",
-  "경제성장", "실업", "인플레이션", "반도체", "배터리",
-  "원화", "달러", "유가", "재정", "세금", "예산",
-  "경제정책", "비트코인", "가상자산", "GDP", "경제협력",
-  "business", "economy", "economic", "stock", "market",
-  "finance", "financial", "inflation", "trade", "bank",
-  "interest rate", "investment", "employment"
-];
+  <style>
+    :root {
+      --mango: #ffc928;
+      --mango-light: #fff4c5;
+      --ink: #242424;
+      --muted: #777;
+      --paper: #fffdf7;
+      --card: #ffffff;
+      --line: #eee8d8;
+      --green: #427a50;
+      --radius: 20px;
+    }
 
-const NEWS_CACHE_KEY = new Request(
-  "https://mango-news-cache.internal/api/news"
-);
+    * {
+      box-sizing: border-box;
+    }
 
-export default {
-  async fetch(request, env, ctx) {
-    const url = new URL(request.url);
+    html {
+      scroll-behavior: smooth;
+    }
 
-    if (url.pathname === "/api/news") {
-      if (request.method !== "GET") {
-        return jsonResponse(
-          { error: "GET 요청만 사용할 수 있어요." },
-          405
-        );
+    body {
+      margin: 0;
+      background: var(--paper);
+      color: var(--ink);
+      font-family:
+        -apple-system, BlinkMacSystemFont, "Segoe UI",
+        "Noto Sans KR", "Malgun Gothic", sans-serif;
+      line-height: 1.7;
+    }
+
+    button,
+    a {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    button:focus-visible,
+    a:focus-visible {
+      outline: 3px solid #755900;
+      outline-offset: 3px;
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: rgba(255, 253, 247, 0.96);
+      border-bottom: 1px solid var(--line);
+      backdrop-filter: blur(12px);
+    }
+
+    .topbar-inner {
+      max-width: 1080px;
+      min-height: 76px;
+      padding: 12px 22px;
+      margin: auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border: 0;
+      background: transparent;
+      color: var(--ink);
+      padding: 0;
+      text-align: left;
+    }
+
+    .brand-icon {
+      width: 45px;
+      height: 45px;
+      border-radius: 15px;
+      background: var(--mango);
+      display: grid;
+      place-items: center;
+      font-size: 26px;
+      flex-shrink: 0;
+    }
+
+    .brand-name {
+      display: block;
+      font-weight: 950;
+      letter-spacing: -1px;
+      font-size: 23px;
+      line-height: 1.2;
+    }
+
+    .brand-subtitle {
+      display: block;
+      color: var(--muted);
+      font-size: 11px;
+      margin-top: 3px;
+    }
+
+    .header-button {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: white;
+      padding: 9px 14px;
+      font-weight: 750;
+      color: var(--ink);
+    }
+
+    .header-button:hover {
+      background: var(--mango-light);
+    }
+
+    .page {
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 24px 22px 70px;
+    }
+
+    .hero {
+      padding: 34px;
+      border-radius: 28px;
+      background: var(--mango);
+      position: relative;
+      overflow: hidden;
+      margin-bottom: 30px;
+    }
+
+    .hero::after {
+      content: "🥭";
+      position: absolute;
+      right: 25px;
+      bottom: -18px;
+      font-size: 120px;
+      opacity: 0.22;
+      transform: rotate(-15deg);
+      pointer-events: none;
+    }
+
+    .hero-label {
+      display: inline-block;
+      background: rgba(255, 255, 255, 0.65);
+      border-radius: 999px;
+      padding: 5px 12px;
+      font-size: 12px;
+      font-weight: 850;
+      margin-bottom: 12px;
+    }
+
+    .hero h1 {
+      font-size: clamp(28px, 5vw, 42px);
+      letter-spacing: -1.8px;
+      line-height: 1.25;
+      margin: 0 0 12px;
+      max-width: 650px;
+    }
+
+    .hero p {
+      margin: 0;
+      font-size: 15px;
+      max-width: 520px;
+      color: #443500;
+    }
+
+    .hero-note {
+      display: inline-block;
+      margin-top: 19px;
+      font-size: 12px;
+      font-weight: 750;
+      color: #594600;
+    }
+
+    .section-heading {
+      display: flex;
+      justify-content: space-between;
+      align-items: end;
+      gap: 12px;
+      margin: 28px 0 16px;
+    }
+
+    .section-heading h2 {
+      font-size: 24px;
+      line-height: 1.3;
+      letter-spacing: -0.7px;
+      margin: 0;
+    }
+
+    .section-heading p {
+      margin: 5px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .news-count {
+      font-size: 12px;
+      color: #6d5a1a;
+      background: var(--mango-light);
+      border-radius: 999px;
+      padding: 6px 11px;
+      white-space: nowrap;
+      font-weight: 800;
+    }
+
+    .status {
+      margin: 14px 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .status.error {
+      color: #a72b22;
+    }
+
+    .news-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
+    }
+
+    .news-card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      overflow: hidden;
+      transition:
+        transform 0.18s ease,
+        box-shadow 0.18s ease;
+    }
+
+    .news-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 10px 28px rgba(70, 50, 0, 0.07);
+    }
+
+    .card-image-button {
+      display: block;
+      width: 100%;
+      height: 180px;
+      padding: 0;
+      border: 0;
+      background: #fff4d1;
+      overflow: hidden;
+    }
+
+    .card-image {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .card-placeholder {
+      height: 180px;
+      background:
+        radial-gradient(circle at 75% 25%, #ffe28a 0 14%, transparent 15%),
+        linear-gradient(135deg, #fff5d1, #ffe69a);
+      display: grid;
+      place-items: center;
+      font-size: 55px;
+    }
+
+    .card-content {
+      padding: 19px;
+    }
+
+    .card-meta {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 10px;
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .source-tag {
+      display: inline-block;
+      background: #fff1b9;
+      color: #634b00;
+      border-radius: 6px;
+      padding: 3px 7px;
+      font-weight: 850;
+    }
+
+    .card-title-button {
+      display: block;
+      width: 100%;
+      text-align: left;
+      border: 0;
+      padding: 0;
+      background: transparent;
+      color: var(--ink);
+      font-weight: 850;
+      font-size: 18px;
+      line-height: 1.5;
+      letter-spacing: -0.5px;
+    }
+
+    .card-title-button:hover {
+      color: #8a6400;
+    }
+
+    .card-description {
+      margin: 10px 0 15px;
+      color: #666;
+      font-size: 13px;
+      line-height: 1.8;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .read-more {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      border: 0;
+      background: transparent;
+      padding: 0;
+      color: #745600;
+      font-weight: 850;
+      font-size: 13px;
+    }
+
+    .read-more:hover {
+      text-decoration: underline;
+    }
+
+    .detail-view {
+      display: none;
+    }
+
+    .detail-view.active {
+      display: block;
+    }
+
+    .home-view.hidden {
+      display: none;
+    }
+
+    .back-button {
+      border: 1px solid var(--line);
+      background: white;
+      border-radius: 12px;
+      padding: 9px 14px;
+      font-weight: 800;
+      margin-bottom: 20px;
+    }
+
+    .back-button:hover {
+      background: var(--mango-light);
+    }
+
+    .article {
+      background: white;
+      border: 1px solid var(--line);
+      border-radius: 25px;
+      padding: clamp(20px, 4vw, 38px);
+    }
+
+    .article-meta {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px;
+      color: var(--muted);
+      font-size: 12px;
+      margin-bottom: 12px;
+    }
+
+    .article h1 {
+      font-size: clamp(26px, 5vw, 38px);
+      line-height: 1.4;
+      letter-spacing: -1.2px;
+      margin: 0 0 18px;
+      overflow-wrap: anywhere;
+    }
+
+    .article-description {
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+      color: #555;
+      font-size: 15px;
+      line-height: 1.9;
+      margin: 18px 0 22px;
+    }
+
+    .article-image-wrap {
+      margin: 22px 0;
+    }
+
+    .article-image {
+      display: none;
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      object-fit: cover;
+      background: #fff3c5;
+      border-radius: 18px;
+    }
+
+    .article-image.visible {
+      display: block;
+    }
+
+    #imageStatus {
+      margin: 10px 0 18px;
+      color: #715700;
+      font-size: 14px;
+      line-height: 1.8;
+    }
+
+    #imageStatus:empty {
+      display: none;
+    }
+
+    .ai-section {
+      margin-top: 28px;
+      border: 1px solid #f0dfa0;
+      background: #fffaf0;
+      border-radius: 20px;
+      padding: 22px;
+    }
+
+    .ai-heading {
+      display: flex;
+      align-items: flex-start;
+      gap: 11px;
+      margin-bottom: 15px;
+    }
+
+    .ai-icon {
+      width: 42px;
+      height: 42px;
+      flex-shrink: 0;
+      display: grid;
+      place-items: center;
+      background: var(--mango);
+      border-radius: 13px;
+      font-size: 23px;
+    }
+
+    .ai-heading h2 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: -0.5px;
+    }
+
+    .ai-heading p {
+      margin: 4px 0 0;
+      color: #756a4d;
+      font-size: 12px;
+    }
+
+    .summary-content {
+      color: #38342a;
+      font-size: 15px;
+      line-height: 1.95;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+
+    .summary-status {
+      color: #776c53;
+      font-size: 14px;
+    }
+
+    .summary-retry {
+      border: 0;
+      border-radius: 10px;
+      background: var(--mango);
+      color: #302500;
+      padding: 9px 13px;
+      font-weight: 850;
+      margin-top: 10px;
+    }
+
+    .summary-retry:hover {
+      background: #f4b800;
+    }
+
+    .article-footer {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 25px;
+      padding-top: 20px;
+      border-top: 1px solid var(--line);
+    }
+
+    .action-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 11px 15px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: white;
+      color: var(--ink);
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 850;
+    }
+
+    .action-button.primary {
+      background: var(--mango);
+      border-color: var(--mango);
+    }
+
+    .action-button:hover {
+      filter: brightness(0.97);
+    }
+
+    .empty-state {
+      grid-column: 1 / -1;
+      text-align: center;
+      background: white;
+      border: 1px dashed #e5d8b6;
+      border-radius: 20px;
+      padding: 38px 20px;
+      color: var(--muted);
+    }
+
+    .empty-state strong {
+      display: block;
+      color: var(--ink);
+      font-size: 18px;
+      margin-bottom: 5px;
+    }
+
+    .footer {
+      text-align: center;
+      padding: 35px 10px 10px;
+      color: #88806b;
+      font-size: 12px;
+    }
+
+    .footer strong {
+      color: #695100;
+    }
+
+    @media (max-width: 680px) {
+      .topbar-inner {
+        padding: 11px 15px;
       }
 
-      const cache = caches.default;
-      const cached = await cache.match(NEWS_CACHE_KEY);
-
-      if (cached) {
-        return cached;
+      .page {
+        padding: 18px 15px 50px;
       }
 
-      try {
-        const articles = await collectNews();
+      .hero {
+        padding: 25px 22px;
+        border-radius: 23px;
+      }
 
-        const response = jsonResponse(
-          {
-            articles,
-            updatedAt: new Date().toISOString()
-          },
-          200,
-          { "Cache-Control": `public, max-age=${CACHE_SECONDS}` }
-        );
+      .hero::after {
+        font-size: 75px;
+        right: 8px;
+        bottom: -8px;
+      }
 
-        ctx.waitUntil(
-          cache.put(NEWS_CACHE_KEY, response.clone())
-        );
+      .hero p {
+        max-width: 80%;
+      }
 
-        return response;
-      } catch (error) {
-        return jsonResponse(
-          {
-            error: "뉴스를 불러오지 못했어요.",
-            details: String(error),
-            articles: []
-          },
-          502
-        );
+      .news-grid {
+        grid-template-columns: 1fr;
+        gap: 14px;
+      }
+
+      .card-image-button,
+      .card-placeholder {
+        height: 190px;
+      }
+
+      .card-content {
+        padding: 17px;
+      }
+
+      .card-title-button {
+        font-size: 17px;
+      }
+
+      .section-heading h2 {
+        font-size: 21px;
+      }
+
+      .article {
+        padding: 20px 16px;
+        border-radius: 20px;
+      }
+
+      .ai-section {
+        padding: 17px;
+      }
+
+      .brand-name {
+        font-size: 20px;
+      }
+
+      .brand-icon {
+        width: 40px;
+        height: 40px;
+      }
+
+      .header-button {
+        padding: 8px 10px;
+        font-size: 12px;
       }
     }
 
-    if (url.pathname === "/api/summarize") {
-      if (request.method !== "POST") {
-        return jsonResponse(
-          { error: "POST 요청만 사용할 수 있어요." },
-          405
-        );
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        scroll-behavior: auto !important;
+        transition: none !important;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <button class="brand" id="brandHome" aria-label="망고 뉴스 홈으로">
+        <span class="brand-icon">🥭</span>
+        <span>
+          <span class="brand-name">MANGO NEWS</span>
+          <span class="brand-subtitle">경제와 주식을 쉽게 읽다</span>
+        </span>
+      </button>
+
+      <button class="header-button" id="headerHome" hidden>
+        ← 뉴스 목록
+      </button>
+
+      <button class="header-button" id="refreshButton">
+        ↻ 새로고침
+      </button>
+    </div>
+  </header>
+
+  <main class="page">
+    <section class="home-view" id="homeView">
+      <section class="hero">
+        <span class="hero-label">🥭 오늘의 경제 뉴스</span>
+        <h1>어려운 경제 뉴스도<br>망고처럼 쉽게!</h1>
+        <p>
+          세상의 경제 소식을 모아 보고,
+          AI가 만든 쉬운 설명과 그림으로 이해해 봐요.
+        </p>
+        <span class="hero-note">
+          매일 조금씩 쌓이는 경제 지식
+        </span>
+      </section>
+
+      <div class="section-heading">
+        <div>
+          <h2>오늘의 뉴스</h2>
+          <p>제목을 누르면 기사별 쉬운 설명을 볼 수 있어요.</p>
+        </div>
+        <span class="news-count" id="newsCount">불러오는 중</span>
+      </div>
+
+      <p class="status" id="newsStatus" role="status" aria-live="polite">
+        🥭 최신 뉴스를 불러오고 있어요...
+      </p>
+
+      <section class="news-grid" id="newsGrid" aria-label="뉴스 목록">
+      </section>
+    </section>
+
+    <section class="detail-view" id="detailView">
+      <button class="back-button" id="backButton">
+        ← 뉴스 목록으로 돌아가기
+      </button>
+
+      <article class="article">
+        <div class="article-meta">
+          <span class="source-tag" id="detailSource">뉴스</span>
+          <time id="detailDate"></time>
+        </div>
+
+        <h1 id="detailTitle">기사 제목</h1>
+
+        <div class="article-image-wrap">
+          <img
+            class="article-image"
+            id="detailImage"
+            alt="기사 내용을 바탕으로 AI가 만든 뉴스 삽화"
+          >
+          <div id="imageStatus" role="status" aria-live="polite"></div>
+        </div>
+
+        <p class="article-description" id="detailDescription"></p>
+
+        <section class="ai-section" aria-labelledby="summaryHeading">
+          <div class="ai-heading">
+            <span class="ai-icon">💡</span>
+            <div>
+              <h2 id="summaryHeading">AI로 쉽게 요약하기</h2>
+              <p>어려운 경제 용어도 쉬운 말로 풀어 봐요.</p>
+            </div>
+          </div>
+
+          <div
+            class="summary-content"
+            id="summaryContent"
+            role="status"
+            aria-live="polite"
+          >
+            AI가 기사 내용을 쉽게 설명할 준비를 하고 있어요...
+          </div>
+
+          <button class="summary-retry" id="retrySummary" hidden>
+            ↻ 다시 요약하기
+          </button>
+        </section>
+
+        <div class="article-footer">
+          <a
+            class="action-button primary"
+            id="originalLink"
+            href="#"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            원문 기사 읽기 ↗
+          </a>
+
+          <button class="action-button" id="detailBackButton">
+            ← 목록으로
+          </button>
+        </div>
+      </article>
+    </section>
+
+    <footer class="footer">
+      <strong>🥭 MANGO NEWS</strong>
+      <p>
+        뉴스를 더 쉽게 이해하기 위한 학습용 사이트입니다.<br>
+        AI의 설명이나 그림은 오류가 있을 수 있으므로 중요한 정보는 원문도 확인해 주세요.
+      </p>
+    </footer>
+  </main>
+
+  <script>
+    const homeView = document.getElementById("homeView");
+    const detailView = document.getElementById("detailView");
+    const newsGrid = document.getElementById("newsGrid");
+    const newsStatus = document.getElementById("newsStatus");
+    const newsCount = document.getElementById("newsCount");
+
+    const detailSource = document.getElementById("detailSource");
+    const detailDate = document.getElementById("detailDate");
+    const detailTitle = document.getElementById("detailTitle");
+    const detailDescription = document.getElementById("detailDescription");
+    const detailImage = document.getElementById("detailImage");
+    const imageStatus = document.getElementById("imageStatus");
+    const summaryContent = document.getElementById("summaryContent");
+    const retrySummary = document.getElementById("retrySummary");
+    const originalLink = document.getElementById("originalLink");
+
+    const refreshButton = document.getElementById("refreshButton");
+    const headerHome = document.getElementById("headerHome");
+
+    let articles = [];
+    let currentArticle = null;
+    let requestNumber = 0;
+    let newsRequestNumber = 0;
+
+    // 같은 기사에 대한 AI 요청은 현재 페이지에서 재사용해요.
+    const generatedImageCache = new Map();
+    const summaryCache = new Map();
+
+    function escapeKey(article) {
+      return `${article.title || ""}\n${article.link || ""}`;
+    }
+
+    function formatDate(value) {
+      if (!value) return "날짜 정보 없음";
+
+      const date = new Date(value);
+
+      if (Number.isNaN(date.getTime())) {
+        return "날짜 정보 없음";
       }
 
-      if (!env.AI) {
-        return jsonResponse(
-          { error: "Cloudflare AI 바인딩을 찾을 수 없어요." },
-          500
-        );
-      }
+      return new Intl.DateTimeFormat("ko-KR", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit"
+      }).format(date);
+    }
 
-      try {
-        const body = await request.json();
-        const title = String(body.title || "").slice(0, 500);
-        const description = String(body.description || "").slice(0, 5000);
+    function setHomeMode(isHome) {
+      homeView.classList.toggle("hidden", !isHome);
+      detailView.classList.toggle("active", !isHome);
+      headerHome.hidden = isHome;
+      refreshButton.hidden = !isHome;
 
-        if (!title && !description) {
-          return jsonResponse(
-            { error: "요약할 기사 내용이 없어요." },
-            400
-          );
-        }
-
-        const prompt = `
-너는 초등학생도 이해할 수 있게 경제 뉴스를 설명하는 한국어 선생님이야.
-
-아래 뉴스 정보를 바탕으로 기사를 쉽게 설명해 줘.
-
-[기사 제목]
-${title}
-
-[기사 설명]
-${description}
-
-작성 규칙:
-1. 어려운 경제 용어는 쉬운 말로 풀어 줘.
-2. 기사에 없는 사실을 지어내지 마.
-3. 제목만 보고 알 수 없는 내용을 확정해서 말하지 마.
-4. 핵심 내용을 2~4개의 짧은 문단으로 설명해 줘.
-5. 마지막에 "왜 중요할까요?"라는 소제목과 함께 의미를 설명해 줘.
-6. 기사 내용이 부족하면 부족하다고 알려 줘.
-7. 한국어로 답해 줘.
-`;
-
-        const result = await env.AI.run(
-          "@cf/meta/llama-3.1-8b-instruct-fp8",
-          {
-            messages: [
-              {
-                role: "system",
-                content:
-                  "너는 정확하고 친절한 경제 뉴스 설명 도우미야. 근거 없는 내용을 만들어내지 마."
-              },
-              {
-                role: "user",
-                content: prompt
-              }
-            ],
-            max_tokens: 700
-          }
-        );
-
-        const summary =
-          result?.response ||
-          result?.result?.response ||
-          "";
-
-        if (!summary) {
-          return jsonResponse(
-            { error: "AI가 요약을 만들지 못했어요." },
-            502
-          );
-        }
-
-        return jsonResponse({ summary });
-      } catch (error) {
-        return jsonResponse(
-          {
-            error: "AI 요약 중 문제가 생겼어요.",
-            details: String(error)
-          },
-          500
-        );
+      if (isHome) {
+        currentArticle = null;
       }
     }
 
-    if (url.pathname === "/api/generate-image") {
-      if (request.method !== "POST") {
-        return jsonResponse(
-          { error: "POST 요청만 사용할 수 있어요." },
-          405
-        );
-      }
-
-      if (!env.AI) {
-        return jsonResponse(
-          { error: "Cloudflare AI 바인딩을 찾을 수 없어요." },
-          500
-        );
-      }
-
-      try {
-        const body = await request.json();
-        const title = String(body.title || "").slice(0, 300);
-        const description = String(body.description || "").slice(0, 1500);
-
-        if (!title && !description) {
-          return jsonResponse(
-            { error: "그림을 만들 기사 정보가 없어요." },
-            400
-          );
-        }
-
-        const cache = caches.default;
-        const cacheText = `${title}\n${description}`;
-        const hashBuffer = await crypto.subtle.digest(
-          "SHA-256",
-          new TextEncoder().encode(cacheText)
-        );
-
-        const hash = Array.from(new Uint8Array(hashBuffer))
-          .map((byte) => byte.toString(16).padStart(2, "0"))
-          .join("");
-
-        const imageCacheRequest = new Request(
-          `https://mango-news-cache.internal/api/generated-image/${hash}`
-        );
-
-        const cachedImage = await cache.match(imageCacheRequest);
-
-        if (cachedImage) {
-          return cachedImage;
-        }
-
-        const prompt = `
-Create a polished editorial illustration for a Korean educational
-economy news website called MANGO NEWS.
-
-The illustration should visually represent the following news.
-News title: ${title}
-News description: ${description}
-
-Visual requirements:
-- Clear, friendly, modern editorial illustration.
-- Appropriate for students and general readers.
-- Show the main idea using recognizable objects and visual metaphors.
-- Warm mango-yellow accents with a clean, balanced composition.
-- Professional news illustration, not a photograph.
-- No written words, letters, numbers, captions, watermarks, or logos.
-- Do not depict a specific real person unless necessary.
-- No misleading charts, statistics, or invented readable text.
-- Landscape composition, 16:9 aspect ratio.
-`;
-
-        const result = await env.AI.run(
-          "@cf/black-forest-labs/flux-1-schnell",
-          {
-            prompt,
-            steps: 4
-          }
-        );
-
-        if (!result || !result.image) {
-          return jsonResponse(
-            { error: "AI가 그림을 만들지 못했어요." },
-            502
-          );
-        }
-
-        const imageResponse = jsonResponse(
-          {
-            image: `data:image/jpeg;base64,${result.image}`
-          },
-          200,
-          { "Cache-Control": "public, max-age=86400" }
-        );
-
-        ctx.waitUntil(
-          cache.put(imageCacheRequest, imageResponse.clone())
-        );
-
-        return imageResponse;
-      } catch (error) {
-        return jsonResponse(
-          {
-            error: "AI 그림 생성 중 문제가 생겼어요.",
-            details: String(error)
-          },
-          500
-        );
-      }
+    function showHome() {
+      requestNumber++;
+      setHomeMode(true);
+      window.scrollTo({ top: 0, behavior: "smooth" });
     }
 
-    // 나머지 요청은 public 폴더의 파일로 처리해요.
-    return env.ASSETS.fetch(request);
-  }
-};
+    function makeCard(article, index) {
+      const card = document.createElement("article");
+      card.className = "news-card";
 
-async function collectNews() {
-  const feedResults = await Promise.allSettled(
-    RSS_FEEDS.map(async (feed) => {
-      const response = await fetch(feed.url, {
-        headers: {
-          "User-Agent": "MANGO-NEWS/1.0",
-          "Accept": "application/rss+xml, application/xml, text/xml"
-        },
-        signal: AbortSignal.timeout(12000)
+      if (article.image) {
+        const imageButton = document.createElement("button");
+        imageButton.className = "card-image-button";
+        imageButton.type = "button";
+        imageButton.setAttribute("aria-label", `${article.title} 기사 보기`);
+
+        const image = document.createElement("img");
+        image.className = "card-image";
+        image.src = article.image;
+        image.alt = "";
+        image.loading = "lazy";
+        image.referrerPolicy = "no-referrer";
+
+        image.addEventListener("error", () => {
+          imageButton.replaceChildren();
+
+          const placeholder = document.createElement("div");
+          placeholder.className = "card-placeholder";
+          placeholder.textContent = "🥭";
+
+          imageButton.appendChild(placeholder);
+        });
+
+        imageButton.appendChild(image);
+        imageButton.addEventListener("click", () => showArticle(article));
+        card.appendChild(imageButton);
+      } else {
+        const placeholder = document.createElement("div");
+        placeholder.className = "card-placeholder";
+        placeholder.textContent = "🥭";
+        card.appendChild(placeholder);
+      }
+
+      const content = document.createElement("div");
+      content.className = "card-content";
+
+      const meta = document.createElement("div");
+      meta.className = "card-meta";
+
+      const source = document.createElement("span");
+      source.className = "source-tag";
+      source.textContent = article.source || "뉴스";
+
+      const date = document.createElement("time");
+      date.textContent = formatDate(article.pubDate);
+
+      meta.append(source, date);
+
+      const titleButton = document.createElement("button");
+      titleButton.className = "card-title-button";
+      titleButton.type = "button";
+      titleButton.textContent = article.title;
+      titleButton.addEventListener("click", () => showArticle(article));
+
+      const description = document.createElement("p");
+      description.className = "card-description";
+      description.textContent =
+        article.description || "이 기사의 자세한 설명은 원문에서 확인할 수 있어요.";
+
+      const readButton = document.createElement("button");
+      readButton.className = "read-more";
+      readButton.type = "button";
+      readButton.textContent = "쉽게 읽어 보기 →";
+      readButton.addEventListener("click", () => showArticle(article));
+
+      content.append(meta, titleButton, description, readButton);
+      card.appendChild(content);
+
+      return card;
+    }
+
+    function renderNews(list) {
+      newsGrid.replaceChildren();
+
+      if (!list.length) {
+        const empty = document.createElement("div");
+        empty.className = "empty-state";
+
+        const heading = document.createElement("strong");
+        heading.textContent = "표시할 뉴스가 없어요.";
+
+        const message = document.createElement("span");
+        message.textContent = "잠시 후 새로고침을 눌러 다시 확인해 주세요.";
+
+        empty.append(heading, message);
+        newsGrid.appendChild(empty);
+        newsCount.textContent = "0개";
+        return;
+      }
+
+      const fragment = document.createDocumentFragment();
+
+      list.forEach((article, index) => {
+        fragment.appendChild(makeCard(article, index));
       });
 
-      if (!response.ok) {
-        throw new Error(`${feed.name} 응답 오류: ${response.status}`);
+      newsGrid.appendChild(fragment);
+      newsCount.textContent = `${list.length}개`;
+    }
+
+    async function loadNews(forceRefresh = false) {
+      const thisRequest = ++newsRequestNumber;
+
+      newsStatus.className = "status";
+      newsStatus.textContent = "🥭 최신 뉴스를 불러오고 있어요...";
+      refreshButton.disabled = true;
+
+      if (forceRefresh) {
+        newsStatus.textContent = "🥭 뉴스를 다시 확인하고 있어요...";
       }
 
-      const xml = await response.text();
-      return parseFeed(xml, feed.name);
-    })
-  );
+      try {
+        const response = await fetch("/api/news", {
+          cache: forceRefresh ? "no-store" : "default"
+        });
 
-  const allArticles = [];
+        const data = await response.json();
 
-  for (const result of feedResults) {
-    if (result.status === "fulfilled") {
-      allArticles.push(...result.value);
-    }
-  }
+        if (!response.ok) {
+          throw new Error(data.error || "뉴스를 불러오지 못했어요.");
+        }
 
-  if (allArticles.length === 0) {
-    throw new Error("사용할 수 있는 뉴스 RSS가 없어요.");
-  }
+        if (thisRequest !== newsRequestNumber) return;
 
-  const seen = new Set();
+        articles = Array.isArray(data.articles) ? data.articles : [];
+        renderNews(articles);
 
-  const uniqueArticles = allArticles.filter((article) => {
-    const key = article.link || article.title;
+        newsStatus.textContent = articles.length
+          ? `뉴스 ${articles.length}개를 불러왔어요. 제목을 눌러 내용을 확인해 보세요.`
+          : "지금은 표시할 뉴스가 없어요.";
 
-    if (!key || seen.has(key)) {
-      return false;
-    }
+      } catch (error) {
+        if (thisRequest !== newsRequestNumber) return;
 
-    seen.add(key);
-    return true;
-  });
+        newsStatus.className = "status error";
+        newsStatus.textContent =
+          "뉴스를 불러오지 못했어요. 잠시 후 다시 시도해 주세요.";
 
-  const economyArticles = uniqueArticles.filter((article) => {
-    const text = `${article.title} ${article.description}`.toLowerCase();
+        newsGrid.replaceChildren();
 
-    return ECONOMY_KEYWORDS.some((keyword) =>
-      text.includes(keyword.toLowerCase())
-    );
-  });
+        const empty = document.createElement("div");
+        empty.className = "empty-state";
 
-  const articles = (economyArticles.length > 0
-    ? economyArticles
-    : uniqueArticles
-  )
-    .sort((a, b) => {
-      return new Date(b.pubDate || 0) - new Date(a.pubDate || 0);
-    })
-    .slice(0, 40);
+        const heading = document.createElement("strong");
+        heading.textContent = "뉴스 연결에 문제가 있어요.";
 
-  return articles;
-}
+        const message = document.createElement("span");
+        message.textContent = error.message || "잠시 후 다시 시도해 주세요.";
 
-function parseFeed(xml, source) {
-  const blocks = xml.match(/<(item|entry)\b[\s\S]*?<\/\1>/gi) || [];
+        empty.append(heading, message);
+        newsGrid.appendChild(empty);
+        newsCount.textContent = "확인 필요";
 
-  return blocks.map((block) => {
-    const title = cleanText(
-      getTag(block, "title")
-    );
-
-    const description = cleanText(
-      getTag(block, "description") ||
-      getTag(block, "summary") ||
-      getTag(block, "content:encoded") ||
-      getTag(block, "content")
-    );
-
-    let link = getTag(block, "link");
-
-    // Atom 형식의 link href도 지원해요.
-    if (!link) {
-      const linkMatch = block.match(
-        /<link\b[^>]*href=["']([^"']+)["'][^>]*\/?>/i
-      );
-      link = linkMatch ? linkMatch[1] : "";
+      } finally {
+        if (thisRequest === newsRequestNumber) {
+          refreshButton.disabled = false;
+        }
+      }
     }
 
-    const pubDate =
-      getTag(block, "pubDate") ||
-      getTag(block, "published") ||
-      getTag(block, "updated") ||
-      getTag(block, "dc:date");
+    async function generateArticleImage(article, thisRequest) {
+      detailImage.classList.remove("visible");
+      detailImage.removeAttribute("src");
+      imageStatus.textContent = "🥭 AI가 기사 내용을 읽고 그림을 그리고 있어요...";
 
-    const image =
-      getTag(block, "media:content", "url") ||
-      getTag(block, "media:thumbnail", "url") ||
-      getTag(block, "enclosure", "url") ||
-      findImage(description);
+      const key = escapeKey(article);
 
-    return {
-      title,
-      description: description.slice(0, 4000),
-      link: decodeEntities(link).trim(),
-      pubDate: cleanText(pubDate),
-      image: image || "",
-      source
-    };
-  }).filter((article) => article.title && article.link);
-}
+      try {
+        let imagePromise = generatedImageCache.get(key);
 
-function getTag(xml, tagName, attributeName = null) {
-  const escapedTag = tagName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        if (!imagePromise) {
+          imagePromise = fetch("/api/generate-image", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+              title: article.title,
+              description: article.description || ""
+            })
+          }).then(async (response) => {
+            const data = await response.json();
 
-  if (attributeName) {
-    const regex = new RegExp(
-      `<${escapedTag}\\b[^>]*\\b${attributeName}=["']([^"']+)["'][^>]*>`,
-      "i"
-    );
-    const match = xml.match(regex);
-    return match ? decodeEntities(match[1]) : "";
-  }
+            if (!response.ok) {
+              throw new Error(data.error || "AI 그림 생성에 실패했어요.");
+            }
 
-  const regex = new RegExp(
-    `<${escapedTag}\\b[^>]*>([\\s\\S]*?)<\\/${escapedTag}\\s*>`,
-    "i"
-  );
+            if (
+              typeof data.image !== "string" ||
+              !data.image.startsWith("data:image/")
+            ) {
+              throw new Error("AI 그림의 형식이 올바르지 않아요.");
+            }
 
-  const match = xml.match(regex);
-  return match ? match[1] : "";
-}
+            return data.image;
+          });
 
-function findImage(text) {
-  const match = text.match(
-    /<img\b[^>]*\bsrc=["']([^"']+)["']/i
-  );
+          generatedImageCache.set(key, imagePromise);
+        }
 
-  return match ? decodeEntities(match[1]) : "";
-}
+        const imageUrl = await imagePromise;
 
-function cleanText(value) {
-  return decodeEntities(String(value || ""))
-    .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1")
-    .replace(/<script\b[\s\S]*?<\/script>/gi, " ")
-    .replace(/<style\b[\s\S]*?<\/style>/gi, " ")
-    .replace(/<[^>]*>/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-}
+        if (thisRequest !== requestNumber) return;
 
-function decodeEntities(value) {
-  return String(value || "")
-    .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1")
-    .replace(/&amp;/g, "&")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;|&apos;/g, "'")
-    .replace(/&#(\d+);/g, (_, number) =>
-      String.fromCodePoint(Number(number))
-    )
-    .replace(/&#x([0-9a-f]+);/gi, (_, number) =>
-      String.fromCodePoint(parseInt(number, 16))
-    );
-}
+        detailImage.onload = () => {
+          if (thisRequest !== requestNumber) return;
 
-function jsonResponse(data, status = 200, extraHeaders = {}) {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: {
-      "Content-Type": "application/json; charset=utf-8",
-      "Cache-Control": "no-store",
-      ...extraHeaders
+          detailImage.classList.add("visible");
+          imageStatus.textContent = "🥭 이 기사의 내용을 바탕으로 AI가 만든 그림이에요.";
+        };
+
+        detailImage.onerror = () => {
+          if (thisRequest !== requestNumber) return;
+
+          detailImage.classList.remove("visible");
+          imageStatus.textContent = "그림을 표시하지 못했어요. 다시 기사를 열어 시도해 주세요.";
+        };
+
+        detailImage.src = imageUrl;
+
+        // 이미 캐시에 있거나 즉시 로드된 이미지도 확인해요.
+        if (detailImage.complete && detailImage.naturalWidth > 0) {
+          detailImage.classList.add("visible");
+          imageStatus.textContent = "🥭 이 기사의 내용을 바탕으로 AI가 만든 그림이에요.";
+        }
+
+      } catch (error) {
+        if (thisRequest !== requestNumber) return;
+
+        generatedImageCache.delete(key);
+        imageStatus.textContent =
+          "AI 그림을 만들지 못했어요. 잠시 후 다시 기사를 열어 주세요.";
+      }
     }
-  });
-}
+
+    async function generateSummary(article, thisRequest, force = false) {
+      retrySummary.hidden = true;
+      summaryContent.textContent = "💡 AI가 기사 내용을 쉽게 설명하고 있어요...";
+
+      const key = escapeKey(article);
+
+      if (!force && summaryCache.has(key)) {
+        summaryContent.textContent = await summaryCache.get(key);
+        return;
+      }
+
+      try {
+        const summaryPromise = fetch("/api/summarize", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            title: article.title,
+            description: article.description || ""
+          })
+        }).then(async (response) => {
+          const data = await response.json();
+
+          if (!response.ok) {
+            throw new Error(data.error || "AI 요약에 실패했어요.");
+          }
+
+          if (typeof data.summary !== "string" || !data.summary.trim()) {
+            throw new Error("요약 결과가 비어 있어요.");
+          }
+
+          return data.summary.trim();
+        });
+
+        summaryCache.set(key, summaryPromise);
+
+        const summary = await summaryPromise;
+
+        if (thisRequest !== requestNumber) return;
+
+        summaryContent.textContent = summary;
+
+      } catch (error) {
+        if (thisRequest !== requestNumber) return;
+
+        summaryCache.delete(key);
+        summaryContent.textContent =
+          "AI 요약을 만들지 못했어요. 잠시 후 다시 시도해 주세요.";
+
+        retrySummary.hidden = false;
+      }
+    }
+
+    function showArticle(article) {
+      currentArticle = article;
+      const thisRequest = ++requestNumber;
+
+      setHomeMode(false);
+
+      detailSource.textContent = article.source || "뉴스";
+      detailDate.textContent = formatDate(article.pubDate);
+      detailTitle.textContent = article.title || "제목 없음";
+
+      detailDescription.textContent = article.description ||
+        "제공된 뉴스 설명이 없어요. 원문 기사에서 자세한 내용을 확인해 주세요.";
+
+      originalLink.href = article.link || "#";
+      originalLink.hidden = !article.link;
+
+      detailImage.classList.remove("visible");
+      detailImage.removeAttribute("src");
+      imageStatus.textContent = "";
+      summaryContent.textContent = "";
+      retrySummary.hidden = true;
+
+      window.scrollTo({ top: 0, behavior: "smooth" });
+
+      generateArticleImage(article, thisRequest);
+      generateSummary(article, thisRequest);
+    }
+
+    function retryCurrentSummary() {
+      if (!currentArticle) return;
+
+      generateSummary(currentArticle, requestNumber, true);
+    }
+
+    refreshButton.addEventListener("click", () => loadNews(true));
+    headerHome.addEventListener("click", showHome);
+    document.getElementById("brandHome").addEventListener("click", showHome);
+    document.getElementById("backButton").addEventListener("click", showHome);
+    document.getElementById("detailBackButton").addEventListener("click", showHome);
+    retrySummary.addEventListener("click", retryCurrentSummary);
+
+    loadNews();
+  </script>
+</body>
+</html>
