@@ -1,0 +1,283 @@
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#ffc928">
+  <title>MANGO NEWS | 세상을 쉽게 읽다</title>
+  <style>
+    :root {
+      --mango: #ffc928;
+      --ink: #242424;
+      --paper: #fffdf5;
+      --muted: #777;
+      --line: #eee6d2;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--paper);
+      font-family: Arial, "Malgun Gothic", sans-serif;
+    }
+
+    header {
+      background: var(--mango);
+      padding: 22px 20px 26px;
+      border-bottom: 3px solid var(--ink);
+    }
+
+    .top, main {
+      width: min(100% - 32px, 1000px);
+      margin: auto;
+    }
+
+    .brand {
+      font-size: 30px;
+      font-weight: 900;
+      letter-spacing: -1px;
+    }
+
+    .tagline {
+      margin-top: 7px;
+      font-size: 14px;
+    }
+
+    .hero {
+      padding: 34px 0 22px;
+    }
+
+    .hero h1 {
+      font-size: clamp(27px, 5vw, 43px);
+      line-height: 1.25;
+      margin: 0 0 12px;
+    }
+
+    .hero p {
+      color: #554a2b;
+      line-height: 1.7;
+      margin: 0;
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      justify-content: space-between;
+      margin: 12px 0 20px;
+    }
+
+    .toolbar h2 {
+      font-size: 23px;
+      margin: 0;
+    }
+
+    button {
+      border: 2px solid var(--ink);
+      border-radius: 10px;
+      padding: 10px 15px;
+      background: var(--mango);
+      color: var(--ink);
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    button:disabled {
+      opacity: .6;
+      cursor: wait;
+    }
+
+    #status {
+      padding: 14px;
+      border-radius: 10px;
+      background: #fff4c9;
+      line-height: 1.6;
+      margin-bottom: 18px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 15px;
+    }
+
+    .article {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 10px;
+      background: white;
+      border: 1px solid var(--line);
+      border-radius: 15px;
+      padding: 20px;
+      min-width: 0;
+    }
+
+    .source {
+      color: #715700;
+      font-size: 12px;
+      font-weight: bold;
+      overflow-wrap: anywhere;
+    }
+
+    .article h3 {
+      font-size: 19px;
+      line-height: 1.55;
+      margin: 0;
+      overflow-wrap: anywhere;
+    }
+
+    .date {
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: auto;
+    }
+
+    .read {
+      display: inline-block;
+      color: #222;
+      font-weight: bold;
+      text-decoration-thickness: 2px;
+      text-underline-offset: 3px;
+      margin-top: 5px;
+    }
+
+    .note {
+      margin: 25px 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.7;
+    }
+
+    footer {
+      margin-top: 38px;
+      padding: 24px 16px;
+      text-align: center;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.8;
+    }
+
+    @media (max-width: 600px) {
+      .grid { grid-template-columns: 1fr; }
+      .brand { font-size: 26px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="top">
+      <div class="brand">🥭 MANGO NEWS</div>
+      <div class="tagline">복잡한 세상 소식을 쉽고 재미있게!</div>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <h1>세상을 읽는 새로운 습관.</h1>
+      <p>
+        경제부터 과학, 기술, 세계 소식까지.<br>
+        오늘의 주요 뉴스를 한곳에서 만나 보세요.
+      </p>
+    </section>
+
+    <section>
+      <div class="toolbar">
+        <h2>오늘의 뉴스 📰</h2>
+        <button id="refresh">↻ 뉴스 새로고침</button>
+      </div>
+
+      <div id="status" role="status">뉴스 서버에 연결하고 있어요...</div>
+      <div id="articles" class="grid"></div>
+
+      <p class="note">
+        기사의 제목과 원문 링크는 외부 뉴스 데이터에서 제공됩니다.
+        기사 전문은 원문 사이트에서 확인해 주세요.
+        뉴스 목록은 새로고침 버튼으로 다시 불러올 수 있어요.
+      </p>
+    </section>
+  </main>
+
+  <footer>
+    🥭 MANGO NEWS · 세상을 쉽게 읽다<br>
+    외부 뉴스 출처: GDELT Project · 기사의 권리는 각 원문 제공자에게 있습니다.
+  </footer>
+
+  <script>
+    const statusBox = document.getElementById('status');
+    const articlesBox = document.getElementById('articles');
+    const refreshButton = document.getElementById('refresh');
+
+    function makeElement(tag, className, text) {
+      const element = document.createElement(tag);
+      if (className) element.className = className;
+      element.textContent = text || '';
+      return element;
+    }
+
+    async function loadNews() {
+      refreshButton.disabled = true;
+      statusBox.textContent = '최신 뉴스를 불러오고 있어요...';
+      articlesBox.replaceChildren();
+
+      try {
+        const response = await fetch('/api/news', {
+          headers: { 'Accept': 'application/json' }
+        });
+
+        if (!response.ok) {
+          throw new Error('뉴스 서버 응답 오류 (' + response.status + ')');
+        }
+
+        const data = await response.json();
+
+        if (!Array.isArray(data.articles) || data.articles.length === 0) {
+          statusBox.textContent =
+            '아직 표시할 뉴스가 없어요. 잠시 후 다시 시도해 주세요.';
+          return;
+        }
+
+        for (const article of data.articles) {
+          const card = makeElement('article', 'article');
+          const source = makeElement(
+            'div', 'source', article.domain || '뉴스 출처'
+          );
+          const title = makeElement(
+            'h3', '', article.title || '제목 없음'
+          );
+          const date = makeElement(
+            'div', 'date',
+            article.date ? '보도 날짜: ' + article.date : ''
+          );
+          const link = makeElement('a', 'read', '원문 읽기 ↗');
+
+          link.href = article.url;
+          link.target = '_blank';
+          link.rel = 'noopener noreferrer';
+
+          card.append(source, title, date, link);
+          articlesBox.append(card);
+        }
+
+        statusBox.textContent =
+          '뉴스 ' + data.articles.length +
+          '개를 불러왔어요! 원문 링크에서 자세한 내용을 확인하세요.';
+      } catch (error) {
+        statusBox.textContent =
+          '뉴스를 불러오지 못했어요. 서버 연결을 확인한 뒤 다시 시도해 주세요. (' +
+          error.message + ')';
+      } finally {
+        refreshButton.disabled = false;
+      }
+    }
+
+    refreshButton.addEventListener('click', loadNews);
+    loadNews();
+  </script>
+</body>
+</html>
