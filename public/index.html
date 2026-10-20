@@ -14,53 +14,36 @@
       --muted: #777;
       --line: #eee6d2;
     }
-
     * { box-sizing: border-box; }
-
     body {
       margin: 0;
       color: var(--ink);
       background: var(--paper);
       font-family: Arial, "Malgun Gothic", sans-serif;
     }
-
     header {
       background: var(--mango);
       padding: 22px 20px 26px;
       border-bottom: 3px solid var(--ink);
     }
-
     .top, main {
       width: min(100% - 32px, 1000px);
       margin: auto;
     }
-
     .brand {
       font-size: 30px;
       font-weight: 900;
       letter-spacing: -1px;
       cursor: pointer;
     }
-
-    .tagline {
-      margin-top: 7px;
-      font-size: 14px;
-    }
-
+    .tagline { margin-top: 7px; font-size: 14px; }
     .hero { padding: 34px 0 22px; }
-
     .hero h1 {
       font-size: clamp(27px, 5vw, 43px);
       line-height: 1.3;
       margin: 0 0 12px;
     }
-
-    .hero p {
-      color: #554a2b;
-      line-height: 1.8;
-      margin: 0;
-    }
-
+    .hero p { color: #554a2b; line-height: 1.8; margin: 0; }
     .toolbar {
       display: flex;
       flex-wrap: wrap;
@@ -69,12 +52,7 @@
       justify-content: space-between;
       margin: 12px 0 20px;
     }
-
-    .toolbar h2 {
-      font-size: 23px;
-      margin: 0;
-    }
-
+    .toolbar h2 { font-size: 23px; margin: 0; }
     button, .button-link {
       display: inline-block;
       border: 2px solid var(--ink);
@@ -87,12 +65,7 @@
       cursor: pointer;
       text-decoration: none;
     }
-
-    button:disabled {
-      opacity: .6;
-      cursor: wait;
-    }
-
+    button:disabled { opacity: .6; cursor: wait; }
     #status {
       padding: 14px;
       border-radius: 10px;
@@ -100,13 +73,11 @@
       line-height: 1.7;
       margin-bottom: 18px;
     }
-
     .grid {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 15px;
     }
-
     .article {
       background: white;
       border: 1px solid var(--line);
@@ -114,7 +85,6 @@
       padding: 20px;
       min-width: 0;
     }
-
     .source {
       color: #715700;
       font-size: 12px;
@@ -122,7 +92,6 @@
       margin-bottom: 10px;
       overflow-wrap: anywhere;
     }
-
     .article-title {
       display: block;
       width: 100%;
@@ -136,26 +105,9 @@
       overflow-wrap: anywhere;
       cursor: pointer;
     }
-
-    .article-title:hover {
-      text-decoration: underline;
-      text-underline-offset: 4px;
-    }
-
-    .date {
-      color: var(--muted);
-      font-size: 12px;
-      line-height: 1.6;
-      margin-top: 14px;
-    }
-
-    .note {
-      margin: 25px 0;
-      color: var(--muted);
-      font-size: 13px;
-      line-height: 1.8;
-    }
-
+    .article-title:hover { text-decoration: underline; text-underline-offset: 4px; }
+    .date { color: var(--muted); font-size: 12px; line-height: 1.6; margin-top: 14px; }
+    .note { margin: 25px 0; color: var(--muted); font-size: 13px; line-height: 1.8; }
     .detail-page {
       max-width: 760px;
       margin: 28px auto 45px;
@@ -164,12 +116,7 @@
       border-radius: 18px;
       padding: clamp(20px, 5vw, 38px);
     }
-
-    .back-button {
-      margin-bottom: 25px;
-      background: white;
-    }
-
+    .back-button { margin-bottom: 25px; background: white; }
     .detail-source {
       display: inline-block;
       padding: 6px 10px;
@@ -180,14 +127,12 @@
       font-weight: bold;
       margin-bottom: 16px;
     }
-
     .detail-title {
       font-size: clamp(25px, 5vw, 36px);
       line-height: 1.45;
       margin: 0 0 16px;
       overflow-wrap: anywhere;
     }
-
     .detail-date {
       color: var(--muted);
       font-size: 13px;
@@ -195,24 +140,31 @@
       padding-bottom: 22px;
       border-bottom: 1px solid var(--line);
     }
-
-    .section-heading {
-      font-size: 20px;
-      margin: 26px 0 12px;
-    }
-
+    .section-heading { font-size: 20px; margin: 26px 0 12px; }
     .detail-content {
       font-size: 17px;
       line-height: 2;
       overflow-wrap: anywhere;
       white-space: pre-line;
     }
-
-    .detail-content.empty {
-      color: var(--muted);
-      font-size: 15px;
+    .detail-content.empty { color: var(--muted); font-size: 15px; }
+    .ai-box {
+      background: #fff9e5;
+      border: 1px solid #f1df9b;
+      border-radius: 14px;
+      padding: 18px;
+      margin-top: 26px;
     }
-
+    .ai-box h2 { font-size: 21px; margin: 0 0 10px; }
+    .ai-description { font-size: 14px; color: #665a37; line-height: 1.8; margin: 0 0 15px; }
+    #aiStatus { font-size: 14px; line-height: 1.8; margin-top: 12px; }
+    #aiSummary {
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+      font-size: 16px;
+      line-height: 1.9;
+      margin-top: 16px;
+    }
     .explain-box {
       background: #fff9e5;
       border-radius: 12px;
@@ -221,26 +173,10 @@
       line-height: 1.9;
       font-size: 15px;
     }
-
-    .explain-box strong {
-      display: block;
-      font-size: 17px;
-      margin-bottom: 6px;
-    }
-
-    .detail-actions {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin-top: 28px;
-    }
-
-    .original-link {
-      background: var(--mango);
-    }
-
+    .explain-box strong { display: block; font-size: 17px; margin-bottom: 6px; }
+    .detail-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 28px; }
+    .original-link { background: var(--mango); }
     .hidden { display: none !important; }
-
     footer {
       margin-top: 38px;
       padding: 24px 16px;
@@ -250,7 +186,6 @@
       font-size: 12px;
       line-height: 1.8;
     }
-
     @media (max-width: 600px) {
       .grid { grid-template-columns: 1fr; }
       .brand { font-size: 26px; }
@@ -262,9 +197,7 @@
 <body>
   <header>
     <div class="top">
-      <div class="brand" id="homeBrand" role="button" tabindex="0">
-        🥭 MANGO NEWS
-      </div>
+      <div class="brand" id="homeBrand" role="button" tabindex="0">🥭 MANGO NEWS</div>
       <div class="tagline">경제와 주식, 누구나 쉽게 이해하도록!</div>
     </div>
   </header>
@@ -273,27 +206,19 @@
     <section id="homePage">
       <section class="hero">
         <h1>돈과 경제의 세상,<br>쉽게 읽어 보자.</h1>
-        <p>
-          국내외 경제와 주식 관련 뉴스를 모아요.<br>
-          제목을 누르면 해당 기사의 상세 화면이 열려요.
-        </p>
+        <p>국내외 경제와 주식 관련 뉴스를 모아요.<br>제목을 누르면 해당 기사의 상세 화면이 열려요.</p>
       </section>
-
       <section>
         <div class="toolbar">
           <h2>경제·주식 뉴스 📰</h2>
           <button id="refresh">↻ 뉴스 새로고침</button>
         </div>
-
-        <div id="status" role="status" aria-live="polite">
-          뉴스를 불러오고 있어요...
-        </div>
+        <div id="status" role="status" aria-live="polite">뉴스를 불러오고 있어요...</div>
         <div id="articles" class="grid"></div>
-
         <p class="note">
-          기사의 상세 화면에서는 뉴스 출처가 제공한 설명을 확인할 수 있어요.
-          AI 요약 기능은 아직 준비 중이에요.
-          정확한 내용과 추가 정보는 원문 기사에서 확인해 주세요.
+          기사 상세 화면에서 출처가 제공한 설명과 AI 쉬운 요약을 확인할 수 있어요.
+          AI 요약은 제공된 뉴스 제목과 설명을 바탕으로 만들어져요.
+          정확한 내용은 원문 기사에서도 확인해 주세요.
         </p>
       </section>
     </section>
@@ -301,13 +226,23 @@
     <section id="detailPage" class="hidden">
       <article class="detail-page">
         <button id="backButton" class="back-button">← 홈으로 돌아가기</button>
-
         <div id="detailSource" class="detail-source"></div>
         <h1 id="detailTitle" class="detail-title"></h1>
         <div id="detailDate" class="detail-date"></div>
 
         <h2 class="section-heading">📰 기사 내용</h2>
         <div id="detailContent" class="detail-content"></div>
+
+        <section class="ai-box" aria-labelledby="aiHeading">
+          <h2 id="aiHeading">🍋 AI로 쉽게 요약하기</h2>
+          <p class="ai-description">
+            어려운 경제 뉴스를 쉬운 말로 풀어 봐요.
+            요약은 뉴스 제목과 출처가 제공한 설명을 바탕으로 만들어져요.
+          </p>
+          <button id="summarizeButton" type="button">✨ 쉬운 요약 만들기</button>
+          <div id="aiStatus" role="status" aria-live="polite"></div>
+          <div id="aiSummary" class="hidden"></div>
+        </section>
 
         <div class="explain-box">
           <strong>💡 경제를 이해하는 팁</strong>
@@ -317,9 +252,7 @@
 
         <div class="detail-actions">
           <a id="originalLink" class="button-link original-link"
-             href="#" target="_blank" rel="noopener noreferrer">
-            원문 기사 읽기 ↗
-          </a>
+             href="#" target="_blank" rel="noopener noreferrer">원문 기사 읽기 ↗</a>
           <button id="backButtonBottom">← 뉴스 목록으로</button>
         </div>
       </article>
@@ -337,14 +270,18 @@
     const refreshButton = document.getElementById('refresh');
     const homePage = document.getElementById('homePage');
     const detailPage = document.getElementById('detailPage');
-
     const detailSource = document.getElementById('detailSource');
     const detailTitle = document.getElementById('detailTitle');
     const detailDate = document.getElementById('detailDate');
     const detailContent = document.getElementById('detailContent');
     const originalLink = document.getElementById('originalLink');
+    const summarizeButton = document.getElementById('summarizeButton');
+    const aiStatus = document.getElementById('aiStatus');
+    const aiSummary = document.getElementById('aiSummary');
 
     let newsArticles = [];
+    let currentArticle = null;
+    let summaryRequestId = 0;
 
     function makeElement(tag, className, text) {
       const element = document.createElement(tag);
@@ -356,15 +293,16 @@
     function showHome(pushHistory = true) {
       homePage.classList.remove('hidden');
       detailPage.classList.add('hidden');
-
       if (pushHistory && location.hash !== '#home') {
         history.pushState({ page: 'home' }, '', '#home');
       }
-
       window.scrollTo(0, 0);
     }
 
     function showArticle(article, pushHistory = true) {
+      currentArticle = article;
+      summaryRequestId++;
+
       detailSource.textContent = article.domain || '뉴스 출처';
       detailTitle.textContent = article.title || '제목 없음';
       detailDate.textContent = article.date
@@ -372,7 +310,6 @@
         : '보도 날짜 정보 없음';
 
       const description = (article.description || '').trim();
-
       detailContent.replaceChildren();
 
       if (description) {
@@ -384,20 +321,76 @@
           '이 뉴스에는 제공된 기사 설명이 없어요. 아래 원문 기사 읽기 버튼을 눌러 자세한 내용을 확인해 주세요.';
       }
 
-      originalLink.href = article.url || '#';
+      aiSummary.textContent = '';
+      aiSummary.classList.add('hidden');
+      aiStatus.textContent = '';
+      summarizeButton.disabled = false;
+      summarizeButton.textContent = '✨ 쉬운 요약 만들기';
 
+      originalLink.href = article.url || '#';
       homePage.classList.add('hidden');
       detailPage.classList.remove('hidden');
 
       if (pushHistory) {
-        history.pushState(
-          { page: 'article', url: article.url },
-          '',
-          '#article'
-        );
+        history.pushState({ page: 'article', url: article.url }, '', '#article');
+      }
+      window.scrollTo(0, 0);
+    }
+
+    async function summarizeArticle() {
+      if (!currentArticle) return;
+
+      if (!currentArticle.description || !currentArticle.description.trim()) {
+        aiStatus.textContent =
+          '이 뉴스에는 요약할 설명이 없어요. 원문 기사를 확인해 주세요.';
+        return;
       }
 
-      window.scrollTo(0, 0);
+      const requestId = ++summaryRequestId;
+      summarizeButton.disabled = true;
+      summarizeButton.textContent = '요약 만드는 중...';
+      aiStatus.textContent = '🍋 AI가 쉬운 말로 설명하고 있어요. 잠시만 기다려 주세요.';
+      aiSummary.textContent = '';
+      aiSummary.classList.add('hidden');
+
+      try {
+        const response = await fetch('/api/summarize', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title: currentArticle.title || '',
+            description: currentArticle.description || '',
+            source: currentArticle.domain || ''
+          })
+        });
+
+        const data = await response.json();
+
+        if (requestId !== summaryRequestId) return;
+
+        if (!response.ok) {
+          throw new Error(data.error || '요약 요청에 실패했어요.');
+        }
+
+        if (typeof data.summary !== 'string' || !data.summary.trim()) {
+          throw new Error('AI가 요약을 보내지 않았어요.');
+        }
+
+        aiSummary.textContent = data.summary.trim();
+        aiSummary.classList.remove('hidden');
+        aiStatus.textContent = '완성했어요! 어려운 내용은 원문 기사와 함께 확인해 보세요.';
+        summarizeButton.textContent = '↻ 다시 요약하기';
+      } catch (error) {
+        if (requestId !== summaryRequestId) return;
+        aiStatus.textContent =
+          '요약을 만들지 못했어요. 잠시 후 다시 시도해 주세요. (' +
+          error.message + ')';
+        summarizeButton.textContent = '↻ 다시 시도하기';
+      } finally {
+        if (requestId === summaryRequestId) {
+          summarizeButton.disabled = false;
+        }
+      }
     }
 
     function renderNews(articles) {
@@ -405,18 +398,8 @@
 
       for (const article of articles) {
         const card = makeElement('article', 'article');
-
-        const source = makeElement(
-          'div',
-          'source',
-          article.domain || '뉴스 출처'
-        );
-
-        const title = makeElement(
-          'button',
-          'article-title',
-          article.title || '제목 없음'
-        );
+        const source = makeElement('div', 'source', article.domain || '뉴스 출처');
+        const title = makeElement('button', 'article-title', article.title || '제목 없음');
 
         title.type = 'button';
         title.addEventListener('click', () => showArticle(article));
@@ -449,14 +432,12 @@
         const data = await response.json();
 
         if (!Array.isArray(data.articles) || data.articles.length === 0) {
-          statusBox.textContent =
-            '아직 표시할 뉴스가 없어요. 잠시 후 다시 시도해 주세요.';
+          statusBox.textContent = '아직 표시할 뉴스가 없어요. 잠시 후 다시 시도해 주세요.';
           return;
         }
 
         newsArticles = data.articles;
         renderNews(newsArticles);
-
         statusBox.textContent =
           '경제·주식 뉴스 ' + newsArticles.length +
           '개를 불러왔어요. 제목을 눌러 기사 내용을 읽어 보세요.';
@@ -483,16 +464,14 @@
     window.addEventListener('popstate', () => {
       if (location.hash === '#article') {
         const article = newsArticles.find(item => item.url === history.state?.url);
-        if (article) {
-          showArticle(article, false);
-        } else {
-          showHome(false);
-        }
+        if (article) showArticle(article, false);
+        else showHome(false);
       } else {
         showHome(false);
       }
     });
 
+    summarizeButton.addEventListener('click', summarizeArticle);
     refreshButton.addEventListener('click', loadNews);
     loadNews();
   </script>
