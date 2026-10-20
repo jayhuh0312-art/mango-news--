@@ -5,7 +5,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#ffc928">
-  <title>MANGO NEWS | 세상을 쉽게 읽다</title>
+  <title>MANGO NEWS | 경제와 주식을 쉽게 읽다</title>
   <style>
     :root {
       --mango: #ffc928;
@@ -46,9 +46,7 @@
       font-size: 14px;
     }
 
-    .hero {
-      padding: 34px 0 22px;
-    }
+    .hero { padding: 34px 0 22px; }
 
     .hero h1 {
       font-size: clamp(27px, 5vw, 43px);
@@ -135,6 +133,34 @@
       color: var(--muted);
       font-size: 12px;
       margin-top: auto;
+      line-height: 1.6;
+    }
+
+    .detail {
+      width: 100%;
+      border-top: 1px solid var(--line);
+      padding-top: 12px;
+      line-height: 1.8;
+      overflow-wrap: anywhere;
+    }
+
+    .detail h4 {
+      margin: 10px 0 4px;
+      font-size: 15px;
+    }
+
+    .detail p {
+      margin: 0 0 10px;
+      font-size: 14px;
+    }
+
+    .explain-label {
+      display: inline-block;
+      background: #fff4c9;
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: bold;
     }
 
     .read {
@@ -173,39 +199,42 @@
   <header>
     <div class="top">
       <div class="brand">🥭 MANGO NEWS</div>
-      <div class="tagline">복잡한 세상 소식을 쉽고 재미있게!</div>
+      <div class="tagline">경제와 주식, 누구나 쉽게 이해하도록!</div>
     </div>
   </header>
 
   <main>
     <section class="hero">
-      <h1>세상을 읽는 새로운 습관.</h1>
+      <h1>돈과 경제의 세상,<br>쉽게 읽어 보자.</h1>
       <p>
-        경제부터 과학, 기술, 세계 소식까지.<br>
-        오늘의 주요 뉴스를 한곳에서 만나 보세요.
+        국내외 경제와 주식 관련 뉴스를 모아요.<br>
+        제목을 누르면 핵심 내용과 쉬운 설명을 볼 수 있어요.
       </p>
     </section>
 
     <section>
       <div class="toolbar">
-        <h2>오늘의 뉴스 📰</h2>
+        <h2>경제·주식 뉴스 📰</h2>
         <button id="refresh">↻ 뉴스 새로고침</button>
       </div>
 
-      <div id="status" role="status">뉴스 서버에 연결하고 있어요...</div>
+      <div id="status" role="status" aria-live="polite">
+        뉴스를 불러오고 있어요...
+      </div>
       <div id="articles" class="grid"></div>
 
       <p class="note">
-        기사의 제목과 원문 링크는 외부 뉴스 데이터에서 제공됩니다.
-        기사 전문은 원문 사이트에서 확인해 주세요.
-        뉴스 목록은 새로고침 버튼으로 다시 불러올 수 있어요.
+        뉴스 설명은 제공된 제목과 요약을 바탕으로 표시합니다.
+        짧은 설명만 있는 경우에는 제목을 쉽게 풀어 설명합니다.
+        자세한 사실은 원문 기사에서 확인해 주세요.
+        이 사이트는 투자 추천 서비스가 아닙니다.
       </p>
     </section>
   </main>
 
   <footer>
-    🥭 MANGO NEWS · 세상을 쉽게 읽다<br>
-    외부 뉴스 출처: GDELT Project · 기사의 권리는 각 원문 제공자에게 있습니다.
+    🥭 MANGO NEWS · 경제와 주식을 쉽게 읽다<br>
+    기사 출처와 저작권은 각 뉴스 제공자에게 있습니다.
   </footer>
 
   <script>
@@ -216,13 +245,61 @@
     function makeElement(tag, className, text) {
       const element = document.createElement(tag);
       if (className) element.className = className;
-      element.textContent = text || '';
+      if (text !== undefined) element.textContent = text;
       return element;
+    }
+
+    function easyExplanation(article) {
+      const title = article.title || '제목 없음';
+      const description = (article.description || '').trim();
+
+      const detail = makeElement('div', 'detail');
+      detail.hidden = true;
+
+      detail.append(
+        makeElement('span', 'explain-label', '쉬운 뉴스 풀이')
+      );
+
+      detail.append(
+        makeElement('h4', '', '📰 무슨 일이야?')
+      );
+
+      if (description) {
+        detail.append(makeElement('p', '', description));
+      } else {
+        detail.append(
+          makeElement(
+            'p',
+            '',
+            '제공된 기사 설명이 없어서 제목을 중심으로 소개할게요. 정확한 사건 내용은 원문 기사에서 확인해 주세요.'
+          )
+        );
+      }
+
+      detail.append(
+        makeElement('h4', '', '💡 쉽게 이해하기')
+      );
+
+      detail.append(
+        makeElement(
+          'p',
+          '',
+          '이 뉴스가 경제나 주식시장과 어떤 관련이 있는지 살펴보세요. 기업 실적, 금리, 환율 같은 변화는 주가에 영향을 줄 수 있지만, 뉴스 하나만으로 주가의 방향을 확실히 예측할 수는 없어요.'
+        )
+      );
+
+      const link = makeElement('a', 'read', '기사 원문 읽기 ↗');
+      link.href = article.url;
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      detail.append(link);
+
+      return detail;
     }
 
     async function loadNews() {
       refreshButton.disabled = true;
-      statusBox.textContent = '최신 뉴스를 불러오고 있어요...';
+      statusBox.textContent = '최신 경제·주식 뉴스를 불러오고 있어요...';
       articlesBox.replaceChildren();
 
       try {
@@ -244,29 +321,47 @@
 
         for (const article of data.articles) {
           const card = makeElement('article', 'article');
+
           const source = makeElement(
-            'div', 'source', article.domain || '뉴스 출처'
+            'div',
+            'source',
+            article.domain || '뉴스 출처'
           );
+
           const title = makeElement(
-            'h3', '', article.title || '제목 없음'
+            'h3',
+            '',
+            article.title || '제목 없음'
           );
+
           const date = makeElement(
-            'div', 'date',
+            'div',
+            'date',
             article.date ? '보도 날짜: ' + article.date : ''
           );
-          const link = makeElement('a', 'read', '원문 읽기 ↗');
 
-          link.href = article.url;
-          link.target = '_blank';
-          link.rel = 'noopener noreferrer';
+          const toggle = makeElement('button', 'toggle', '쉬운 설명 보기 ＋');
+          toggle.type = 'button';
+          toggle.setAttribute('aria-expanded', 'false');
 
-          card.append(source, title, date, link);
+          const detail = easyExplanation(article);
+
+          toggle.addEventListener('click', () => {
+            const opening = detail.hidden;
+            detail.hidden = !opening;
+            toggle.textContent = opening
+              ? '쉬운 설명 접기 −'
+              : '쉬운 설명 보기 ＋';
+            toggle.setAttribute('aria-expanded', String(opening));
+          });
+
+          card.append(source, title, date, toggle, detail);
           articlesBox.append(card);
         }
 
         statusBox.textContent =
-          '뉴스 ' + data.articles.length +
-          '개를 불러왔어요! 원문 링크에서 자세한 내용을 확인하세요.';
+          '경제·주식 뉴스 ' + data.articles.length +
+          '개를 불러왔어요! 제목 아래 버튼을 눌러 쉬운 설명을 확인해 보세요.';
       } catch (error) {
         statusBox.textContent =
           '뉴스를 불러오지 못했어요. 서버 연결을 확인한 뒤 다시 시도해 주세요. (' +
