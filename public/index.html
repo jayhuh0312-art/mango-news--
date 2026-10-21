@@ -10,11 +10,9 @@
     :root {
       --mango: #ffc928;
       --ink: #292929;
-      --muted: #737373;
+      --muted: #777;
       --paper: #fffdf6;
       --line: #eee7d7;
-      --white: #fff;
-      --green: #27865c;
     }
 
     * { box-sizing: border-box; }
@@ -24,26 +22,17 @@
       background: var(--paper);
       color: var(--ink);
       font-family: Arial, "Malgun Gothic", sans-serif;
-      line-height: 1.6;
+      line-height: 1.65;
     }
 
-    button, input { font: inherit; }
-
-    button {
-      cursor: pointer;
-      border: 0;
-      border-radius: 12px;
-      padding: 10px 15px;
-      font-weight: 700;
-    }
+    button { font: inherit; cursor: pointer; }
 
     .topbar {
       position: sticky;
       top: 0;
       z-index: 5;
-      background: rgba(255,253,246,.96);
+      background: #fffdf6f5;
       border-bottom: 1px solid var(--line);
-      backdrop-filter: blur(10px);
     }
 
     .top-inner {
@@ -56,36 +45,25 @@
       gap: 12px;
     }
 
-    .logo {
-      font-size: 22px;
-      font-weight: 900;
-      letter-spacing: -1px;
-    }
-
+    .logo { font-size: 22px; font-weight: 900; }
     .logo span { color: #bd8500; }
 
-    .hero {
-      background: var(--mango);
-      padding: 35px 20px;
-    }
-
-    .hero-inner, main, footer {
-      max-width: 1100px;
-      margin: auto;
-    }
-
-    .hero h1 {
-      margin: 0 0 8px;
-      font-size: clamp(28px, 5vw, 44px);
-      line-height: 1.2;
-    }
-
+    .hero { background: var(--mango); padding: 35px 20px; }
+    .hero-inner, main, footer { max-width: 1100px; margin: auto; }
+    .hero h1 { margin: 0 0 8px; font-size: clamp(28px, 5vw, 44px); line-height: 1.25; }
     .hero p { margin: 0; }
 
     main { padding: 22px 20px 50px; }
 
+    button {
+      border: 0;
+      border-radius: 12px;
+      padding: 10px 15px;
+      font-weight: 700;
+    }
+
     .timer-panel {
-      background: var(--white);
+      background: white;
       border: 1px solid var(--line);
       border-radius: 20px;
       padding: 20px;
@@ -96,99 +74,33 @@
       box-shadow: 0 5px 20px #4b370b0a;
     }
 
-    .timer-label {
-      font-size: 14px;
-      color: var(--muted);
-      font-weight: 700;
-    }
+    .timer-label { font-size: 14px; color: var(--muted); font-weight: 700; }
+    #timer { font-size: clamp(36px, 7vw, 48px); font-weight: 900; letter-spacing: 2px; line-height: 1.25; font-variant-numeric: tabular-nums; }
+    #timerHint { color: var(--muted); font-size: 13px; margin-top: 4px; }
 
-    #timer {
-      font-size: clamp(34px, 7vw, 48px);
-      font-weight: 900;
-      letter-spacing: 2px;
-      line-height: 1.25;
-      font-variant-numeric: tabular-nums;
-    }
-
-    #timerHint {
-      color: var(--muted);
-      font-size: 13px;
-      margin-top: 4px;
-    }
-
-    .mode-button {
-      background: #efefef;
-      color: #333;
-      min-width: 112px;
-    }
-
-    .mode-button.on {
-      background: #d9f4e5;
-      color: #176c45;
-    }
-
-    .timer-track {
+    .timer-track, .progress-track {
       height: 7px;
-      background: #f0eadb;
       border-radius: 99px;
       overflow: hidden;
+      background: #f0eadb;
       margin-top: 12px;
     }
 
-    #timerBar {
-      height: 100%;
-      width: 100%;
-      background: var(--mango);
-      transition: width .5s linear;
-    }
+    #timerBar { height: 100%; width: 100%; background: var(--mango); transition: width .5s linear; }
+    .mode-button { min-width: 112px; background: #eee; color: #333; }
+    .mode-button.on { background: #d9f4e5; color: #176c45; }
 
-    .status {
-      margin: 16px 0;
-      padding: 12px 15px;
-      border-radius: 12px;
-      background: #fff7d9;
-      font-size: 14px;
-    }
+    .status { margin: 16px 0; padding: 12px 15px; border-radius: 12px; background: #fff7d9; font-size: 14px; }
 
-    .toolbar {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin: 22px 0;
-    }
+    .toolbar { display: flex; flex-wrap: wrap; gap: 8px; margin: 22px 0; }
+    .category-button { background: white; border: 1px solid var(--line); color: #555; }
+    .category-button.active { background: var(--mango); color: #302600; border-color: var(--mango); }
 
-    .category-button {
-      background: white;
-      border: 1px solid var(--line);
-      color: #555;
-    }
-
-    .category-button.active {
-      background: var(--mango);
-      color: #302600;
-      border-color: var(--mango);
-    }
-
-    .section-heading {
-      display: flex;
-      align-items: baseline;
-      justify-content: space-between;
-      gap: 10px;
-      margin: 25px 0 14px;
-    }
-
-    .section-heading h2 {
-      margin: 0;
-      font-size: 23px;
-    }
-
+    .section-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin: 25px 0 14px; }
+    .section-heading h2 { margin: 0; font-size: 23px; }
     .muted { color: var(--muted); font-size: 13px; }
 
-    .news-grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 14px;
-    }
+    .news-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
 
     .news-card {
       text-align: left;
@@ -202,173 +114,47 @@
       align-items: stretch;
       gap: 8px;
       min-height: 150px;
-      transition: transform .15s, box-shadow .15s;
     }
 
-    .news-card:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 22px #0000000b;
-    }
+    .news-card:hover { box-shadow: 0 8px 22px #0000000b; }
+    .tag { align-self: flex-start; background: #fff1b9; color: #745500; border-radius: 6px; padding: 3px 8px; font-size: 12px; font-weight: 800; }
+    .news-title { font-size: 17px; line-height: 1.45; font-weight: 800; }
+    .news-description { color: #686868; font-size: 14px; font-weight: 400; }
+    .news-meta { color: #888; font-size: 12px; margin-top: auto; }
 
-    .tag {
-      align-self: flex-start;
-      background: #fff1b9;
-      color: #745500;
-      border-radius: 6px;
-      padding: 3px 8px;
-      font-size: 12px;
-      font-weight: 800;
-    }
+    .empty { background: white; border: 1px dashed #d8cfba; border-radius: 16px; padding: 28px; text-align: center; color: var(--muted); grid-column: 1 / -1; }
 
-    .news-title {
-      font-size: 17px;
-      line-height: 1.45;
-      font-weight: 800;
-    }
-
-    .news-description {
-      color: #686868;
-      font-size: 14px;
-      font-weight: 400;
-    }
-
-    .news-meta {
-      color: #888;
-      font-size: 12px;
-      margin-top: auto;
-    }
-
-    .empty {
-      background: white;
-      border: 1px dashed #d8cfba;
-      border-radius: 16px;
-      padding: 28px;
-      text-align: center;
-      color: var(--muted);
-      grid-column: 1 / -1;
-    }
-
-    .detail {
-      display: none;
-      background: white;
-      border: 1px solid var(--line);
-      border-radius: 20px;
-      padding: clamp(18px, 4vw, 32px);
-      margin-top: 22px;
-    }
-
+    .detail { display: none; background: white; border: 1px solid var(--line); border-radius: 20px; padding: clamp(18px, 4vw, 32px); margin-top: 22px; }
     .detail.show { display: block; }
+    .back-button { background: #f3f0e8; margin-bottom: 20px; }
+    .detail h2 { font-size: clamp(24px, 4vw, 34px); line-height: 1.35; margin: 12px 0; }
 
-    .back-button {
-      background: #f3f0e8;
-      margin-bottom: 20px;
-    }
-
-    .detail h2 {
-      font-size: clamp(24px, 4vw, 34px);
-      line-height: 1.35;
-      margin: 12px 0;
-    }
-
-    .detail-image {
-      display: none;
-      width: 100%;
-      max-height: 420px;
-      object-fit: cover;
-      border-radius: 14px;
-      margin: 18px 0;
-      background: #fff8dd;
-    }
-
-    .detail-body {
-      white-space: pre-wrap;
-      line-height: 1.9;
-      font-size: 16px;
-    }
-
-    .ai-box {
-      background: #fff9e8;
-      border-radius: 14px;
-      padding: 18px;
-      margin: 18px 0;
-    }
-
+    .detail-image { display: none; width: 100%; max-height: 420px; object-fit: cover; border-radius: 14px; margin: 18px 0; background: #fff8dd; }
+    .detail-body { white-space: pre-wrap; line-height: 1.9; font-size: 16px; }
+    .ai-box { background: #fff9e8; border-radius: 14px; padding: 18px; margin: 18px 0; }
     .ai-box h3 { margin: 0 0 10px; }
+    .ai-status { display: flex; align-items: center; gap: 10px; color: #725400; font-size: 14px; margin: 12px 0; }
 
-    .ai-status {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      color: #725400;
-      font-size: 14px;
-      margin: 12px 0;
-    }
-
-    .spinner {
-      width: 18px;
-      height: 18px;
-      border: 3px solid #eedb9c;
-      border-top-color: #b88700;
-      border-radius: 50%;
-      animation: spin .8s linear infinite;
-      flex: 0 0 auto;
-    }
-
+    .spinner { width: 18px; height: 18px; border: 3px solid #eedb9c; border-top-color: #b88700; border-radius: 50%; animation: spin .8s linear infinite; flex: 0 0 auto; }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    .progress-track {
-      width: 100%;
-      height: 7px;
-      border-radius: 99px;
-      overflow: hidden;
-      background: #eee4c7;
-      margin-top: 10px;
-    }
-
-    .progress-indeterminate {
-      height: 100%;
-      width: 35%;
-      background: #e9b600;
-      border-radius: 99px;
-      animation: move 1.3s ease-in-out infinite alternate;
-    }
-
-    @keyframes move {
-      from { transform: translateX(0); }
-      to { transform: translateX(185%); }
-    }
+    .progress-track { margin-top: 10px; background: #eee4c7; }
+    .progress-indeterminate { height: 100%; width: 35%; background: #e9b600; border-radius: 99px; animation: move 1.3s ease-in-out infinite alternate; }
+    @keyframes move { from { transform: translateX(0); } to { transform: translateX(185%); } }
 
     .term-list { padding-left: 20px; }
-
-    .source-link {
-      display: inline-block;
-      margin-top: 18px;
-      color: #795900;
-      font-weight: 800;
-    }
-
-    .refresh-button {
-      background: var(--mango);
-      margin-top: 14px;
-    }
-
-    footer {
-      padding: 25px 20px 40px;
-      color: var(--muted);
-      font-size: 12px;
-      text-align: center;
-    }
+    .source-link { display: inline-block; margin-top: 18px; color: #795900; font-weight: 800; }
+    .refresh-button { background: var(--mango); margin-top: 14px; }
+    footer { padding: 25px 20px 40px; color: var(--muted); font-size: 12px; text-align: center; }
 
     @media (max-width: 650px) {
       .news-grid { grid-template-columns: 1fr; }
       .timer-panel { grid-template-columns: 1fr; }
       .mode-button { justify-self: start; }
-      .top-inner { padding: 12px 16px; }
       main { padding: 18px 14px 40px; }
     }
   </style>
 </head>
-
 <body>
   <header class="topbar">
     <div class="top-inner">
@@ -385,21 +171,17 @@
   </section>
 
   <main>
-    <section class="timer-panel" aria-label="뉴스 업데이트 타이머">
+    <section class="timer-panel">
       <div>
-        <div class="timer-label" id="timerLabel">다음 주요 뉴스 업데이트까지</div>
+        <div id="timerLabel" class="timer-label">다음 주요 뉴스 업데이트까지</div>
         <div id="timer">30:00</div>
         <div id="timerHint">30분마다 분야별 주요 뉴스를 갱신해요.</div>
         <div class="timer-track"><div id="timerBar"></div></div>
       </div>
-      <button id="modeButton" class="mode-button" type="button" aria-pressed="false">
-        실시간 OFF
-      </button>
+      <button id="modeButton" class="mode-button" type="button" aria-pressed="false">실시간 OFF</button>
     </section>
 
-    <div id="status" class="status" role="status" aria-live="polite">
-      뉴스를 불러오는 중이에요.
-    </div>
+    <div id="status" class="status" role="status" aria-live="polite">뉴스를 불러오는 중이에요.</div>
 
     <section id="homeView">
       <div class="section-heading">
@@ -407,7 +189,7 @@
         <span id="articleCount" class="muted"></span>
       </div>
 
-      <nav class="toolbar" id="categoryToolbar" aria-label="뉴스 분야">
+      <nav id="categoryToolbar" class="toolbar" aria-label="뉴스 분야">
         <button class="category-button active" data-category="all">전체 경제</button>
         <button class="category-button" data-category="stock">주식·투자</button>
         <button class="category-button" data-category="finance">금융·은행</button>
@@ -426,29 +208,20 @@
       <div id="detailTag" class="tag">경제 뉴스</div>
       <h2 id="detailTitle"></h2>
       <div id="detailMeta" class="muted"></div>
-
       <img id="detailImage" class="detail-image" alt="기사 관련 AI 그림">
 
       <div class="ai-box">
         <h3>🥭 AI로 쉽게 이해하기</h3>
-        <div id="summaryStatus" class="ai-status">
-          <span class="spinner"></span><span>쉬운 설명을 준비하고 있어요.</span>
-        </div>
-        <div id="summaryProgress" class="progress-track">
-          <div class="progress-indeterminate"></div>
-        </div>
+        <div id="summaryStatus" class="ai-status"><span class="spinner"></span><span>쉬운 설명을 준비하고 있어요.</span></div>
+        <div id="summaryProgress" class="progress-track"><div class="progress-indeterminate"></div></div>
         <div id="summaryText" class="detail-body"></div>
         <ul id="termList" class="term-list"></ul>
       </div>
 
       <div class="ai-box">
         <h3>🎨 기사 그림</h3>
-        <div id="imageStatus" class="ai-status">
-          <span class="spinner"></span><span>AI가 그림을 만들고 있어요.</span>
-        </div>
-        <div id="imageProgress" class="progress-track">
-          <div class="progress-indeterminate"></div>
-        </div>
+        <div id="imageStatus" class="ai-status"><span class="spinner"></span><span>AI가 그림을 만들고 있어요.</span></div>
+        <div id="imageProgress" class="progress-track"><div class="progress-indeterminate"></div></div>
       </div>
 
       <p id="detailDescription" class="detail-body"></p>
@@ -488,10 +261,7 @@
       category: "all",
       live: false,
       timerEnd: Date.now() + UPDATE_MS,
-      selectedArticle: null,
       showAll: false,
-      timerId: null,
-      reloadId: null,
       requestId: 0
     };
 
@@ -501,40 +271,37 @@
       $("status").textContent = message;
     }
 
+    function dateLabel(value) {
+      if (!value) return "날짜 정보 없음";
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) return "";
+      return date.toLocaleString("ko-KR", {
+        month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit"
+      });
+    }
+
     function normaliseArticle(article) {
       const title = article.title || "제목 없는 기사";
       const description = article.description || "";
       const text = `${title} ${description}`.toLowerCase();
-
       const matched = Object.entries(CATEGORY_RULES)
         .filter(([, words]) => words.some(word => text.includes(word.toLowerCase())))
         .map(([id]) => id);
 
-      const date = article.date || article.pubDate || article.publishedAt || "";
       return {
         ...article,
         title,
         description,
         url: article.url || article.link || "",
         source: article.source || article.domain || "뉴스 출처",
-        date,
+        date: article.date || article.pubDate || "",
         categories: Array.isArray(article.categories) && article.categories.length
           ? article.categories : matched,
         image: article.image || article.socialimage || ""
       };
     }
 
-    function dateLabel(value) {
-      if (!value) return "날짜 정보 없음";
-      const date = new Date(value);
-      if (Number.isNaN(date.getTime())) return "";
-      return date.toLocaleString("ko-KR", {
-        month: "numeric", day: "numeric",
-        hour: "2-digit", minute: "2-digit"
-      });
-    }
-
-    function getVisibleArticles() {
+    function visibleArticles() {
       let list = [...state.articles];
 
       if (state.category !== "all") {
@@ -544,22 +311,20 @@
         );
       }
 
-      if (!state.showAll) list = list.slice(0, 30);
-      return list;
+      return state.showAll ? list : list.slice(0, 30);
     }
 
     function renderNews() {
       const grid = $("newsGrid");
       grid.replaceChildren();
 
-      const list = getVisibleArticles();
-      $("articleCount").textContent = `${list.length}개 기사`;
-      $("listHeading").textContent = state.live
-        ? `${CATEGORY_NAMES[state.category]} · 최신 뉴스`
-        : `${CATEGORY_NAMES[state.category]} · 분야별 주요 뉴스`;
-      $("loadMoreButton").hidden = state.showAll || list.length < 30;
+      const articles = visibleArticles();
+      $("articleCount").textContent = `${articles.length}개 기사`;
+      $("listHeading").textContent =
+        `${CATEGORY_NAMES[state.category]} · ${state.live ? "최신 뉴스" : "분야별 주요 뉴스"}`;
+      $("loadMoreButton").hidden = state.showAll || articles.length < 30;
 
-      if (!list.length) {
+      if (!articles.length) {
         const empty = document.createElement("div");
         empty.className = "empty";
         empty.textContent = "이 분야의 기사를 찾지 못했어요. 새로고침을 눌러 다시 확인해 주세요.";
@@ -567,15 +332,16 @@
         return;
       }
 
-      for (const article of list) {
+      for (const article of articles) {
         const card = document.createElement("button");
         card.type = "button";
         card.className = "news-card";
 
         const tag = document.createElement("span");
         tag.className = "tag";
-        const cat = article.digestCategory || article.categories?.[0];
-        tag.textContent = CATEGORY_NAMES[cat] || "경제 뉴스";
+        tag.textContent = CATEGORY_NAMES[
+          article.digestCategory || article.categories?.[0]
+        ] || "경제 뉴스";
 
         const title = document.createElement("span");
         title.className = "news-title";
@@ -587,7 +353,7 @@
 
         const meta = document.createElement("span");
         meta.className = "news-meta";
-        meta.textContent = `${article.source || "뉴스"} · ${dateLabel(article.date)}`;
+        meta.textContent = `${article.source} · ${dateLabel(article.date)}`;
 
         card.append(tag, title, description, meta);
         card.addEventListener("click", () => openArticle(article));
@@ -596,10 +362,13 @@
     }
 
     async function loadNews({quiet = false} = {}) {
-      const requestId = ++state.requestId;
-      if (!quiet) setStatus(state.live
-        ? "최신 뉴스를 불러오고 있어요."
-        : "분야별 주요 뉴스를 확인하고 있어요.");
+      const id = ++state.requestId;
+
+      if (!quiet) {
+        setStatus(state.live
+          ? "최신 뉴스를 불러오고 있어요."
+          : "분야별 주요 뉴스를 확인하고 있어요.");
+      }
 
       try {
         const mode = state.live ? "live" : "digest";
@@ -607,33 +376,29 @@
         const data = await response.json();
 
         if (!response.ok) throw new Error(data.error || "뉴스를 불러오지 못했어요.");
-        if (requestId !== state.requestId) return;
+        if (id !== state.requestId) return;
 
         state.articles = (data.articles || []).map(normaliseArticle);
         renderNews();
 
-        if (data.nextUpdateAt && Number.isFinite(Number(data.nextUpdateAt))) {
-          const next = Number(data.nextUpdateAt);
-          state.timerEnd = next > Date.now() ? next : Date.now() + UPDATE_MS;
-        } else {
-          state.timerEnd = Date.now() + UPDATE_MS;
-        }
+        const next = Number(data.nextUpdateAt);
+        state.timerEnd = Number.isFinite(next) && next > Date.now()
+          ? next : Date.now() + UPDATE_MS;
 
-        const updated = data.updatedAt ? dateLabel(data.updatedAt) : "";
         setStatus(state.live
-          ? `실시간 모드: 최신 기사를 불러왔어요.${updated ? " 확인 시각: " + updated : ""}`
-          : `주요 뉴스 모드: 분야별 기사를 표시하고 있어요.${updated ? " 마지막 서버 갱신: " + updated : ""}`);
+          ? "실시간 모드: 최신 기사를 확인했어요."
+          : "주요 뉴스 모드: 분야별 기사를 표시하고 있어요.");
       } catch (error) {
-        if (requestId !== state.requestId) return;
+        if (id !== state.requestId) return;
         setStatus(`뉴스를 불러오지 못했어요: ${error.message}`);
       }
     }
 
     function updateTimer() {
       const remaining = Math.max(0, state.timerEnd - Date.now());
-      const totalSeconds = Math.ceil(remaining / 1000);
-      const minutes = Math.floor(totalSeconds / 60);
-      const seconds = totalSeconds % 60;
+      const secondsLeft = Math.ceil(remaining / 1000);
+      const minutes = Math.floor(secondsLeft / 60);
+      const seconds = secondsLeft % 60;
 
       $("timer").textContent =
         `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
@@ -643,7 +408,7 @@
         : "다음 주요 뉴스 업데이트까지";
 
       $("timerHint").textContent = state.live
-        ? "실시간 모드에서는 최신 뉴스를 우선해서 불러와요."
+        ? "실시간 모드에서는 요청할 때 최신 기사를 확인해요."
         : "30분마다 서버에 저장된 기사에서 분야별 주요 뉴스를 골라요.";
 
       $("timerBar").style.width = `${Math.max(0, remaining / UPDATE_MS * 100)}%`;
@@ -656,20 +421,21 @@
 
     async function changeMode() {
       state.live = !state.live;
+      state.showAll = false;
+
       $("modeButton").classList.toggle("on", state.live);
       $("modeButton").textContent = state.live ? "실시간 ON" : "실시간 OFF";
       $("modeButton").setAttribute("aria-pressed", String(state.live));
-      state.showAll = false;
+
       state.timerEnd = Date.now() + UPDATE_MS;
       await loadNews();
     }
 
-    function setDetailStatus(type, message, done = false, error = false) {
+    function setAIStatus(type, message, done = false, failed = false) {
       const status = $(type + "Status");
-      const progress = $(type + "Progress");
-
       status.replaceChildren();
-      if (!done && !error) {
+
+      if (!done && !failed) {
         const spinner = document.createElement("span");
         spinner.className = "spinner";
         status.appendChild(spinner);
@@ -679,18 +445,17 @@
       text.textContent = message;
       status.appendChild(text);
 
-      progress.hidden = done || error;
+      $(type + "Progress").hidden = done || failed;
     }
 
     async function openArticle(article) {
-      state.selectedArticle = article;
       $("homeView").style.display = "none";
       $("detailView").classList.add("show");
 
       $("detailTitle").textContent = article.title;
       $("detailTag").textContent =
         CATEGORY_NAMES[article.digestCategory || article.categories?.[0]] || "경제 뉴스";
-      $("detailMeta").textContent = `${article.source || "뉴스"} · ${dateLabel(article.date)}`;
+      $("detailMeta").textContent = `${article.source} · ${dateLabel(article.date)}`;
       $("detailDescription").textContent = article.description || "";
       $("summaryText").textContent = "";
       $("termList").replaceChildren();
@@ -699,50 +464,53 @@
       $("sourceLink").href = article.url || "#";
       $("sourceLink").style.display = article.url ? "inline-block" : "none";
 
-      setDetailStatus("summary", "AI가 쉬운 설명을 만들고 있어요.");
-      setDetailStatus("image", "AI가 그림을 만들고 있어요.");
+      setAIStatus("summary", "AI가 쉬운 설명을 만들고 있어요.");
+      setAIStatus("image", "AI가 그림을 만들고 있어요.");
 
-      window.scrollTo({top: 0, behavior: "smooth"});
+      window.scrollTo({ top: 0, behavior: "smooth" });
 
-      // AI 요약
-      try {
-        const response = await fetch("/api/summarize", {
-          method: "POST",
-          headers: {"Content-Type": "application/json"},
-          body: JSON.stringify({
-            title: article.title,
-            description: article.description
-          })
-        });
-
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.error || "요약 생성 실패");
-
-        $("summaryText").textContent = data.article || "쉬운 설명이 없어요.";
-
-        for (const item of (data.terms || [])) {
-          const li = document.createElement("li");
-          li.textContent = `${item.term}: ${item.definition}`;
-          $("termList").appendChild(li);
-        }
-
-        setDetailStatus("summary", "쉬운 설명을 완성했어요.", true);
-      } catch (error) {
-        $("summaryText").textContent =
-          `요약을 만들지 못했어요. 잠시 후 다시 시도해 주세요.\n(${error.message})`;
-        setDetailStatus("summary", "요약 생성에 실패했어요.", false, true);
-      }
-
-      // 원문에 그림이 있으면 우선 사용하고, 없으면 AI 그림 생성
-      if (article.image && /^https?:\/\//i.test(article.image)) {
-        $("detailImage").src = article.image;
-        $("detailImage").style.display = "block";
-        setDetailStatus("image", "기사에 포함된 그림을 표시했어요.", true);
-      } else {
+      // 요약과 그림은 독립적으로 요청합니다.
+      const summaryTask = (async () => {
         try {
+          const response = await fetch("/api/summarize", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              title: article.title,
+              description: article.description
+            })
+          });
+
+          const data = await response.json();
+          if (!response.ok) throw new Error(data.error || "요약 생성 실패");
+
+          $("summaryText").textContent = data.article || "쉬운 설명이 없어요.";
+
+          for (const item of (data.terms || [])) {
+            const li = document.createElement("li");
+            li.textContent = `${item.term}: ${item.definition}`;
+            $("termList").appendChild(li);
+          }
+
+          setAIStatus("summary", "쉬운 설명을 완성했어요.", true);
+        } catch (error) {
+          $("summaryText").textContent = `요약을 만들지 못했어요. (${error.message})`;
+          setAIStatus("summary", "요약 생성에 실패했어요.", false, true);
+        }
+      })();
+
+      const imageTask = (async () => {
+        try {
+          if (article.image && /^https?:\/\//i.test(article.image)) {
+            $("detailImage").src = article.image;
+            $("detailImage").style.display = "block";
+            setAIStatus("image", "기사에 포함된 그림을 표시했어요.", true);
+            return;
+          }
+
           const response = await fetch("/api/generate-image", {
             method: "POST",
-            headers: {"Content-Type": "application/json"},
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               title: article.title,
               description: article.description
@@ -751,25 +519,25 @@
 
           const data = await response.json();
           if (!response.ok) throw new Error(data.error || "그림 생성 실패");
-
           if (!data.image) throw new Error("그림 데이터가 없어요.");
 
           $("detailImage").src = data.image.startsWith("data:")
             ? data.image
             : `data:image/png;base64,${data.image}`;
           $("detailImage").style.display = "block";
-          setDetailStatus("image", "그림을 완성했어요.", true);
+          setAIStatus("image", "그림을 완성했어요.", true);
         } catch (error) {
-          setDetailStatus("image", `그림을 만들지 못했어요: ${error.message}`, false, true);
+          setAIStatus("image", `그림을 만들지 못했어요: ${error.message}`, false, true);
         }
-      }
+      })();
+
+      await Promise.all([summaryTask, imageTask]);
     }
 
     function goHome() {
       $("detailView").classList.remove("show");
       $("homeView").style.display = "";
-      state.selectedArticle = null;
-      window.scrollTo({top: 0, behavior: "smooth"});
+      window.scrollTo({ top: 0, behavior: "smooth" });
     }
 
     $("modeButton").addEventListener("click", changeMode);
@@ -783,9 +551,9 @@
       state.category = button.dataset.category;
       state.showAll = false;
 
-      $("categoryToolbar").querySelectorAll("button").forEach(item =>
-        item.classList.toggle("active", item === button)
-      );
+      $("categoryToolbar").querySelectorAll("button").forEach(item => {
+        item.classList.toggle("active", item === button);
+      });
 
       renderNews();
     });
@@ -795,15 +563,16 @@
       renderNews();
     });
 
-    state.timerId = setInterval(updateTimer, 1000);
+    setInterval(updateTimer, 1000);
+
+    // 열린 페이지에서도 30분마다 새 목록을 확인합니다.
+    setInterval(() => {
+      state.timerEnd = Date.now() + UPDATE_MS;
+      loadNews({ quiet: true });
+    }, UPDATE_MS);
+
     updateTimer();
     loadNews();
-
-    // 페이지가 열려 있는 동안 30분마다 목록을 다시 확인합니다.
-    state.reloadId = setInterval(() => {
-      state.timerEnd = Date.now() + UPDATE_MS;
-      loadNews({quiet: true});
-    }, UPDATE_MS);
   </script>
 </body>
 </html>
