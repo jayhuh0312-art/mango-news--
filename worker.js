@@ -9,15 +9,21 @@ const RSS_FEEDS = [
 ];
 
 const ECONOMY_KEYWORDS = [
-  "경제", "금융", "주식", "증시", "코스피", "코스닥",
-  "환율", "금리", "물가", "부동산", "기업", "산업",
-  "수출", "수입", "무역", "은행", "투자", "고용",
-  "취업", "일자리", "소비", "시장", "성장", "실업",
-  "인플레이션", "반도체", "배터리", "원화", "달러",
-  "유가", "재정", "세금", "예산", "경제정책",
-  "비트코인", "가상자산", "GDP", "business", "economy",
-  "economic", "stock", "market", "finance", "financial",
-  "inflation", "trade", "bank", "investment", "employment"
+  "경제", "금융", "주식", "증시", "코스피", "코스닥", "환율", "금리",
+  "물가", "부동산", "기업 실적", "기업 투자", "수출", "수입", "무역",
+  "은행", "투자", "고용", "취업", "일자리", "소비자물가", "인플레이션",
+  "반도체", "배터리", "원화", "달러", "유가", "재정", "세금", "예산",
+  "경제정책", "비트코인", "가상자산", "국채", "채권", "기준금리",
+  "중앙은행", "연준", "한국은행", "GDP", "business", "economy",
+  "economic", "stock market", "finance", "financial", "inflation",
+  "trade", "investment", "employment", "interest rate", "bond yield",
+  "gross domestic product", "consumer prices"
+];
+
+const EXCLUDE_KEYWORDS = [
+  "축구", "야구", "농구", "배구", "골프 경기", "올림픽 경기", "연예인",
+  "아이돌", "신곡", "앨범 발매", "드라마 출연", "영화 개봉", "시사회",
+  "살인 사건", "교통사고", "실종", "화재 사고", "날씨 예보"
 ];
 
 const NEWS_CACHE_KEY = new Request(
@@ -30,7 +36,10 @@ export default {
 
     if (url.pathname === "/api/news") {
       if (request.method !== "GET") {
-        return jsonResponse({ error: "GET 요청만 사용할 수 있어요." }, 405);
+        return jsonResponse(
+          { error: "GET 요청만 사용할 수 있어요." },
+          405
+        );
       }
 
       const cache = caches.default;
@@ -42,12 +51,16 @@ export default {
         const articles = await collectNews();
 
         const response = jsonResponse(
-          { articles, updatedAt: new Date().toISOString() },
+          {
+            articles,
+            updatedAt: new Date().toISOString()
+          },
           200,
           { "Cache-Control": `public, max-age=${CACHE_SECONDS}` }
         );
 
         ctx.waitUntil(cache.put(NEWS_CACHE_KEY, response.clone()));
+
         return response;
       } catch (error) {
         console.error("News collection error:", error);
@@ -62,12 +75,16 @@ export default {
 
     if (url.pathname === "/api/summarize") {
       if (request.method !== "POST") {
-        return jsonResponse({ error: "POST 요청만 사용할 수 있어요." }, 405);
+        return jsonResponse(
+          { error: "POST 요청만 사용할 수 있어요." },
+          405
+        );
       }
 
       if (!env.AI) {
         return jsonResponse({
-          error: "Cloudflare AI 바인딩을 찾을 수 없어요."
+          error: "Cloudflare AI 바인딩을 찾을 수 없어요.",
+          help: "Cloudflare 대시보드에서 이 Worker에 AI 바인딩을 추가한 뒤 다시 배포해 주세요."
         }, 500);
       }
 
@@ -77,24 +94,45 @@ export default {
         const description = String(body.description || "").slice(0, 5000);
 
         if (!title && !description) {
-          return jsonResponse({ error: "요약할 기사 내용이 없어요." }, 400);
+          return jsonResponse(
+            { error: "다시 쓸 기사 내용이 없어요." },
+            400
+          );
         }
 
         const prompt = `
-아래 경제 뉴스를 초등학생도 이해할 수 있는 쉬운 한국어로 설명해 줘.
+다음 뉴스의 내용을 초등학생도 이해할 수 있는 쉬운 한국어 기사로 다시 써 줘.
+
+중요한 규칙:
+- "무슨 일이 있었나요?", "왜 중요할까요?" 같은 별도 질문 항목은 만들지 마.
+- 원래 기사의 핵심 사실, 인물, 국가, 날짜, 숫자와 인과관계는 유지해.
+- 원문에 없는 사실을 추측하거나 덧붙이지 마.
+- 문장은 짧고 자연스럽게 써.
+- 어려운 표현은 쉬운 말로 바꿔.
+- 원문에 정보가 적으면 억지로 내용을 늘리지 마.
+- 기사 본문은 실제 뉴스 내용을 짧고 쉽게 다시 쓴 글이어야 해.
+- 경제 용어 중 알아둘 가치가 있는 용어는 최대 5개 골라.
+- 각 용어는 기사 본문에도 실제로 등장하는 표현을 사용해.
+- 용어 설명은 초등학생도 이해할 수 있도록 정확하고 짧게 써.
+- 경제 용어가 없다면 terms는 빈 배열로 해.
+- 반드시 JSON 하나만 출력해. 마크다운 코드블록은 사용하지 마.
+
+출력 형식:
+{
+  "article": "쉽게 다시 쓴 기사 본문",
+  "terms": [
+    {
+      "term": "기사에 등장한 경제 용어",
+      "definition": "쉬운 설명"
+    }
+  ]
+}
 
 기사 제목:
 ${title}
 
-기사 설명:
+기사 원문 또는 제공된 설명:
 ${description}
-
-규칙:
-- 기사에 없는 사실을 만들어 내지 마.
-- 어려운 경제 용어는 쉬운 말로 설명해.
-- 핵심 내용을 짧은 문단 2~4개로 설명해.
-- 마지막에 "왜 중요할까요?"라는 소제목으로 의미를 알려 줘.
-- 정보가 부족하면 부족하다고 밝혀.
 `;
 
         const result = await env.AI.run(
@@ -103,29 +141,83 @@ ${description}
             messages: [
               {
                 role: "system",
-                content: "너는 정확하고 친절한 경제 뉴스 설명 도우미야."
+                content:
+                  "너는 사실을 지키며 경제 뉴스를 어린이용 쉬운 한국어로 다시 쓰는 편집자야. 요청된 JSON 형식을 정확히 지켜."
               },
-              { role: "user", content: prompt }
+              {
+                role: "user",
+                content: prompt
+              }
             ],
-            max_tokens: 700
+            max_tokens: 1200
           }
         );
 
-        const summary =
+        const raw =
           result?.response ||
           result?.result?.response ||
           "";
 
-        if (!summary) {
-          return jsonResponse({ error: "AI가 요약을 만들지 못했어요." }, 502);
+        if (!raw) {
+          return jsonResponse(
+            { error: "AI가 쉬운 기사를 만들지 못했어요." },
+            502
+          );
         }
 
-        return jsonResponse({ summary });
+        let parsed;
+
+        try {
+          const cleaned = raw
+            .replace(/^```(?:json)?\s*/i, "")
+            .replace(/\s*```$/, "")
+            .trim();
+
+          const start = cleaned.indexOf("{");
+          const end = cleaned.lastIndexOf("}");
+
+          parsed = JSON.parse(
+            start >= 0 && end > start
+              ? cleaned.slice(start, end + 1)
+              : cleaned
+          );
+        } catch {
+          parsed = {
+            article: raw.trim(),
+            terms: []
+          };
+        }
+
+        const article = String(parsed.article || "").trim();
+
+        const terms = Array.isArray(parsed.terms)
+          ? parsed.terms
+              .filter(
+                item =>
+                  item &&
+                  typeof item.term === "string" &&
+                  typeof item.definition === "string"
+              )
+              .slice(0, 5)
+              .map(item => ({
+                term: item.term.trim().slice(0, 80),
+                definition: item.definition.trim().slice(0, 400)
+              }))
+          : [];
+
+        if (!article) {
+          return jsonResponse(
+            { error: "AI가 쉬운 기사 내용을 반환하지 않았어요." },
+            502
+          );
+        }
+
+        return jsonResponse({ article, terms });
       } catch (error) {
         console.error("AI summary error:", error);
 
         return jsonResponse({
-          error: "AI 요약 중 문제가 생겼어요.",
+          error: "AI 쉬운 뉴스 생성 중 문제가 생겼어요.",
           details: String(error?.message || error).slice(0, 1000)
         }, 500);
       }
@@ -133,12 +225,16 @@ ${description}
 
     if (url.pathname === "/api/generate-image") {
       if (request.method !== "POST") {
-        return jsonResponse({ error: "POST 요청만 사용할 수 있어요." }, 405);
+        return jsonResponse(
+          { error: "POST 요청만 사용할 수 있어요." },
+          405
+        );
       }
 
       if (!env.AI) {
         return jsonResponse({
-          error: "Cloudflare AI 바인딩을 찾을 수 없어요."
+          error: "Cloudflare AI 바인딩을 찾을 수 없어요.",
+          help: "Cloudflare 대시보드에서 이 Worker에 AI 바인딩을 추가한 뒤 다시 배포해 주세요."
         }, 500);
       }
 
@@ -148,9 +244,10 @@ ${description}
         const description = String(body.description || "").slice(0, 600);
 
         if (!title && !description) {
-          return jsonResponse({
-            error: "그림을 만들 기사 정보가 없어요."
-          }, 400);
+          return jsonResponse(
+            { error: "그림을 만들 기사 정보가 없어요." },
+            400
+          );
         }
 
         const cache = caches.default;
@@ -171,18 +268,18 @@ ${description}
 
         const cachedImage = await cache.match(imageCacheRequest);
 
-        if (cachedImage) {
-          return cachedImage;
-        }
+        if (cachedImage) return cachedImage;
 
         const prompt = `
-Create a clean editorial illustration for an educational
-Korean economy news website. Use warm mango-yellow accents,
-a friendly modern style, and a clear landscape composition.
-Illustrate this news topic:
-${title}
-${description}
-No text, letters, numbers, watermarks, or logos.
+Create a friendly landscape editorial illustration for a children's
+educational Korean economy news website.
+Use warm mango-yellow accents and a modern magazine illustration style.
+Clearly depict the main subject of the news.
+Use simple visual storytelling.
+Do not include text, letters, numbers, watermarks, or logos.
+
+News topic: ${title}
+Context: ${description}
 `.trim().slice(0, 1800);
 
         const result = await env.AI.run(
@@ -196,13 +293,14 @@ No text, letters, numbers, watermarks, or logos.
         if (
           !result ||
           typeof result.image !== "string" ||
-          result.image.length === 0
+          !result.image.length
         ) {
           console.error("AI image response did not contain an image.");
 
-          return jsonResponse({
-            error: "AI 응답에 그림 데이터가 없어요."
-          }, 502);
+          return jsonResponse(
+            { error: "AI 응답에 그림 데이터가 없어요." },
+            502
+          );
         }
 
         const imageResponse = jsonResponse(
@@ -244,7 +342,9 @@ async function collectNews() {
       });
 
       if (!response.ok) {
-        throw new Error(`${feed.name} 응답 오류: ${response.status}`);
+        throw new Error(
+          `${feed.name} 응답 오류: ${response.status}`
+        );
       }
 
       return parseFeed(await response.text(), feed.name);
@@ -261,7 +361,7 @@ async function collectNews() {
     }
   }
 
-  if (allArticles.length === 0) {
+  if (!allArticles.length) {
     throw new Error("사용할 수 있는 뉴스 RSS가 없어요.");
   }
 
@@ -279,13 +379,22 @@ async function collectNews() {
   const economyArticles = uniqueArticles.filter(article => {
     const text = `${article.title} ${article.description}`.toLowerCase();
 
-    return ECONOMY_KEYWORDS.some(keyword =>
-      text.includes(keyword.toLowerCase())
+    const matchesEconomy = ECONOMY_KEYWORDS.some(
+      keyword => text.includes(keyword.toLowerCase())
     );
+
+    const matchesClearlyUnrelated = EXCLUDE_KEYWORDS.some(
+      keyword => text.includes(keyword.toLowerCase())
+    );
+
+    return matchesEconomy && !matchesClearlyUnrelated;
   });
 
-  return (economyArticles.length ? economyArticles : uniqueArticles)
-    .sort((a, b) => new Date(b.pubDate || 0) - new Date(a.pubDate || 0))
+  return economyArticles
+    .sort(
+      (a, b) =>
+        new Date(b.pubDate || 0) - new Date(a.pubDate || 0)
+    )
     .slice(0, 40);
 }
 
@@ -336,7 +445,10 @@ function parseFeed(xml, source) {
 }
 
 function getTag(xml, tagName, attributeName = null) {
-  const escapedTag = tagName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const escapedTag = tagName.replace(
+    /[.*+?^${}()|[\]\\]/g,
+    "\\$&"
+  );
 
   if (attributeName) {
     const regex = new RegExp(
@@ -345,6 +457,7 @@ function getTag(xml, tagName, attributeName = null) {
     );
 
     const match = xml.match(regex);
+
     return match ? decodeEntities(match[1]) : "";
   }
 
@@ -354,11 +467,15 @@ function getTag(xml, tagName, attributeName = null) {
   );
 
   const match = xml.match(regex);
+
   return match ? match[1] : "";
 }
 
 function findImage(text) {
-  const match = text.match(/<img\b[^>]*\bsrc=["']([^"']+)["']/i);
+  const match = text.match(
+    /<img\b[^>]*\bsrc=["']([^"']+)["']/i
+  );
+
   return match ? decodeEntities(match[1]) : "";
 }
 
