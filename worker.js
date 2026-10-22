@@ -26,10 +26,14 @@ function decodeXML(text) {
     .replace(/&quot;/g, '"')
     .replace(/&apos;/g, "'")
     .replace(/&#39;/g, "'")
-    .replace(/&#(\d+);/g, (_, code) => String.fromCodePoint(Number(code)))
-    .replace(/&#x([0-9a-f]+);/gi, (_, code) =>
-      String.fromCodePoint(parseInt(code, 16))
-    );
+    .replace(/&#(\d+);/g, (_, code) => {
+      try { return String.fromCodePoint(Number(code)); }
+      catch { return ""; }
+    })
+    .replace(/&#x([0-9a-f]+);/gi, (_, code) => {
+      try { return String.fromCodePoint(parseInt(code, 16)); }
+      catch { return ""; }
+    });
 }
 
 function getTag(item, tag) {
@@ -56,6 +60,35 @@ function getTag(item, tag) {
   return "";
 }
 
+function getImageUrl(item) {
+  // media:content, media:thumbnail, enclosure는
+  // 이미지 URL이 태그의 url 속성에 들어가는 경우가 많습니다.
+  const tags = [
+    /<media:content\b[^>]*>/i,
+    /<media:thumbnail\b[^>]*>/i,
+    /<enclosure\b[^>]*>/i
+  ];
+
+  for (const pattern of tags) {
+    const match = item.match(pattern);
+    if (!match) continue;
+
+    const urlMatch = match[0].match(/\burl\s*=\s*["']([^"']+)["']/i);
+    if (urlMatch && /^https?:\/\//i.test(urlMatch[1])) {
+      return decodeXML(urlMatch[1]);
+    }
+  }
+
+  // 본문 안에 <img src="...">가 있는 RSS도 확인합니다.
+  const htmlImage = item.match(
+    /<img\b[^>]*\bsrc\s*=\s*["'](https?:\/\/[^"']+)["']/i
+  );
+
+  if (htmlImage) return decodeXML(htmlImage[1]);
+
+  return "";
+}
+
 function parseRSS(xml, source) {
   const items = xml.match(/<item\b[^>]*>[\s\S]*?<\/item\s*>/gi) || [];
 
@@ -65,29 +98,15 @@ function parseRSS(xml, source) {
     const description = getTag(item, "description");
     const pubDate = getTag(item, "pubDate");
 
-    // RSS에 이미지가 들어 있는 경우에만 이미지 주소를 추출합니다.
-    const image =
-      getTag(item, "media:content") ||
-      getTag(item, "media:thumbnail") ||
-      getTag(item, "enclosure");
-
-    const imageUrl = (() => {
-      const urlMatch = image.match(/url=["']([^"']+)["']/i);
-      if (urlMatch) return urlMatch[1];
-
-      if (/^https?:\/\//i.test(image)) return image;
-      return "";
-    })();
-
     return {
       title,
       description: description.slice(0, 1200),
       url: link,
       domain: source,
       date: pubDate,
-      image: imageUrl
+      image: getImageUrl(item)
     };
-  }).filter((article) => article.title && article.url);
+  }).filter(article => article.title && article.url);
 }
 
 async function fetchFeed(feed) {
@@ -130,16 +149,13 @@ function getArticleInput(body) {
 }
 
 function extractAIText(result) {
-  // 일반적인 Workers AI 텍스트 모델 응답
   if (typeof result === "string") return result;
   if (typeof result?.response === "string") return result.response;
   if (typeof result?.output_text === "string") return result.output_text;
 
-  // 일부 모델은 다른 응답 구조를 반환할 수 있습니다.
   if (Array.isArray(result?.choices)) {
     const choice = result.choices[0];
     const content = choice?.message?.content ?? choice?.text;
-
     if (typeof content === "string") return content;
   }
 
@@ -158,27 +174,38 @@ async function summarizeArticle(env, article) {
     throw new Error("Cloudflare Workers AI 바인딩 AI를 찾을 수 없어요.");
   }
 
-  // 먼저 비교적 가벼운 텍스트 모델을 사용합니다.
   const result = await env.AI.run(
     "@cf/meta/llama-3.3-70b-instruct-fp8-fast",
     {
       messages: [
         {
           role: "system",
-          content: `너는 한국 초등학교 6학년도 이해할 수 있게 경제 뉴스를 설명하는 도우미야.
+          content: `너는 한국 초등학교 6학년도 이해할 수 있게 뉴스를 설명하는 도우미야.
 반드시 한국어로 답해.
-기사에 없는 사실을 지어내지 마.
-반드시 아래 JSON 형식으로만 답해. 마크다운이나 코드블록은 쓰지 마.
-{"article":"쉬운 설명","terms":[{"term":"경제 용어","definition":"쉬운 뜻"}]}
-article에는 기사의 핵심을 3~5개의 짧은 문장으로 설명해.
-terms에는 어려운 용어를 최대 3개 넣어. 없으면 빈 배열 []을 사용해.`
+기사 제목과 설명에 있는 정보만 사용하고, 기사에 없는 사실을 지어내지 마.
+반드시 JSON 형식으로만 답해. 마크다운이나 코드블록은 쓰지 마.
+
+출력 형식:
+{"article":"쉬운 설명","terms":[{"term":"어려운 단어","definition":"쉬운 뜻"}]}
+
+규칙:
+1. article은 핵심 내용을 최소 7개의 짧은 문장으로 설명해.
+2. 각 문장은 줄바꿈으로 구분해. 한 문장에 너무 많은 내용을 넣지 마.
+3. 초등학교 6학년이 이해할 수 있는 쉬운 표현을 사용해.
+4. 원인과 결과, 관련된 사람이나 기관, 경제에 미치는 영향을 기사에 나온 범위에서 설명해.
+5. 정보가 부족한 부분은 추측하지 마.
+6. terms에는 본문에 실제로 등장하는 어려운 단어를 최대 5개 넣어.
+7. term은 article 안에 실제로 적힌 단어와 똑같이 써야 해. 그래야 본문에서 형광펜으로 강조할 수 있어.
+8. definition은 해당 단어의 뜻을 초등학교 6학년도 이해할 수 있게 설명해.
+9. 적합한 어려운 단어가 없으면 terms는 빈 배열 []로 만들어.
+10. JSON 바깥에는 다른 문장을 쓰지 마.`
         },
         {
           role: "user",
           content: `기사 제목: ${article.title}\n기사 설명: ${article.description || "추가 설명 없음"}`
         }
       ],
-      max_tokens: 700,
+      max_tokens: 1200,
       temperature: 0.2
     }
   );
@@ -186,7 +213,6 @@ terms에는 어려운 용어를 최대 3개 넣어. 없으면 빈 배열 []을 �
   const output = extractAIText(result).trim();
 
   if (!output) {
-    // 실제 응답 구조를 확인할 수 있도록 서버 로그에 남깁니다.
     console.error("AI returned no text:", JSON.stringify(result).slice(0, 3000));
 
     if (result?.success === false && Array.isArray(result?.errors)) {
@@ -195,16 +221,12 @@ terms에는 어려운 용어를 최대 3개 넣어. 없으면 빈 배열 []을 �
         .filter(Boolean)
         .join("; ");
 
-      throw new Error(
-        details
-          ? `Cloudflare AI 오류: ${details}`
-          : "Cloudflare AI가 요청을 처리하지 못했어요. Cloudflare 로그를 확인해 주세요."
-      );
+      throw new Error(details
+        ? `Cloudflare AI 오류: ${details}`
+        : "Cloudflare AI가 답변하지 않았어요. Worker 로그를 확인해 주세요.");
     }
 
-    throw new Error(
-      "AI 응답에 설명 문장이 없어요. Cloudflare 대시보드의 Worker 로그를 확인해 주세요."
-    );
+    throw new Error("AI가 설명을 반환하지 않았어요.");
   }
 
   const cleaned = output
@@ -217,12 +239,7 @@ terms에는 어려운 용어를 최대 3개 넣어. 없으면 빈 배열 []을 �
 
   if (first < 0 || last <= first) {
     console.error("AI returned non-JSON text:", cleaned.slice(0, 2000));
-
-    // JSON을 만들지 못한 경우에도 실제 문장이 있다면 설명으로 보여 줍니다.
-    return {
-      article: cleaned.slice(0, 4000),
-      terms: []
-    };
+    throw new Error("AI 답변 형식이 올바르지 않아요. 다시 시도해 주세요.");
   }
 
   let parsed;
@@ -231,9 +248,7 @@ terms에는 어려운 용어를 최대 3개 넣어. 없으면 빈 배열 []을 �
     parsed = JSON.parse(cleaned.slice(first, last + 1));
   } catch (error) {
     console.error("AI JSON parse error:", String(error));
-    console.error("AI output:", cleaned.slice(0, 2000));
-
-    throw new Error("AI 답변의 형식이 올바르지 않아요. 다시 시도해 주세요.");
+    throw new Error("AI 답변을 읽지 못했어요. 다시 시도해 주세요.");
   }
 
   if (typeof parsed.article !== "string" || !parsed.article.trim()) {
@@ -245,9 +260,11 @@ terms에는 어려운 용어를 최대 3개 넣어. 없으면 빈 배열 []을 �
         .filter(item =>
           item &&
           typeof item.term === "string" &&
-          typeof item.definition === "string"
+          typeof item.definition === "string" &&
+          item.term.trim() &&
+          item.definition.trim()
         )
-        .slice(0, 3)
+        .slice(0, 5)
     : [];
 
   return {
@@ -256,41 +273,71 @@ terms에는 어려운 용어를 최대 3개 넣어. 없으면 빈 배열 []을 �
   };
 }
 
-async function generateArticleImage(env, article) {
-  if (!env.AI) {
-    throw new Error("Cloudflare Workers AI 바인딩 AI를 찾을 수 없어요.");
-  }
+// RSS에 사진이 없을 때 실제 공개 이미지 파일을 검색합니다.
+// 이 기능은 AI 그림을 생성하지 않습니다.
+async function searchArticleImage(title) {
+  const query = String(title || "").trim().slice(0, 180);
 
-  const prompt = [
-    "Create a colorful, friendly editorial illustration for a Korean educational economics news website.",
-    "Polished 2D cartoon illustration, simple composition, suitable for children and teenagers.",
-    "No text, no letters, no logos, no watermark.",
-    "Illustrate this news topic:",
-    article.title,
-    article.description
-  ].filter(Boolean).join("\n").slice(0, 1800);
+  if (!query) return { image: "", page: "" };
 
-  const result = await env.AI.run(
-    "@cf/black-forest-labs/flux-1-schnell",
-    {
-      prompt,
-      steps: 4
+  const params = new URLSearchParams({
+    action: "query",
+    generator: "search",
+    gsrsearch: query,
+    gsrnamespace: "6",
+    gsrlimit: "8",
+    prop: "imageinfo",
+    iiprop: "url",
+    iiurlwidth: "1000",
+    format: "json",
+    origin: "*"
+  });
+
+  try {
+    const response = await fetch(
+      "https://commons.wikimedia.org/w/api.php?" + params.toString(),
+      {
+        headers: {
+          "User-Agent": "MANGO-NEWS/1.0 (educational news website)"
+        },
+        signal: AbortSignal.timeout(8000)
+      }
+    );
+
+    if (!response.ok) {
+      console.error("Wikimedia image search error:", response.status);
+      return { image: "", page: "" };
     }
-  );
 
-  if (!result || typeof result.image !== "string" || !result.image) {
-    console.error("AI image response was empty:", JSON.stringify(result).slice(0, 1000));
-    throw new Error("AI가 그림 데이터를 반환하지 않았어요.");
+    const data = await response.json();
+    const pages = Object.values(data?.query?.pages || {});
+
+    const candidates = pages
+      .filter(page => {
+        const imageInfo = page.imageinfo?.[0];
+        const imageUrl = imageInfo?.thumburl || imageInfo?.url || "";
+
+        return imageUrl &&
+          /^https:\/\/upload\.wikimedia\.org\//i.test(imageUrl) &&
+          /\.(jpg|jpeg|png|webp|gif)(\?|$)/i.test(imageUrl);
+      })
+      .map(page => ({
+        image: page.imageinfo[0].thumburl || page.imageinfo[0].url,
+        page: page.imageinfo[0].descriptionurl || page.canonicalurl || ""
+      }));
+
+    return candidates[0] || { image: "", page: "" };
+  } catch (error) {
+    console.error("Wikimedia image search failed:", String(error));
+    return { image: "", page: "" };
   }
-
-  return { image: result.image };
 }
 
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
 
-    // 최신 뉴스 API
+    // 뉴스 목록 API
     if (url.pathname === "/api/news") {
       if (request.method !== "GET") {
         return jsonResponse({ error: "GET 요청만 사용할 수 있어요." }, 405);
@@ -369,6 +416,28 @@ export default {
       }
     }
 
+    // 기사 제목으로 실제 이미지 검색
+    if (url.pathname === "/api/image-search") {
+      if (request.method !== "GET") {
+        return jsonResponse({ error: "GET 요청만 사용할 수 있어요." }, 405);
+      }
+
+      const title = url.searchParams.get("title") || "";
+
+      if (!title.trim()) {
+        return jsonResponse({ error: "기사 제목이 필요해요." }, 400);
+      }
+
+      const result = await searchArticleImage(title);
+
+      return new Response(JSON.stringify(result), {
+        headers: {
+          "Content-Type": "application/json; charset=utf-8",
+          "Cache-Control": "public, max-age=3600"
+        }
+      });
+    }
+
     // AI 쉬운 설명 API
     if (url.pathname === "/api/summarize") {
       if (request.method !== "POST") {
@@ -385,30 +454,16 @@ export default {
         console.error("Summarize API error:", error?.stack || String(error));
 
         return jsonResponse({
-          error: String(error?.message || "AI 요약에 실패했어요.")
+          error: String(error?.message || "AI 설명을 만들지 못했어요.")
         }, 500);
       }
     }
 
-    // AI 기사 그림 API
+    // AI 그림 생성 API는 더 이상 사용하지 않습니다.
     if (url.pathname === "/api/generate-image") {
-      if (request.method !== "POST") {
-        return jsonResponse({ error: "POST 요청만 사용할 수 있어요." }, 405);
-      }
-
-      try {
-        const body = await readRequestBody(request);
-        const article = getArticleInput(body);
-        const result = await generateArticleImage(env, article);
-
-        return jsonResponse(result);
-      } catch (error) {
-        console.error("Image API error:", error?.stack || String(error));
-
-        return jsonResponse({
-          error: String(error?.message || "AI 그림 생성에 실패했어요.")
-        }, 500);
-      }
+      return jsonResponse({
+        error: "AI 그림 생성 기능은 사용하지 않아요. 실제 뉴스 이미지를 검색해 주세요."
+      }, 410);
     }
 
     // 웹사이트 파일 제공
@@ -420,9 +475,7 @@ export default {
       "ASSETS 바인딩을 찾을 수 없어요. Cloudflare 설정을 확인해 주세요.",
       {
         status: 500,
-        headers: {
-          "Content-Type": "text/plain; charset=utf-8"
-        }
+        headers: { "Content-Type": "text/plain; charset=utf-8" }
       }
     );
   }
