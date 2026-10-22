@@ -719,7 +719,43 @@
 
     const imageCache = new Map();
 
-    function cleanText(value) {
+   
+function cleanText(value) {
+  const replacements = {
+    "突然": "갑자기",
+    "警察": "경찰",
+    "重傷": "심한 상처",
+    "救護措置": "피해자를 돕는 조치",
+    "救護": "구호",
+    "措置": "조치",
+    "事件": "사건",
+    "事故": "사고",
+    "原因": "원인",
+    "影響": "영향",
+    "政府": "정부",
+    "經濟": "경제",
+    "株式": "주식",
+    "價格": "가격",
+    "增加": "증가",
+    "減少": "감소",
+    "確認": "확인",
+    "發生": "발생",
+    "決定": "결정",
+    "調査": "조사",
+    "急発進": "급출발",
+    "入件": "입건"
+  };
+
+  let result = String(value || "")
+    .replace(/[\u200B-\u200D\uFEFF]/g, "");
+
+  for (const [original, replacement] of Object.entries(replacements)) {
+    result = result.replaceAll(original, replacement);
+  }
+
+  return result.trim();
+}
+
       return String(value || "")
         .replace(/[\u200B-\u200D\uFEFF]/g, "")
         .trim();
@@ -1330,8 +1366,8 @@
           term.textContent = item.term;
 
           const definition = document.createElement("span");
-          definition.textContent = item.definition;
-
+term.textContent = cleanText(item.term);
+definition.textContent = cleanText(item.definition);
           row.append(term, definition);
           elements.termsList.appendChild(row);
         });
