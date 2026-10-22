@@ -5,20 +5,13 @@ const MAX_ARTICLES = 100;
 const FEED_TIMEOUT_MS = 7000;
 const AI_MODEL = "@cf/meta/llama-3.3-70b-instruct-fp8-fast";
 
-// 경제·주식 전문 피드를 먼저 수집합니다.
-// 각 출처가 실제로 연결되지 않더라도 다른 출처는 계속 시도합니다.
 const NEWS_FEEDS = [
+  // 국내 경제·주식 전문 뉴스
   {
     name: "한국경제 증권",
     region: "국내",
     priority: 1,
     url: "https://www.hankyung.com/feed/finance"
-  },
-  {
-    name: "매일경제 증권",
-    region: "국내",
-    priority: 1,
-    url: "https://www.mk.co.kr/rss/50200011/"
   },
   {
     name: "한국경제 경제",
@@ -27,29 +20,38 @@ const NEWS_FEEDS = [
     url: "https://www.hankyung.com/feed/economy"
   },
   {
+    name: "매일경제 증권",
+    region: "국내",
+    priority: 1,
+    url: "https://www.mk.co.kr/rss/50200011/"
+  },
+  {
     name: "매일경제 경제",
     region: "국내",
     priority: 1,
     url: "https://www.mk.co.kr/rss/30100041/"
   },
-  {
-    name: "한국경제 전체뉴스",
-    region: "국내",
-    priority: 2,
-    url: "https://www.hankyung.com/feed/all-news"
-  },
-  {
-    name: "매일경제 기업·경영",
-    region: "국내",
-    priority: 2,
-    url: "https://www.mk.co.kr/rss/50100032/"
-  },
+  // 국내 종합 뉴스
   {
     name: "연합뉴스",
     region: "국내",
     priority: 3,
     url: "https://www.yna.co.kr/rss/news.xml"
   },
+  // 해외 경제·주식 뉴스 검색 피드
+  {
+    name: "해외 경제",
+    region: "해외",
+    priority: 1,
+    url: "https://news.google.com/rss/search?q=business+OR+economy+OR+inflation+OR+interest+rates&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    name: "해외 주식",
+    region: "해외",
+    priority: 1,
+    url: "https://news.google.com/rss/search?q=stock+market+OR+stocks+OR+Nasdaq+OR+S%26P+500&hl=en-US&gl=US&ceid=US:en"
+  },
+  // 해외 일반 뉴스
   {
     name: "BBC World",
     region: "해외",
@@ -57,16 +59,10 @@ const NEWS_FEEDS = [
     url: "https://feeds.bbci.co.uk/news/world/rss.xml"
   },
   {
-    name: "Reuters Business",
+    name: "Korea.net",
     region: "해외",
-    priority: 2,
-    url: "https://news.google.com/rss/search?q=when:7d+site:reuters.com/business&ceid=US:en&hl=en-US&gl=US"
-  },
-  {
-    name: "Reuters Markets",
-    region: "해외",
-    priority: 2,
-    url: "https://news.google.com/rss/search?q=when:7d+site:reuters.com/markets+-site:reuters.com/markets/companies+-site:reuters.com/markets/quote&ceid=US:en&hl=en-US&gl=US"
+    priority: 4,
+    url: "https://www.korea.net/RSS/News.xml"
   }
 ];
 
@@ -90,12 +86,18 @@ function decodeXML(value = "") {
     .replace(/&apos;/g, "'")
     .replace(/&#39;/g, "'")
     .replace(/&#(\d+);/g, (_, n) => {
-      try { return String.fromCodePoint(Number(n)); }
-      catch { return ""; }
+      try {
+        return String.fromCodePoint(Number(n));
+      } catch {
+        return "";
+      }
     })
     .replace(/&#x([0-9a-f]+);/gi, (_, n) => {
-      try { return String.fromCodePoint(parseInt(n, 16)); }
-      catch { return ""; }
+      try {
+        return String.fromCodePoint(parseInt(n, 16));
+      } catch {
+        return "";
+      }
     })
     .replace(/<[^>]*>/g, "")
     .trim();
@@ -104,9 +106,11 @@ function decodeXML(value = "") {
 function getTag(item, tag) {
   const safeTag = tag.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   const pattern = new RegExp(
-    "<" + safeTag + "\\b[^>]*>([\\s\\S]*?)</" + safeTag + "\\s*>",
+    "<" + safeTag + "\\b[^>]*>([\\s\\S]*?)</" +
+    safeTag + "\\s*>",
     "i"
   );
+
   const match = item.match(pattern);
   return match ? decodeXML(match[1]) : "";
 }
@@ -115,7 +119,7 @@ function getImageUrl(item) {
   const patterns = [
     /<media:content\b[^>]*>/i,
     /<media:thumbnail\b[^>]*>/i,
-    /<enclosure\b[^>]*>/
+    /<enclosure\b[^>]*>/i
   ];
 
   for (const pattern of patterns) {
@@ -123,6 +127,7 @@ function getImageUrl(item) {
     if (!match) continue;
 
     const urlMatch = match[0].match(/\burl\s*=\s*["']([^"']+)["']/i);
+
     if (urlMatch && /^https?:\/\//i.test(urlMatch[1])) {
       return decodeXML(urlMatch[1]);
     }
@@ -136,41 +141,43 @@ function getImageUrl(item) {
 }
 
 function getCategory(article) {
-  const title = (
+  const text = (
     (article.originalTitle || article.title || "") + " " +
     (article.description || "")
   ).toLowerCase();
 
-  // 주식 분류를 일반 경제보다 먼저 검사합니다.
-  if (/주식|증시|코스피|코스닥|상장|주가|배당|공모주|선물시장|나스닥|다우존스|s&p 500|stock market|stocks|shares|equities|wall street|nasdaq/.test(title)) {
+  // 주식은 경제보다 먼저 분류합니다.
+  if (/주식|증시|코스피|코스닥|상장|주가|배당|공모주|나스닥|다우존스|s&p 500|stock market|stocks|shares|equities|wall street|nasdaq|dow jones/.test(text)) {
     return "주식";
   }
 
-  if (/경제|금리|물가|환율|은행|금융|수출|수입|무역|부동산|고용|실업|경기|소비자물가|국내총생산|gdp|inflation|interest rate|economy|economic|business|finance|market outlook|central bank|bond yield|tariff/.test(title)) {
+  if (/경제|금리|물가|환율|은행|금융|수출|수입|무역|부동산|고용|실업|경기|소비자물가|국내총생산|gdp|inflation|interest rate|economy|economic|business|finance|central bank|bond yield|tariff/.test(text)) {
     return "경제";
   }
 
-  if (/인공지능|\bai\b|반도체|로봇|스마트폰|컴퓨터|인터넷|우주|과학|기술|소프트웨어|technology|artificial intelligence|science|chipmaker|cybersecurity/.test(title)) {
+  if (/인공지능|\bai\b|반도체|로봇|스마트폰|컴퓨터|인터넷|우주|과학|기술|소프트웨어|technology|artificial intelligence|science|chipmaker|cybersecurity/.test(text)) {
     return "기술";
   }
 
-  if (/미국|중국|일본|북한|유럽|러시아|우크라이나|중동|전쟁|국제|세계|해외|international|world|united states|china|japan|europe|middle east/.test(title)) {
-    return "국제";
-  }
-
-  if (/대통령|국회|국회의원|정당|선거|정부|장관|정치|법안|president|election|parliament|politics|political/.test(title)) {
+  if (/대통령|국회|국회의원|정당|선거|정부|장관|정치|법안|president|election|parliament|politics|political/.test(text)) {
     return "정치";
   }
 
-  if (/사건|사고|경찰|법원|학교|학생|교육|병원|건강|환경|화재|교통|범죄|시민|지역|school|court|health|environment/.test(title)) {
+  if (/사건|사고|경찰|법원|학교|학생|교육|병원|건강|환경|화재|교통|범죄|시민|지역|school|court|health|environment/.test(text)) {
     return "사회";
+  }
+
+  if (/미국|중국|일본|북한|유럽|러시아|우크라이나|중동|전쟁|국제|세계|해외|international|world|united states|china|japan|europe|middle east/.test(text)) {
+    return "국제";
   }
 
   return "일반";
 }
 
 function parseRSS(xml, feed) {
-  const items = xml.match(/<item\b[^>]*>[\s\S]*?<\/item\s*>/gi) || [];
+  const items = xml.match(
+    /<item\b[^>]*>[\s\S]*?<\/item\s*>/gi
+  ) || [];
 
   return items.map(item => {
     const title = getTag(item, "title");
@@ -194,7 +201,10 @@ function parseRSS(xml, feed) {
 
 async function fetchFeed(feed) {
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), FEED_TIMEOUT_MS);
+  const timer = setTimeout(
+    () => controller.abort(),
+    FEED_TIMEOUT_MS
+  );
 
   try {
     const response = await fetch(feed.url, {
@@ -220,7 +230,10 @@ async function fetchFeed(feed) {
 
 async function getCachedNews() {
   try {
-    const cached = await caches.default.match(new Request(CACHE_KEY));
+    const cached = await caches.default.match(
+      new Request(CACHE_KEY)
+    );
+
     if (!cached) return null;
 
     const data = await cached.json();
@@ -252,6 +265,20 @@ function compareDate(a, b) {
   return (Date.parse(b.date) || 0) - (Date.parse(a.date) || 0);
 }
 
+function categoryRank(category) {
+  const ranks = {
+    "경제": 0,
+    "주식": 1,
+    "기술": 2,
+    "국제": 3,
+    "사회": 4,
+    "정치": 5,
+    "일반": 6
+  };
+
+  return ranks[category] ?? 6;
+}
+
 async function getNews(ctx, forceRefresh = false) {
   const cached = await getCachedNews();
 
@@ -259,7 +286,10 @@ async function getNews(ctx, forceRefresh = false) {
     return jsonResponse(cached);
   }
 
-  const feedResults = await Promise.all(NEWS_FEEDS.map(fetchFeed));
+  const feedResults = await Promise.all(
+    NEWS_FEEDS.map(fetchFeed)
+  );
+
   const unique = new Map();
 
   for (const article of feedResults.flat()) {
@@ -275,26 +305,23 @@ async function getNews(ctx, forceRefresh = false) {
 
   const allArticles = Array.from(unique.values());
 
-  // 전문 경제·주식 피드의 기사를 우선하고,
-  // 같은 우선순위에서는 최신 기사를 먼저 배치합니다.
+  // 경제·주식 전문 피드의 기사를 우선하고,
+  // 같은 우선순위에서는 경제·주식 및 최신 기사부터 보여 줍니다.
   allArticles.sort((a, b) => {
-    const categoryRank = category => {
-      if (category === "경제" || category === "주식") return 0;
-      if (category === "기술" || category === "국제") return 1;
-      if (category === "사회") return 2;
-      if (category === "정치") return 3;
-      return 4;
-    };
+    const priorityDiff =
+      (a.feedPriority || 3) - (b.feedPriority || 3);
 
-    const priorityDiff = (a.feedPriority || 3) - (b.feedPriority || 3);
     if (priorityDiff !== 0) return priorityDiff;
 
-    const categoryDiff = categoryRank(a.category) - categoryRank(b.category);
+    const categoryDiff =
+      categoryRank(a.category) - categoryRank(b.category);
+
     if (categoryDiff !== 0) return categoryDiff;
 
     return compareDate(a, b);
   });
 
+  // 경제·주식 기사가 부족하면 다른 분야의 기사로 채웁니다.
   const articles = allArticles.slice(0, MAX_ARTICLES);
 
   if (!articles.length) {
@@ -310,6 +337,7 @@ async function getNews(ctx, forceRefresh = false) {
   }
 
   const categoryCounts = {};
+
   for (const article of articles) {
     categoryCounts[article.category] =
       (categoryCounts[article.category] || 0) + 1;
@@ -318,8 +346,12 @@ async function getNews(ctx, forceRefresh = false) {
   const data = {
     articles,
     count: articles.length,
-    domesticCount: articles.filter(a => a.region === "국내").length,
-    internationalCount: articles.filter(a => a.region === "해외").length,
+    domesticCount: articles.filter(
+      article => article.region === "국내"
+    ).length,
+    internationalCount: articles.filter(
+      article => article.region === "해외"
+    ).length,
     categoryCounts,
     updatedAt: new Date().toISOString()
   };
@@ -330,14 +362,21 @@ async function getNews(ctx, forceRefresh = false) {
 
 function extractAIText(result) {
   if (typeof result === "string") return result;
-  if (typeof result?.response === "string") return result.response;
-  if (typeof result?.output_text === "string") return result.output_text;
+
+  if (typeof result?.response === "string") {
+    return result.response;
+  }
+
+  if (typeof result?.output_text === "string") {
+    return result.output_text;
+  }
 
   if (Array.isArray(result?.choices)) {
     const choice = result.choices[0];
     const content = choice?.message?.content ?? choice?.text;
 
     if (typeof content === "string") return content;
+
     if (Array.isArray(content)) {
       return content.map(item => item?.text || "").join("\n");
     }
@@ -384,7 +423,10 @@ async function runAI(env, messages, maxTokens = 1800) {
   }
 
   const output = extractAIText(result);
-  if (!output.trim()) throw new Error("AI 응답이 비어 있어요.");
+
+  if (!output.trim()) {
+    throw new Error("AI 응답이 비어 있어요.");
+  }
 
   return output;
 }
@@ -398,6 +440,8 @@ async function summarizeArticle(env, article) {
 기사에 없는 사실, 인물, 날짜, 숫자를 만들지 마.
 최소 5개의 짧은 문장으로 핵심을 설명해.
 어려운 단어는 최대 5개 골라 쉬운 말로 풀이해.
+경제·주식 기사는 금리, 주가, 기업 실적 등의 의미를 쉽게 설명해.
+투자 수익을 보장하거나 특정 주식을 사라고 권하지 마.
 자연스러운 한국어를 사용해.
 JSON 형식:
 {"titleKo":"쉬운 제목","article":"쉬운 설명","terms":[{"term":"어려운 단어","definition":"쉬운 뜻"}]}`
@@ -412,21 +456,25 @@ JSON 형식:
   ], 1800);
 
   const data = parseJSON(raw);
+
   const clean = value => String(value || "")
     .replace(/[\u200B-\u200D\uFEFF]/g, "")
     .replace(/\s+/g, " ")
     .trim();
 
   const articleText = clean(data.article || data.summary);
+
   if (articleText.length < 20) {
     throw new Error("AI가 충분한 기사 설명을 만들지 못했어요.");
   }
 
   const terms = Array.isArray(data.terms)
     ? data.terms
-        .filter(item => item &&
+        .filter(item =>
+          item &&
           typeof item.term === "string" &&
-          typeof item.definition === "string")
+          typeof item.definition === "string"
+        )
         .map(item => ({
           term: clean(item.term),
           definition: clean(item.definition)
@@ -444,6 +492,7 @@ JSON 형식:
 
 async function searchArticleImage(title) {
   const query = String(title || "").trim().slice(0, 160);
+
   if (!query) return { image: "", page: "" };
 
   const params = new URLSearchParams({
@@ -478,12 +527,14 @@ async function searchArticleImage(title) {
     const candidates = pages.filter(page => {
       const info = page.imageinfo?.[0];
       const image = info?.thumburl || info?.url || "";
+
       return /^https:\/\/upload\.wikimedia\.org\//i.test(image);
     });
 
     if (!candidates.length) return { image: "", page: "" };
 
     const info = candidates[0].imageinfo[0];
+
     return {
       image: info.thumburl || info.url || "",
       page: info.descriptionurl || ""
@@ -502,13 +553,19 @@ export default {
 
     if (url.pathname === "/api/news") {
       if (request.method !== "GET") {
-        return jsonResponse({ error: "GET 요청만 사용할 수 있어요." }, 405);
+        return jsonResponse({
+          error: "GET 요청만 사용할 수 있어요."
+        }, 405);
       }
 
       try {
-        return await getNews(ctx, url.searchParams.get("refresh") === "1");
+        return await getNews(
+          ctx,
+          url.searchParams.get("refresh") === "1"
+        );
       } catch (error) {
         console.error("뉴스 API 오류:", error?.stack || String(error));
+
         const cached = await getCachedNews();
 
         if (cached?.articles?.length) {
@@ -524,39 +581,58 @@ export default {
 
     if (url.pathname === "/api/summarize") {
       if (request.method !== "POST") {
-        return jsonResponse({ error: "POST 요청만 사용할 수 있어요." }, 405);
+        return jsonResponse({
+          error: "POST 요청만 사용할 수 있어요."
+        }, 405);
       }
 
       try {
         const body = await request.json();
-        const title = String(body?.originalTitle || body?.title || "")
-          .trim().slice(0, 500);
-        const description = String(body?.description || "")
-          .trim().slice(0, 3000);
+
+        const title = String(
+          body?.originalTitle || body?.title || ""
+        ).trim().slice(0, 500);
+
+        const description = String(
+          body?.description || ""
+        ).trim().slice(0, 3000);
 
         if (!title) {
-          return jsonResponse({ error: "기사 제목이 없어요." }, 400);
+          return jsonResponse({
+            error: "기사 제목이 없어요."
+          }, 400);
         }
 
-        return jsonResponse(
-          await summarizeArticle(env, { title, description })
-        );
+        const result = await summarizeArticle(env, {
+          title,
+          description
+        });
+
+        return jsonResponse(result);
       } catch (error) {
         console.error("AI 요약 오류:", error?.stack || String(error));
+
         return jsonResponse({
-          error: String(error?.message || "AI 설명을 만들지 못했어요.")
+          error: String(
+            error?.message || "AI 설명을 만들지 못했어요."
+          )
         }, 500);
       }
     }
 
     if (url.pathname === "/api/image-search") {
       if (request.method !== "GET") {
-        return jsonResponse({ error: "GET 요청만 사용할 수 있어요." }, 405);
+        return jsonResponse({
+          error: "GET 요청만 사용할 수 있어요."
+        }, 405);
       }
 
       const title = url.searchParams.get("title") || "";
+
       if (!title.trim()) {
-        return jsonResponse({ error: "기사 제목이 필요해요." }, 400);
+        return jsonResponse({
+          error: "기사 제목이 필요해요."
+        }, 400);
       }
 
       return jsonResponse(await searchArticleImage(title));
@@ -568,11 +644,15 @@ export default {
       }, 410);
     }
 
-    if (env.ASSETS) return env.ASSETS.fetch(request);
+    if (env.ASSETS) {
+      return env.ASSETS.fetch(request);
+    }
 
     return new Response("ASSETS 바인딩을 찾을 수 없어요.", {
       status: 500,
-      headers: { "Content-Type": "text/plain; charset=utf-8" }
+      headers: {
+        "Content-Type": "text/plain; charset=utf-8"
+      }
     });
   }
 };
