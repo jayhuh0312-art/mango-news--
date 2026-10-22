@@ -3,301 +3,277 @@ const CACHE_KEY = "mango-news-articles-v3";
 const MAX_ARTICLES = 500;
 const CATEGORY_LIMIT = 10;
 
-const CATEGORIES = [
+const CATEGORY_QUERIES = [
   {
-    id: "stock",
     name: "주식·투자",
-    words: ["주식", "증시", "코스피", "코스닥", "주가", "투자", "상장", "나스닥", "증권", "주주", "반도체"]
+    query: '(주식 OR 증시 OR 코스피 OR 코스닥 OR 투자 OR 주가) sourcelang:korean'
   },
   {
-    id: "finance",
     name: "금융·은행",
-    words: ["금리", "은행", "대출", "금융", "환율", "원화", "달러", "예금", "한국은행", "채권", "이자"]
+    query: '(금융 OR 은행 OR 금리 OR 대출 OR 환율 OR 채권) sourcelang:korean'
   },
   {
-    id: "prices",
     name: "물가·생활경제",
-    words: ["물가", "소비자물가", "가격", "휘발유", "기름값", "생활비", "식품", "소비", "인플레이션"]
+    query: '(물가 OR 소비자물가 OR 인플레이션 OR 생활비 OR 소비 OR 유가) sourcelang:korean'
   },
   {
-    id: "business",
     name: "기업·산업",
-    words: ["기업", "산업", "삼성전자", "현대차", "실적", "매출", "공장", "수출", "제조업", "배터리"]
+    query: '(기업 OR 산업 OR 반도체 OR 자동차 OR 삼성전자 OR 수출) sourcelang:korean'
   },
   {
-    id: "global",
     name: "국제경제·무역",
-    words: ["미국", "중국", "일본", "유럽", "무역", "관세", "수입", "세계경제", "유가", "국제경제"]
+    query: '(국제경제 OR 무역 OR 관세 OR 미국경제 OR 중국경제 OR 세계경제) sourcelang:korean'
   },
   {
-    id: "jobs",
     name: "부동산·일자리·정책",
-    words: ["부동산", "아파트", "집값", "전세", "월세", "취업", "일자리", "고용", "정부", "정책", "주택"]
+    query: '(부동산 OR 집값 OR 취업 OR 일자리 OR 고용 OR 경제정책) sourcelang:korean'
+  },
+  {
+    name: "전체 경제",
+    query: '(경제 OR 금융시장 OR 경제성장 OR 경기전망 OR 기업실적) sourcelang:korean'
   }
 ];
 
-function json(data, status = 200) {
+const CATEGORY_KEYWORDS = {
+  "주식·투자": [
+    "주식", "증시", "코스피", "코스닥", "투자", "주가", "상장", "주주"
+  ],
+  "금융·은행": [
+    "금융", "은행", "금리", "대출", "환율", "채권", "예금", "중앙은행"
+  ],
+  "물가·생활경제": [
+    "물가", "인플레이션", "생활비", "소비자물가", "유가", "소비", "가격"
+  ],
+  "기업·산업": [
+    "기업", "산업", "반도체", "삼성전자", "자동차", "수출", "공장", "기술"
+  ],
+  "국제경제·무역": [
+    "국제경제", "무역", "관세", "미국경제", "중국경제", "세계경제",
+    "수입", "달러", "유럽", "국제"
+  ],
+  "부동산·일자리·정책": [
+    "부동산", "집값", "취업", "일자리", "고용", "경제정책", "아파트",
+    "주택", "청년고용"
+  ]
+};
+
+function jsonResponse(data, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
     headers: {
       "Content-Type": "application/json; charset=utf-8",
-      "Cache-Control": "no-store",
-      "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-      "Access-Control-Allow-Headers": "Content-Type"
+      "Cache-Control": "no-store"
     }
   });
 }
 
-function clean(value) {
-  return String(value || "")
+function cleanText(value) {
+  if (typeof value !== "string") {
+    return "";
+  }
+
+  return value
     .replace(/<[^>]*>/g, " ")
     .replace(/\s+/g, " ")
     .trim();
 }
 
-function classify(article) {
-  const text = `${article.title || ""} ${article.description || ""}`;
+function getCategory(article) {
+  const text = (
+    (article.title || "") + " " +
+    (article.description || "")
+  ).toLowerCase();
 
-  return CATEGORIES
-    .filter(category =>
-      category.words.some(word => text.includes(word.toLowerCase()))
-    )
-    .map(category => category.id);
-}
-
-function getDate(item) {
-  if (item.seendate) {
-    const date = new Date(item.seendate);
-
-    if (!Number.isNaN(date.getTime())) {
-      return date.toISOString();
+  for (const [category, keywords] of Object.entries(CATEGORY_KEYWORDS)) {
+    if (keywords.some(keyword => text.includes(keyword.toLowerCase()))) {
+      return category;
     }
   }
 
-  return item.date || new Date().toISOString();
+  return "전체 경제";
 }
 
 function normalizeArticle(item) {
-  const article = {
-    title: clean(item.title),
-    description: clean(item.description || ""),
-    url: item.url || item.link || "",
-    source: item.domain || item.source || "뉴스 제공처",
-    date: getDate(item),
-    image: item.image || item.socialimage || ""
-  };
+  const title = cleanText(item.title);
+  const description = cleanText(
+    item.description || item.seendate || ""
+  );
 
-  article.categories = classify(article);
-  return article;
+  if (!title) {
+    return null;
+  }
+
+  const url = item.url || "";
+
+  return {
+    id: url || title,
+    title,
+    description,
+    url,
+    source: item.domain || "",
+    publishedAt: item.seendate || "",
+    category: getCategory({
+      title,
+      description
+    }),
+    image: item.socialimage || ""
+  };
 }
 
-async function fetchGdelt(query, maxRecords = 250) {
+async function fetchGdelt(query, maxRecords = 100) {
   const params = new URLSearchParams({
     query,
     mode: "ArtList",
     format: "json",
-    sort: "DateDesc",
     maxrecords: String(maxRecords),
+    sort: "DateDesc",
     timespan: "1d"
   });
 
-  const response = await fetch(
-    `https://api.gdeltproject.org/api/v2/doc/doc?${params.toString()}`,
-    {
-      headers: {
-        "Accept": "application/json"
-      },
-      signal: AbortSignal.timeout(25000)
-    }
-  );
+  const url =
+    "https://api.gdeltproject.org/api/v2/doc/doc?" +
+    params.toString();
 
-  if (!response.ok) {
-    throw new Error(`GDELT 요청 실패: HTTP ${response.status}`);
+  let response;
+
+  try {
+    response = await fetch(url, {
+      headers: {
+        "User-Agent": "MangoNews/1.0"
+      },
+      signal: AbortSignal.timeout(15000)
+    });
+  } catch (error) {
+    throw new Error("GDELT에 연결하지 못했어요: " + error.message);
   }
 
-  const responseText = await response.text();
+  if (!response.ok) {
+    throw new Error(
+      "GDELT 요청 실패: HTTP " + response.status
+    );
+  }
 
   let data;
 
   try {
-    data = JSON.parse(responseText);
+    data = await response.json();
   } catch {
-    throw new Error(
-      `GDELT 응답을 JSON으로 읽지 못했어요: ${responseText.slice(0, 180)}`
-    );
+    throw new Error("GDELT가 올바른 JSON 데이터를 보내지 않았어요.");
   }
 
   if (!Array.isArray(data.articles)) {
-    if (data.error) {
-      throw new Error(`GDELT 오류: ${String(data.error).slice(0, 180)}`);
-    }
-
     return [];
   }
 
   return data.articles
-    .map(item => normalizeArticle({
-      title: item.title,
-      description: item.description || "",
-      url: item.url,
-      domain: item.domain,
-      seendate: item.seendate,
-      socialimage: item.socialimage
-    }))
-    .filter(article => article.title && article.url);
+    .map(normalizeArticle)
+    .filter(Boolean);
 }
 
 async function collectNews() {
-  const queries = [
-    '(경제 OR 주식 OR 금융 OR 물가 OR 기업 OR 부동산 OR 금리 OR 무역 OR 투자) sourcelang:korean',
-    '(주식 OR 증시 OR 코스피 OR 코스닥 OR 투자 OR 증권) sourcelang:korean',
-    '(금리 OR 은행 OR 대출 OR 금융 OR 환율 OR 예금) sourcelang:korean',
-    '(물가 OR 가격 OR 소비자물가 OR 생활비 OR 소비) sourcelang:korean',
-    '(기업 OR 산업 OR 실적 OR 매출 OR 수출 OR 제조업) sourcelang:korean',
-    '(국제경제 OR 무역 OR 관세 OR 수입 OR 세계경제) sourcelang:korean',
-    '(부동산 OR 아파트 OR 취업 OR 일자리 OR 고용 OR 경제정책) sourcelang:korean'
-  ];
-
-  const collected = [];
+  const allArticles = [];
   const errors = [];
 
-  // 요청을 한 번에 너무 많이 보내지 않도록 2개씩 검색
-  for (let i = 0; i < queries.length; i += 2) {
-    const batch = queries.slice(i, i + 2);
+  for (let i = 0; i < CATEGORY_QUERIES.length; i += 2) {
+    const batch = CATEGORY_QUERIES.slice(i, i + 2);
 
     const results = await Promise.allSettled(
-      batch.map(query => fetchGdelt(query, 100))
+      batch.map(item => fetchGdelt(item.query, 100))
     );
 
-    for (const result of results) {
+    for (let j = 0; j < results.length; j++) {
+      const result = results[j];
+
       if (result.status === "fulfilled") {
-        collected.push(...result.value);
+        allArticles.push(...result.value);
       } else {
-        const message = result.reason?.message || String(result.reason);
-        errors.push(message);
-        console.error("GDELT 검색 실패:", message);
+        errors.push(
+          batch[j].name + ": " + result.reason.message
+        );
       }
-    }
-  }
-
-  // 모든 한국어 검색이 실패하면 영어 검색어로 한 번 더 시도
-  if (collected.length === 0) {
-    try {
-      const fallback = await fetchGdelt(
-        '(economy OR stocks OR finance OR inflation OR business OR trade) sourcelang:korean',
-        100
-      );
-
-      collected.push(...fallback);
-    } catch (error) {
-      errors.push(error.message || String(error));
     }
   }
 
   const unique = new Map();
 
-  for (const article of collected) {
-    const previous = unique.get(article.url);
+  for (const article of allArticles) {
+    const key = article.url || article.title;
 
-    if (
-      !previous ||
-      new Date(article.date) > new Date(previous.date)
-    ) {
-      unique.set(article.url, article);
+    if (!unique.has(key)) {
+      unique.set(key, article);
     }
   }
 
-  const articles = [...unique.values()]
-    .sort((a, b) => new Date(b.date) - new Date(a.date));
+  let articles = Array.from(unique.values());
 
   if (articles.length === 0) {
-    const detail = errors.length
-      ? errors.slice(0, 2).join(" / ")
-      : "검색 결과가 0개예요.";
-
-    throw new Error(`뉴스를 가져오지 못했어요. ${detail}`);
+    throw new Error(
+      errors.length
+        ? errors.join(" / ")
+        : "최근 뉴스가 검색되지 않았어요."
+    );
   }
 
-  return articles;
+  articles.sort((a, b) => {
+    return String(b.publishedAt).localeCompare(
+      String(a.publishedAt)
+    );
+  });
+
+  return articles.slice(0, MAX_ARTICLES);
 }
 
 async function readNews(env) {
   if (!env.NEWS_KV) {
     throw new Error(
-      "NEWS_KV 바인딩을 찾을 수 없어요. Cloudflare에서 KV 연결을 확인해 주세요."
+      "NEWS_KV 바인딩이 없어요. Cloudflare에서 KV를 연결해 주세요."
     );
   }
 
   const saved = await env.NEWS_KV.get(CACHE_KEY, "json");
 
-  return {
-    articles: Array.isArray(saved?.articles) ? saved.articles : [],
-    updatedAt: saved?.updatedAt || null
-  };
-}
-
-async function saveNews(env, newArticles) {
-  const previous = await readNews(env);
-  const combined = new Map();
-
-  for (const article of [...previous.articles, ...newArticles]) {
-    if (!article.url) continue;
-
-    const normalized = normalizeArticle(article);
-    const existing = combined.get(normalized.url);
-
-    if (
-      !existing ||
-      new Date(normalized.date) > new Date(existing.date)
-    ) {
-      combined.set(normalized.url, normalized);
-    }
+  if (!Array.isArray(saved)) {
+    return [];
   }
 
-  const result = {
-    articles: [...combined.values()]
-      .sort((a, b) => new Date(b.date) - new Date(a.date))
-      .slice(0, MAX_ARTICLES),
-    updatedAt: new Date().toISOString()
-  };
-
-  await env.NEWS_KV.put(CACHE_KEY, JSON.stringify(result));
-
-  return result;
+  return saved;
 }
 
-async function refreshNews(env) {
-  const fresh = await collectNews();
-  return await saveNews(env, fresh);
+async function saveNews(env, articles) {
+  if (!env.NEWS_KV) {
+    throw new Error(
+      "NEWS_KV 바인딩이 없어요. Cloudflare에서 KV를 연결해 주세요."
+    );
+  }
+
+  await env.NEWS_KV.put(
+    CACHE_KEY,
+    JSON.stringify(articles)
+  );
 }
 
 function buildCategories(articles) {
-  const newest = [...articles].sort(
-    (a, b) => new Date(b.date) - new Date(a.date)
-  );
+  const result = {
+    "전체 경제": [],
+    "주식·투자": [],
+    "금융·은행": [],
+    "물가·생활경제": [],
+    "기업·산업": [],
+    "국제경제·무역": [],
+    "부동산·일자리·정책": []
+  };
 
-  const result = [];
+  for (const article of articles) {
+    const category = article.category || "전체 경제";
 
-  for (const article of newest.slice(0, CATEGORY_LIMIT)) {
-    result.push({
-      ...article,
-      digestCategory: "all",
-      digestCategoryName: "전체 경제"
-    });
-  }
+    if (result[category] && result[category].length < CATEGORY_LIMIT) {
+      result[category].push(article);
+    }
 
-  for (const category of CATEGORIES) {
-    const related = newest.filter(article =>
-      article.categories?.includes(category.id)
-    );
-
-    for (const article of related.slice(0, CATEGORY_LIMIT)) {
-      result.push({
-        ...article,
-        digestCategory: category.id,
-        digestCategoryName: category.name
-      });
+    if (result["전체 경제"].length < CATEGORY_LIMIT) {
+      if (!result["전체 경제"].some(item => item.id === article.id)) {
+        result["전체 경제"].push(article);
+      }
     }
   }
 
@@ -305,48 +281,49 @@ function buildCategories(articles) {
 }
 
 async function getLiveNews(env) {
-  let freshError = null;
-
   try {
-    const fresh = await collectNews();
-    const saved = await saveNews(env, fresh);
+    const articles = await collectNews();
+
+    await saveNews(env, articles);
 
     return {
-      articles: buildCategories(saved.articles),
-      updatedAt: saved.updatedAt,
+      mode: "live",
       live: true,
-      warning: null
+      articles,
+      categories: buildCategories(articles),
+      updatedAt: new Date().toISOString(),
+      warning: ""
     };
   } catch (error) {
-    freshError = error;
-    console.error("실시간 뉴스 수집 실패:", error);
-  }
+    let saved = [];
 
-  try {
-    const saved = await readNews(env);
+    try {
+      saved = await readNews(env);
+    } catch {
+      // KV에서 저장된 기사를 읽을 수 없으면 아래에서 오류를 안내해요.
+    }
 
-    if (saved.articles.length > 0) {
+    if (saved.length > 0) {
       return {
-        articles: buildCategories(saved.articles),
-        updatedAt: saved.updatedAt,
+        mode: "live",
         live: false,
+        articles: saved,
+        categories: buildCategories(saved),
+        updatedAt: null,
         warning:
-          "최신 뉴스 수집에 실패해 저장된 뉴스를 표시하고 있어요. " +
-          (freshError?.message || "")
+          "새 뉴스를 가져오지 못해 저장된 뉴스를 보여 주고 있어요. 원인: " +
+          error.message
       };
     }
-  } catch (storageError) {
-    console.error("저장된 뉴스 확인 실패:", storageError);
-    throw storageError;
-  }
 
-  throw freshError || new Error("뉴스를 가져오지 못했어요.");
+    throw error;
+  }
 }
 
 async function runTextAI(env, prompt) {
   if (!env.AI) {
     throw new Error(
-      "AI 바인딩이 없어요. Cloudflare Workers AI를 연결해 주세요."
+      "Cloudflare AI 바인딩을 찾을 수 없어요. AI 바인딩 이름이 AI인지 확인해 주세요."
     );
   }
 
@@ -357,96 +334,167 @@ async function runTextAI(env, prompt) {
         {
           role: "system",
           content:
-            "너는 경제 뉴스를 초등학생도 이해하도록 쉽게 설명하는 선생님이야. " +
-            "제공되지 않은 사실을 지어내지 마."
+            "너는 한국 초등학생도 이해할 수 있게 경제 뉴스를 설명하는 친절한 선생님이야. " +
+            "쉬운 한국어를 사용하고, 어려운 경제 용어는 풀어서 설명해. " +
+            "기사에 없는 사실을 만들어 내지 마. " +
+            "핵심 내용을 짧은 문단과 목록으로 정리해."
         },
         {
           role: "user",
           content: prompt
         }
       ],
-      max_tokens: 900
+      max_tokens: 700,
+      temperature: 0.4
     }
   );
 
-  const answer = result?.response || result?.output_text;
+  const text =
+    result && result.response
+      ? result.response
+      : "";
 
-  if (!answer) {
-    throw new Error("AI가 설명을 반환하지 않았어요.");
+  if (!text) {
+    throw new Error("AI가 설명을 만들어 내지 못했어요.");
   }
 
-  return answer;
+  return text.trim();
 }
 
 async function handleSummary(request, env) {
-  const body = await request.json();
-  const title = clean(body.title);
-  const description = clean(body.description);
+  let body;
 
-  if (!title) {
-    return json({ error: "기사 제목이 필요해요." }, 400);
+  try {
+    body = await request.json();
+  } catch {
+    return jsonResponse(
+      { error: "요청 내용을 읽을 수 없어요." },
+      400
+    );
   }
 
-  const article = await runTextAI(env, `
-다음 경제 뉴스를 초등학생도 이해할 수 있게 설명해 줘.
+  const article = body.article || body;
 
-제목: ${title}
-기사 설명: ${description || "추가 설명 없음"}
+  if (!article.title) {
+    return jsonResponse(
+      { error: "기사 제목이 없어요." },
+      400
+    );
+  }
 
-3~5개의 짧은 문장으로 설명하고, 왜 중요한지 알려 줘.
-어려운 용어가 있으면 마지막에 '용어: 뜻' 형식으로 최대 4개 적어 줘.
-기사에 없는 사실은 추가하지 마.
-`);
+  const text =
+    `${article.title || ""} ${article.description || ""}`;
 
-  return json({ article, terms: [] });
+  const prompt =
+    "다음 경제 뉴스를 초등학생이 이해할 수 있도록 설명해 줘.\n\n" +
+    "제목: " + (article.title || "") + "\n" +
+    "기사 설명: " + (article.description || "") + "\n\n" +
+    "다음 순서로 작성해 줘.\n" +
+    "1. 쉬운 제목\n" +
+    "2. 무슨 일이 일어났나요?\n" +
+    "3. 왜 중요한가요?\n" +
+    "4. 우리 생활에 어떤 영향을 줄 수 있나요?\n" +
+    "5. 꼭 알아둘 경제 용어\n\n" +
+    "기사에 없는 구체적인 사실이나 수치를 만들어 내지 마.";
+
+  try {
+    const summary = await runTextAI(env, prompt);
+
+    return jsonResponse({
+      success: true,
+      summary
+    });
+  } catch (error) {
+    return jsonResponse(
+      {
+        error: "AI 요약 실패: " + error.message
+      },
+      500
+    );
+  }
 }
 
 async function handleImage(request, env) {
-  const body = await request.json();
-  const title = clean(body.title);
-  const description = clean(body.description);
+  let body;
 
-  if (!title) {
-    return json({ error: "기사 제목이 필요해요." }, 400);
+  try {
+    body = await request.json();
+  } catch {
+    return jsonResponse(
+      { error: "요청 내용을 읽을 수 없어요." },
+      400
+    );
+  }
+
+  const article = body.article || body;
+
+  if (!article.title) {
+    return jsonResponse(
+      { error: "기사 제목이 없어요." },
+      400
+    );
   }
 
   if (!env.AI) {
-    return json({ error: "AI 바인딩이 없어요." }, 503);
+    return jsonResponse(
+      {
+        error:
+          "Cloudflare AI 바인딩을 찾을 수 없어요. AI 바인딩 이름이 AI인지 확인해 주세요."
+      },
+      500
+    );
   }
 
-  const result = await env.AI.run(
-    "@cf/black-forest-labs/flux-1-schnell",
-    {
-      prompt:
-        "Educational editorial illustration for a Korean children's economics news site. " +
-        `Topic: ${title}. Context: ${description}. ` +
-        "Friendly magazine illustration, clear shapes, no text, no logos, no watermark.",
-      num_steps: 4
+  const prompt =
+    "Create a clear, colorful editorial illustration for a Korean children's economics news website. " +
+    "Topic: " + article.title + ". " +
+    "Description: " + (article.description || "") + ". " +
+    "Friendly educational cartoon style, mango yellow accents, clean composition, " +
+    "no text, no letters, no logos, no watermarks.";
+
+  try {
+    const result = await env.AI.run(
+      "@cf/black-forest-labs/flux-1-schnell",
+      {
+        prompt,
+        num_steps: 4
+      }
+    );
+
+    let imageData = null;
+
+    if (result && result.image) {
+      imageData = result.image;
+    } else if (result && result.data) {
+      imageData = result.data;
     }
-  );
 
-  if (!result?.image) {
-    throw new Error("AI 그림 데이터가 비어 있어요.");
+    if (!imageData) {
+      throw new Error("AI가 그림 데이터를 반환하지 않았어요.");
+    }
+
+    return jsonResponse({
+      success: true,
+      image: "data:image/jpeg;base64," + imageData
+    });
+  } catch (error) {
+    return jsonResponse(
+      {
+        error: "AI 그림 생성 실패: " + error.message
+      },
+      500
+    );
   }
-
-  const bytes = result.image;
-  let binary = "";
-
-  for (let i = 0; i < bytes.length; i++) {
-    binary += String.fromCharCode(bytes[i]);
-  }
-
-  return json({
-    image: `data:image/png;base64,${btoa(binary)}`
-  });
 }
 
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
+    const path = url.pathname;
 
     if (request.method === "OPTIONS") {
       return new Response(null, {
+        status: 204,
         headers: {
           "Access-Control-Allow-Origin": "*",
           "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
@@ -456,47 +504,56 @@ export default {
     }
 
     try {
-      if (url.pathname === "/api/news" && request.method === "GET") {
+      if (path === "/api/news") {
         const result = await getLiveNews(env);
 
-        return json({
-          mode: "live",
-          articles: result.articles,
-          updatedAt: result.updatedAt,
-          live: result.live,
-          warning: result.warning
-        });
+        return jsonResponse(result);
       }
 
-      if (url.pathname === "/api/refresh" && request.method === "POST") {
-        const result = await refreshNews(env);
-
-        return json({
-          ok: true,
-          count: result.articles.length,
-          updatedAt: result.updatedAt
-        });
-      }
-
-      if (url.pathname === "/api/summarize" && request.method === "POST") {
+      if (path === "/api/summarize" && request.method === "POST") {
         return await handleSummary(request, env);
       }
 
-      if (url.pathname === "/api/generate-image" && request.method === "POST") {
+      if (
+        path === "/api/generate-image" &&
+        request.method === "POST"
+      ) {
         return await handleImage(request, env);
       }
 
-      if (env.ASSETS) {
-        return env.ASSETS.fetch(request);
+      if (path === "/api/health") {
+        return jsonResponse({
+          success: true,
+          message: "MANGO NEWS Worker is running.",
+          aiBinding: Boolean(env.AI),
+          kvBinding: Boolean(env.NEWS_KV),
+          time: new Date().toISOString()
+        });
       }
 
-      return new Response("MANGO NEWS is running.", { status: 200 });
-    } catch (error) {
-      console.error("MANGO NEWS ERROR:", error);
+      if (env.ASSETS) {
+        return await env.ASSETS.fetch(request);
+      }
 
-      return json({
-        error: error.message || "서버 오류가 발생했어요."
-      }, 500);
+      return new Response(
+        "MANGO NEWS Worker is running. Check your Assets binding.",
+        {
+          status: 200,
+          headers: {
+            "Content-Type": "text/plain; charset=utf-8"
+          }
+        }
+      );
+    } catch (error) {
+      return jsonResponse(
+        {
+          error:
+            error && error.message
+              ? error.message
+              : "알 수 없는 서버 오류가 발생했어요."
+        },
+        500
+      );
     }
   }
 };
