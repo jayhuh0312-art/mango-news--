@@ -1,4 +1,4 @@
-```html
+
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -29,8 +29,9 @@ button{border:0;border-radius:12px;padding:10px 15px;font-weight:700}
 .section-heading h2{margin:0;font-size:23px}
 .muted{color:var(--muted);font-size:13px}
 .news-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
-.news-card{min-width:0;text-align:left;background:white;border:1px solid var(--line);border-radius:16px;padding:18px;color:var(--ink);display:flex;flex-direction:column;align-items:stretch;gap:8px;min-height:145px}
+.news-card{min-width:0;text-align:left;background:white;border:1px solid var(--line);border-radius:16px;padding:18px;color:var(--ink);display:flex;flex-direction:column;align-items:stretch;gap:8px;min-height:145px;overflow:hidden}
 .news-card:hover{box-shadow:0 8px 22px #0000000b}
+.card-image{display:block;width:100%;height:190px;object-fit:cover;border-radius:10px;background:#fff8dd}
 .tag{align-self:flex-start;background:#fff1b9;color:#745500;border-radius:6px;padding:3px 8px;font-size:12px;font-weight:800}
 .news-title{font-size:17px;line-height:1.45;font-weight:800}
 .news-description{color:#686868;font-size:14px;font-weight:400}
@@ -54,7 +55,7 @@ button{border:0;border-radius:12px;padding:10px 15px;font-weight:700}
 .refresh-button{background:var(--mango)}
 .refresh-button:disabled{opacity:.6;cursor:wait}
 footer{padding:25px 20px 40px;color:var(--muted);font-size:12px;text-align:center}
-@media(max-width:650px){.news-grid{grid-template-columns:1fr}main{padding:18px 14px 40px}}
+@media(max-width:650px){.news-grid{grid-template-columns:1fr}main{padding:18px 14px 40px}.card-image{height:200px}}
 </style>
 </head>
 <body>
@@ -73,9 +74,7 @@ footer{padding:25px 20px 40px;color:var(--muted);font-size:12px;text-align:cente
 </section>
 
 <main>
-  <div id="status" class="status" role="status" aria-live="polite">
-    최신 뉴스를 불러오는 중이에요.
-  </div>
+  <div id="status" class="status" role="status" aria-live="polite">최신 뉴스를 불러오는 중이에요.</div>
 
   <section id="homeView">
     <div class="section-heading">
@@ -129,31 +128,21 @@ footer{padding:25px 20px 40px;color:var(--muted);font-size:12px;text-align:cente
 
 <script>
 const CATEGORY_NAMES = {
-  all: "전체 경제",
-  stock: "주식·투자",
-  finance: "금융·은행",
-  prices: "물가·생활경제",
-  business: "기업·산업",
-  global: "국제경제·무역",
-  jobs: "부동산·일자리·정책"
+  all:"전체 경제", stock:"주식·투자", finance:"금융·은행",
+  prices:"물가·생활경제", business:"기업·산업",
+  global:"국제경제·무역", jobs:"부동산·일자리·정책"
 };
 
 const CATEGORY_RULES = {
-  stock: ["주식","증시","코스피","코스닥","주가","투자","상장","나스닥","반도체","주주","증권"],
-  finance: ["금리","은행","대출","금융","환율","원화","달러","예금","카드","한국은행","채권","이자"],
-  prices: ["물가","소비자물가","장바구니","가격","휘발유","기름값","생활비","식품","소비","인플레이션"],
-  business: ["기업","산업","삼성전자","현대차","LG","SK","실적","매출","공장","수출","제조업","배터리"],
-  global: ["미국","중국","일본","유럽","무역","관세","수출","수입","세계경제","국제경제","유가"],
-  jobs: ["부동산","아파트","집값","전세","월세","취업","일자리","고용","정부","정책","청년","주택"]
+  stock:["주식","증시","코스피","코스닥","주가","투자","상장","나스닥","반도체","주주","증권"],
+  finance:["금리","은행","대출","금융","환율","원화","달러","예금","카드","한국은행","채권","이자"],
+  prices:["물가","소비자물가","장바구니","가격","휘발유","기름값","생활비","식품","소비","인플레이션"],
+  business:["기업","산업","삼성전자","현대차","LG","SK","실적","매출","공장","수출","제조업","배터리"],
+  global:["미국","중국","일본","유럽","무역","관세","수출","수입","세계경제","국제경제","유가"],
+  jobs:["부동산","아파트","집값","전세","월세","취업","일자리","고용","정부","정책","청년","주택"]
 };
 
-const state = {
-  articles: [],
-  category: "all",
-  requestId: 0,
-  detailRequestId: 0
-};
-
+const state = {articles:[],category:"all",requestId:0,detailRequestId:0};
 const $ = id => document.getElementById(id);
 
 function dateLabel(value) {
@@ -161,10 +150,7 @@ function dateLabel(value) {
   const d = new Date(value);
   if (Number.isNaN(d.getTime())) return "";
   return d.toLocaleString("ko-KR", {
-    month: "numeric",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit"
+    month:"numeric",day:"numeric",hour:"2-digit",minute:"2-digit"
   });
 }
 
@@ -174,20 +160,19 @@ function normalise(article) {
   const text = `${title} ${description}`.toLowerCase();
 
   const detected = Object.entries(CATEGORY_RULES)
-    .filter(([, words]) => words.some(word => text.includes(word.toLowerCase())))
+    .filter(([,words]) => words.some(word => text.includes(word.toLowerCase())))
     .map(([id]) => id);
 
   return {
     ...article,
     title,
     description,
-    url: article.url || article.link || "",
-    source: article.source || article.domain || "뉴스 제공처",
-    date: article.date || article.pubDate || "",
-    image: article.image || article.socialimage || "",
-    categories: Array.isArray(article.categories) && article.categories.length
-      ? article.categories
-      : detected
+    url:article.url || article.link || "",
+    source:article.source || article.domain || "뉴스 제공처",
+    date:article.date || article.pubDate || "",
+    image:article.image || article.socialimage || "",
+    categories:Array.isArray(article.categories) && article.categories.length
+      ? article.categories : detected
   };
 }
 
@@ -196,19 +181,12 @@ function setStatus(message) {
 }
 
 function visibleArticles() {
-  const list = [...state.articles];
+  if (state.category === "all") return state.articles.slice(0,10);
 
-  if (state.category === "all") {
-    return list.filter(article =>
-      article.digestCategory === "all" ||
-      (!article.digestCategory && article.categories?.length)
-    ).slice(0, 10);
-  }
-
-  return list.filter(article =>
+  return state.articles.filter(article =>
     article.digestCategory === state.category ||
     article.categories?.includes(state.category)
-  ).slice(0, 10);
+  ).slice(0,10);
 }
 
 function renderNews() {
@@ -216,7 +194,6 @@ function renderNews() {
   grid.replaceChildren();
 
   const articles = visibleArticles();
-
   $("articleCount").textContent = `${articles.length}개 기사`;
   $("listHeading").textContent = `${CATEGORY_NAMES[state.category]} · 최신 뉴스`;
 
@@ -239,6 +216,17 @@ function renderNews() {
       article.digestCategory || article.categories?.[0]
     ] || "경제 뉴스";
 
+    // 기사에 이미지 주소가 있는 경우 홈 화면 카드에 표시합니다.
+    if (article.image && /^https?:\/\//i.test(article.image)) {
+      const image = document.createElement("img");
+      image.className = "card-image";
+      image.src = article.image;
+      image.alt = "";
+      image.loading = "lazy";
+      image.onerror = () => image.remove();
+      card.appendChild(image);
+    }
+
     const title = document.createElement("span");
     title.className = "news-title";
     title.textContent = article.title;
@@ -251,8 +239,8 @@ function renderNews() {
     meta.className = "news-meta";
     meta.textContent = `${article.source} · ${dateLabel(article.date)}`;
 
-    card.append(tag, title, description, meta);
-    card.addEventListener("click", () => openArticle(article));
+    card.append(tag,title,description,meta);
+    card.addEventListener("click",() => openArticle(article));
     grid.appendChild(card);
   }
 }
@@ -267,44 +255,28 @@ async function loadNews() {
 
   try {
     const response = await fetch(`/api/news?mode=live&t=${Date.now()}`, {
-      method: "GET",
-      cache: "no-store"
+      method:"GET",cache:"no-store"
     });
 
     const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.error || `서버 오류 (${response.status})`);
-    }
-
+    if (!response.ok) throw new Error(data.error || `서버 오류 (${response.status})`);
     if (id !== state.requestId) return;
-
-    if (!Array.isArray(data.articles)) {
-      throw new Error("서버 응답에 기사 목록이 없어요.");
-    }
+    if (!Array.isArray(data.articles)) throw new Error("서버 응답에 기사 목록이 없어요.");
 
     state.articles = data.articles.map(normalise);
     renderNews();
 
-    if (data.live === false) {
-      setStatus(data.warning || "최신 뉴스 수집에 실패해 저장된 뉴스를 표시하고 있어요.");
-    } else {
-      const time = data.updatedAt ? dateLabel(data.updatedAt) : "";
-      setStatus(`최신 뉴스 ${state.articles.length}개를 확인했어요.${time ? " 확인 시각: " + time : ""}`);
-    }
+    const time = data.updatedAt ? dateLabel(data.updatedAt) : "";
+    setStatus(`최신 뉴스 ${state.articles.length}개를 확인했어요.${time ? " 확인 시각: " + time : ""}`);
   } catch (error) {
     if (id !== state.requestId) return;
-
     setStatus(`뉴스를 불러오지 못했어요: ${error.message}`);
 
     if (!state.articles.length) {
-      const grid = $("newsGrid");
-      grid.replaceChildren();
-
       const empty = document.createElement("div");
       empty.className = "empty";
       empty.textContent = "뉴스 서버에 연결하지 못했어요. 잠시 후 다시 시도해 주세요.";
-      grid.appendChild(empty);
+      $("newsGrid").replaceChildren(empty);
     }
   } finally {
     if (id === state.requestId) {
@@ -314,8 +286,8 @@ async function loadNews() {
   }
 }
 
-function aiStatus(type, message, finished = false, failed = false) {
-  const status = $(type + "Status");
+function aiStatus(type,message,finished=false,failed=false) {
+  const status = $(type+"Status");
   status.replaceChildren();
 
   if (!finished && !failed) {
@@ -327,7 +299,28 @@ function aiStatus(type, message, finished = false, failed = false) {
   const label = document.createElement("span");
   label.textContent = message;
   status.appendChild(label);
-  $(type + "Progress").hidden = finished || failed;
+  $(type+"Progress").hidden = finished || failed;
+}
+
+async function readApiResponse(response) {
+  const text = await response.text();
+  let data;
+
+  try {
+    data = JSON.parse(text);
+  } catch {
+    throw new Error(
+      text.trim()
+        ? `서버가 JSON이 아닌 응답을 보냈어요: ${text.slice(0,180)}`
+        : `서버 응답이 비어 있어요 (HTTP ${response.status}).`
+    );
+  }
+
+  if (!response.ok) {
+    throw new Error(data.error || `서버 오류 (${response.status})`);
+  }
+
+  return data;
 }
 
 async function openArticle(article) {
@@ -348,23 +341,22 @@ async function openArticle(article) {
   $("sourceLink").href = article.url || "#";
   $("sourceLink").style.display = article.url ? "inline-block" : "none";
 
-  aiStatus("summary", "AI가 쉬운 설명을 만들고 있어요.");
-  aiStatus("image", "AI가 그림을 만들고 있어요.");
-  window.scrollTo({top: 0, behavior: "smooth"});
+  aiStatus("summary","AI가 쉬운 설명을 만들고 있어요.");
+  aiStatus("image","AI가 그림을 만들고 있어요.");
+  window.scrollTo({top:0,behavior:"smooth"});
 
   const summaryTask = (async () => {
     try {
       const response = await fetch("/api/summarize", {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({
-          title: article.title,
-          description: article.description
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({
+          title:article.title,
+          description:article.description
         })
       });
 
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || "요약 생성 실패");
+      const data = await readApiResponse(response);
       if (requestId !== state.detailRequestId) return;
 
       $("summaryText").textContent = data.article || "설명을 받지 못했어요.";
@@ -375,65 +367,72 @@ async function openArticle(article) {
         $("termList").appendChild(li);
       }
 
-      aiStatus("summary", "쉬운 설명을 완성했어요.", true);
+      aiStatus("summary","쉬운 설명을 완성했어요.",true);
     } catch (error) {
       if (requestId !== state.detailRequestId) return;
       $("summaryText").textContent = `요약 오류: ${error.message}`;
-      aiStatus("summary", `요약을 만들지 못했어요: ${error.message}`, false, true);
+      aiStatus("summary",`요약을 만들지 못했어요: ${error.message}`,false,true);
     }
   })();
 
   const imageTask = (async () => {
     try {
       if (article.image && /^https?:\/\//i.test(article.image)) {
-        $("detailImage").onerror = () => {
-          if (requestId !== state.detailRequestId) return;
-          $("detailImage").style.display = "none";
-          aiStatus("image", "기사 그림을 표시하지 못해 AI 그림을 만들고 있어요.");
-          generateAIImage(article, requestId);
-        };
+        const image = $("detailImage");
 
-        $("detailImage").src = article.image;
-        $("detailImage").style.display = "block";
-        aiStatus("image", "기사에 포함된 그림을 불러왔어요.", true);
-        return;
+        const loaded = await new Promise(resolve => {
+          image.onload = () => resolve(true);
+          image.onerror = () => resolve(false);
+          image.src = article.image;
+        });
+
+        if (requestId !== state.detailRequestId) return;
+
+        if (loaded) {
+          image.style.display = "block";
+          aiStatus("image","기사에 포함된 그림을 불러왔어요.",true);
+          return;
+        }
       }
 
-      await generateAIImage(article, requestId);
+      await generateAIImage(article,requestId);
     } catch (error) {
       if (requestId !== state.detailRequestId) return;
-      aiStatus("image", `그림 생성 오류: ${error.message}`, false, true);
+      aiStatus("image",`그림 생성 오류: ${error.message}`,false,true);
     }
   })();
 
-  await Promise.all([summaryTask, imageTask]);
+  await Promise.all([summaryTask,imageTask]);
 }
 
-async function generateAIImage(article, requestId) {
+async function generateAIImage(article,requestId) {
   try {
     const response = await fetch("/api/generate-image", {
-      method: "POST",
-      headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({
-        title: article.title,
-        description: article.description
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({
+        title:article.title,
+        description:article.description
       })
     });
 
-    const data = await response.json();
-    if (!response.ok) throw new Error(data.error || "그림 생성 실패");
+    const data = await readApiResponse(response);
     if (requestId !== state.detailRequestId) return;
     if (!data.image) throw new Error("그림 데이터가 없어요.");
 
-    $("detailImage").onerror = null;
+    $("detailImage").onerror = () => {
+      aiStatus("image","그림 데이터를 표시하지 못했어요.",false,true);
+    };
+
     $("detailImage").src = data.image.startsWith("data:")
       ? data.image
       : `data:image/png;base64,${data.image}`;
+
     $("detailImage").style.display = "block";
-    aiStatus("image", "AI 그림을 완성했어요.", true);
+    aiStatus("image","AI 그림을 완성했어요.",true);
   } catch (error) {
     if (requestId !== state.detailRequestId) return;
-    aiStatus("image", `그림 생성 오류: ${error.message}`, false, true);
+    aiStatus("image",`그림 생성 오류: ${error.message}`,false,true);
   }
 }
 
@@ -441,29 +440,27 @@ function goHome() {
   state.detailRequestId++;
   $("detailView").classList.remove("show");
   $("homeView").style.display = "";
-  window.scrollTo({top: 0, behavior: "smooth"});
+  window.scrollTo({top:0,behavior:"smooth"});
 }
 
-$("refreshButton").addEventListener("click", loadNews);
-$("backButton").addEventListener("click", goHome);
+$("refreshButton").addEventListener("click",loadNews);
+$("backButton").addEventListener("click",goHome);
 
-$("categoryToolbar").addEventListener("click", event => {
+$("categoryToolbar").addEventListener("click",event => {
   const button = event.target.closest("button[data-category]");
   if (!button) return;
 
   state.category = button.dataset.category;
 
   $("categoryToolbar").querySelectorAll("button").forEach(item => {
-    item.classList.toggle("active", item === button);
+    item.classList.toggle("active",item === button);
   });
 
   renderNews();
 });
 
-// 30분 타이머와 자동 반복 실행은 사용하지 않습니다.
-// 페이지를 열 때 한 번 불러오고, 버튼을 누르면 다시 불러옵니다.
+// 페이지를 열 때 뉴스 목록을 불러옵니다.
 loadNews();
 </script>
 </body>
 </html>
-```
