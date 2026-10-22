@@ -57,7 +57,7 @@ function clean(value) {
 }
 
 function classify(article) {
-  const text = `${article.title || ""} ${article.description || ""}`.toLowerCase();
+  const text = `${article.title || ""} ${article.description || ""}`;
 
   return CATEGORIES
     .filter(category =>
