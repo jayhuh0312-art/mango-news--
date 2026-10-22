@@ -1,141 +1,195 @@
 
+const CACHE_KEY = "https://mango-news-cache.internal/api/news";
+const CACHE_SECONDS = 120;
+
+const NEWS_FEEDS = [
+  {
+    name: "연합뉴스",
+    url: "https://www.yna.co.kr/rss/news.xml"
+  },
+  {
+    name: "BBC News",
+    url: "https://feeds.bbci.co.uk/news/world/rss.xml"
+  },
+  {
+    name: "Korea.net",
+    url: "https://www.korea.net/RSS/News.xml"
+  }
+];
+
+function decodeXML(text) {
+  return text
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&apos;/g, "'")
+    .replace(/&#39;/g, "'")
+    .replace(/&#(\d+);/g, (_, code) =>
+      String.fromCodePoint(Number(code))
+    )
+    .replace(/&#x([0-9a-f]+);/gi, (_, code) =>
+      String.fromCodePoint(parseInt(code, 16))
+    );
+}
+
+function getTag(item, tag) {
+  const escapedTag = tag.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+  const cdataPattern = new RegExp(
+    "<" + escapedTag + "\\b[^>]*>\\s*<!\\[CDATA\\[([\\s\\S]*?)\\]\\]>\\s*</" + escapedTag + "\\s*>",
+    "i"
+  );
+
+  const normalPattern = new RegExp(
+    "<" + escapedTag + "\\b[^>]*>([\\s\\S]*?)</" + escapedTag + "\\s*>",
+    "i"
+  );
+
+  const cdataMatch = item.match(cdataPattern);
+  if (cdataMatch) return decodeXML(cdataMatch[1].trim());
+
+  const normalMatch = item.match(normalPattern);
+  if (normalMatch) {
+    return decodeXML(
+      normalMatch[1].replace(/<[^>]*>/g, "").trim()
+    );
+  }
+
+  return "";
+}
+
+function parseRSS(xml, source) {
+  const items = xml.match(/<item\b[^>]*>[\s\S]*?<\/item\s*>/gi) || [];
+
+  return items.map((item) => {
+    const title = getTag(item, "title");
+    const link = getTag(item, "link");
+    const description = getTag(item, "description");
+    const pubDate = getTag(item, "pubDate");
+
+    return {
+      title,
+      description: description.slice(0, 1200),
+      url: link,
+      domain: source,
+      date: pubDate
+    };
+  }).filter((article) => article.title && article.url);
+}
+
+async function fetchFeed(feed) {
+  try {
+    const response = await fetch(feed.url, {
+      headers: {
+        "User-Agent": "MANGO-NEWS/1.0",
+        "Accept": "application/rss+xml, application/xml, text/xml, */*"
+      },
+      signal: AbortSignal.timeout(10000)
+    });
+
+    if (!response.ok) {
+      return [];
+    }
+
+    const xml = await response.text();
+    return parseRSS(xml, feed.name);
+  } catch (error) {
+    console.error("RSS feed failed:", feed.name, String(error));
+    return [];
+  }
+}
+
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
 
-    // 뉴스 API
     if (url.pathname === "/api/news") {
-      const headers = {
-        "Content-Type": "application/json; charset=utf-8",
-        "Access-Control-Allow-Origin": "*",
-        "Cache-Control": "no-store"
-      };
+      const cache = caches.default;
+      const cacheRequest = new Request(CACHE_KEY);
 
-      try {
-        // GDELT 검색어: 영어 검색어 + 한국어 출처
-        const query =
-          "(economy OR stocks OR finance OR inflation OR business OR real estate OR trade) sourcelang:korean";
-
-        const gdeltUrl = new URL(
-          "https://api.gdeltproject.org/api/v2/doc/doc"
+      if (request.method !== "GET") {
+        return Response.json(
+          { error: "GET requests only" },
+          { status: 405 }
         );
+      }
 
-        gdeltUrl.searchParams.set("query", query);
-        gdeltUrl.searchParams.set("mode", "ArtList");
-        gdeltUrl.searchParams.set("format", "json");
-        gdeltUrl.searchParams.set("maxrecords", "50");
-        gdeltUrl.searchParams.set("sort", "DateDesc");
+      const cached = await cache.match(cacheRequest);
 
-        const newsResponse = await fetch(gdeltUrl.toString(), {
+      if (cached) {
+        return new Response(cached.body, {
+          status: cached.status,
           headers: {
-            "User-Agent": "MANGO-NEWS/1.0",
-            "Accept": "application/json"
-          },
-          signal: AbortSignal.timeout(20000)
-        });
-
-        // GDELT 요청 자체가 실패한 경우
-        if (!newsResponse.ok) {
-          const errorText = await newsResponse.text();
-
-          return new Response(
-            JSON.stringify({
-              articles: [],
-              error: "GDELT 요청 실패",
-              status: newsResponse.status,
-              details: errorText.slice(0, 500)
-            }),
-            {
-              status: 502,
-              headers
-            }
-          );
-        }
-
-        // GDELT 응답 읽기
-        const responseText = await newsResponse.text();
-        let data;
-
-        try {
-          data = JSON.parse(responseText);
-        } catch {
-          return new Response(
-            JSON.stringify({
-              articles: [],
-              error: "GDELT가 JSON 형식으로 응답하지 않았어요.",
-              details: responseText.slice(0, 500)
-            }),
-            {
-              status: 502,
-              headers
-            }
-          );
-        }
-
-        // 기사 목록 확인
-        const rawArticles = Array.isArray(data.articles)
-          ? data.articles
-          : [];
-
-        const articles = rawArticles
-          .filter(article => article.title && article.url)
-          .map(article => ({
-            title: article.title || "제목 없음",
-            description:
-              article.description ||
-              article.title ||
-              "기사 설명이 제공되지 않았어요.",
-            url: article.url || "",
-            domain: article.domain || "",
-            date: article.seendate || "",
-            image: article.socialimage || ""
-          }));
-
-        // 검색 결과가 없으면 원인 확인용 정보 반환
-        if (articles.length === 0) {
-          return new Response(
-            JSON.stringify({
-              articles: [],
-              error: "GDELT에서 기사를 찾지 못했어요.",
-              details: "검색어, GDELT 응답 또는 검색 결과를 확인해야 해요.",
-              gdeltArticleCount: rawArticles.length,
-              updatedAt: new Date().toISOString()
-            }),
-            {
-              headers
-            }
-          );
-        }
-
-        // 정상 결과
-        return new Response(
-          JSON.stringify({
-            articles,
-            updatedAt: new Date().toISOString(),
-            count: articles.length
-          }),
-          {
-            headers
+            "Content-Type": "application/json; charset=utf-8",
+            "Cache-Control": "no-store",
+            "X-News-Cache": "HIT"
           }
-        );
+        });
+      }
 
-      } catch (error) {
-        return new Response(
-          JSON.stringify({
+      const results = await Promise.all(
+        NEWS_FEEDS.map(fetchFeed)
+      );
+
+      const articles = results
+        .flat()
+        .filter((article, index, all) =>
+          all.findIndex(
+            (other) => other.url === article.url
+          ) === index
+        )
+        .sort((a, b) => {
+          const dateA = Date.parse(a.date) || 0;
+          const dateB = Date.parse(b.date) || 0;
+          return dateB - dateA;
+        })
+        .slice(0, 40);
+
+      if (articles.length === 0) {
+        return Response.json(
+          {
             articles: [],
-            error: "뉴스를 불러오지 못했어요.",
-            details: error.message || String(error),
+            error: "뉴스 RSS 피드에서 기사를 가져오지 못했어요.",
             updatedAt: new Date().toISOString()
-          }),
+          },
           {
             status: 502,
-            headers
+            headers: {
+              "Cache-Control": "no-store; max-age=0"
+            }
           }
         );
       }
+
+      const data = {
+        articles,
+        updatedAt: new Date().toISOString(),
+        count: articles.length
+      };
+
+      const response = Response.json(data, {
+        headers: {
+          "Cache-Control": "public, max-age=120",
+          "X-News-Cache": "MISS"
+        }
+      });
+
+      ctx.waitUntil(
+        cache.put(
+          cacheRequest,
+          new Response(JSON.stringify(data), {
+            headers: {
+              "Content-Type": "application/json; charset=utf-8",
+              "Cache-Control": "public, max-age=120"
+            }
+          })
+        )
+      );
+
+      return response;
     }
 
-    // 홈페이지 파일 전달
     if (env.ASSETS) {
       return env.ASSETS.fetch(request);
     }
