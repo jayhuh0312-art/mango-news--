@@ -16,11 +16,6 @@
       "id": "ef3edbec3c3846a49151ed01e59abd7a"
     }
   ],
-  "triggers": {
-    "crons": [
-      "*/30 * * * *"
-    ]
-  },
   "assets": {
     "directory": "./public",
     "binding": "ASSETS",
