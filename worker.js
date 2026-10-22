@@ -1,5 +1,5 @@
-
-const CACHE_KEY = "mango-news-articles-v2";
+```javascript
+const CACHE_KEY = "mango-news-articles-v3";
 const MAX_ARTICLES = 500;
 const CATEGORY_LIMIT = 10;
 
@@ -57,7 +57,7 @@ function clean(value) {
 }
 
 function classify(article) {
-  const text = `${article.title} ${article.description || ""}`.toLowerCase();
+  const text = `${article.title || ""} ${article.description || ""}`.toLowerCase();
 
   return CATEGORIES
     .filter(category =>
@@ -75,16 +75,16 @@ function getDate(item) {
     }
   }
 
-  return new Date().toISOString();
+  return item.date || new Date().toISOString();
 }
 
 function normalizeArticle(item) {
   const article = {
     title: clean(item.title),
     description: clean(item.description || ""),
-    url: item.url || "",
-    source: item.domain || "뉴스 제공처",
-    date: item.date || getDate(item),
+    url: item.url || item.link || "",
+    source: item.domain || item.source || "뉴스 제공처",
+    date: getDate(item),
     image: item.image || item.socialimage || ""
   };
 
@@ -94,28 +94,49 @@ function normalizeArticle(item) {
 
 async function fetchGdelt(query, maxRecords = 250) {
   const params = new URLSearchParams({
-    query: `${query} sourcelang:korean`,
+    query,
     mode: "ArtList",
     format: "json",
     sort: "DateDesc",
-    maxrecords: String(maxRecords)
+    maxrecords: String(maxRecords),
+    timespan: "1d"
   });
 
   const response = await fetch(
     `https://api.gdeltproject.org/api/v2/doc/doc?${params.toString()}`,
     {
-      headers: { "Accept": "application/json" },
-      signal: AbortSignal.timeout(20000)
+      headers: {
+        "Accept": "application/json"
+      },
+      signal: AbortSignal.timeout(25000)
     }
   );
 
   if (!response.ok) {
-    throw new Error(`GDELT 뉴스 수집 오류: HTTP ${response.status}`);
+    throw new Error(`GDELT 요청 실패: HTTP ${response.status}`);
   }
 
-  const data = await response.json();
+  const responseText = await response.text();
 
-  return (data.articles || [])
+  let data;
+
+  try {
+    data = JSON.parse(responseText);
+  } catch {
+    throw new Error(
+      `GDELT 응답을 JSON으로 읽지 못했어요: ${responseText.slice(0, 180)}`
+    );
+  }
+
+  if (!Array.isArray(data.articles)) {
+    if (data.error) {
+      throw new Error(`GDELT 오류: ${String(data.error).slice(0, 180)}`);
+    }
+
+    return [];
+  }
+
+  return data.articles
     .map(item => normalizeArticle({
       title: item.title,
       description: item.description || "",
@@ -129,26 +150,48 @@ async function fetchGdelt(query, maxRecords = 250) {
 
 async function collectNews() {
   const queries = [
-    '(경제 OR 주식 OR 금융 OR 물가 OR 기업 OR 부동산 OR 금리 OR 무역 OR 투자)',
-    '(주식 OR 증시 OR 코스피 OR 코스닥 OR 투자 OR 증권)',
-    '(금리 OR 은행 OR 대출 OR 금융 OR 환율 OR 예금)',
-    '(물가 OR 가격 OR 소비자물가 OR 생활비 OR 소비)',
-    '(기업 OR 산업 OR 실적 OR 매출 OR 수출 OR 제조업)',
-    '(국제경제 OR 무역 OR 관세 OR 수입 OR 세계경제)',
-    '(부동산 OR 아파트 OR 취업 OR 일자리 OR 고용 OR 경제정책)'
+    '(경제 OR 주식 OR 금융 OR 물가 OR 기업 OR 부동산 OR 금리 OR 무역 OR 투자) sourcelang:korean',
+    '(주식 OR 증시 OR 코스피 OR 코스닥 OR 투자 OR 증권) sourcelang:korean',
+    '(금리 OR 은행 OR 대출 OR 금융 OR 환율 OR 예금) sourcelang:korean',
+    '(물가 OR 가격 OR 소비자물가 OR 생활비 OR 소비) sourcelang:korean',
+    '(기업 OR 산업 OR 실적 OR 매출 OR 수출 OR 제조업) sourcelang:korean',
+    '(국제경제 OR 무역 OR 관세 OR 수입 OR 세계경제) sourcelang:korean',
+    '(부동산 OR 아파트 OR 취업 OR 일자리 OR 고용 OR 경제정책) sourcelang:korean'
   ];
 
-  const results = await Promise.allSettled(
-    queries.map(query => fetchGdelt(query, 250))
-  );
-
   const collected = [];
+  const errors = [];
 
-  for (const result of results) {
-    if (result.status === "fulfilled") {
-      collected.push(...result.value);
-    } else {
-      console.error("뉴스 검색 일부 실패:", result.reason);
+  // 요청을 한 번에 너무 많이 보내지 않도록 2개씩 검색
+  for (let i = 0; i < queries.length; i += 2) {
+    const batch = queries.slice(i, i + 2);
+
+    const results = await Promise.allSettled(
+      batch.map(query => fetchGdelt(query, 100))
+    );
+
+    for (const result of results) {
+      if (result.status === "fulfilled") {
+        collected.push(...result.value);
+      } else {
+        const message = result.reason?.message || String(result.reason);
+        errors.push(message);
+        console.error("GDELT 검색 실패:", message);
+      }
+    }
+  }
+
+  // 모든 한국어 검색이 실패하면 영어 검색어로 한 번 더 시도
+  if (collected.length === 0) {
+    try {
+      const fallback = await fetchGdelt(
+        '(economy OR stocks OR finance OR inflation OR business OR trade) sourcelang:korean',
+        100
+      );
+
+      collected.push(...fallback);
+    } catch (error) {
+      errors.push(error.message || String(error));
     }
   }
 
@@ -169,7 +212,11 @@ async function collectNews() {
     .sort((a, b) => new Date(b.date) - new Date(a.date));
 
   if (articles.length === 0) {
-    throw new Error("뉴스를 가져오지 못했어요. 잠시 후 다시 시도해 주세요.");
+    const detail = errors.length
+      ? errors.slice(0, 2).join(" / ")
+      : "검색 결과가 0개예요.";
+
+    throw new Error(`뉴스를 가져오지 못했어요. ${detail}`);
   }
 
   return articles;
@@ -177,7 +224,9 @@ async function collectNews() {
 
 async function readNews(env) {
   if (!env.NEWS_KV) {
-    throw new Error("NEWS_KV 바인딩을 찾을 수 없어요.");
+    throw new Error(
+      "NEWS_KV 바인딩을 찾을 수 없어요. Cloudflare에서 KV 연결을 확인해 주세요."
+    );
   }
 
   const saved = await env.NEWS_KV.get(CACHE_KEY, "json");
@@ -230,7 +279,6 @@ function buildCategories(articles) {
 
   const result = [];
 
-  // 전체 경제 카테고리
   for (const article of newest.slice(0, CATEGORY_LIMIT)) {
     result.push({
       ...article,
@@ -239,7 +287,6 @@ function buildCategories(articles) {
     });
   }
 
-  // 각 카테고리는 관련 뉴스만 표시
   for (const category of CATEGORIES) {
     const related = newest.filter(article =>
       article.categories?.includes(category.id)
@@ -258,20 +305,24 @@ function buildCategories(articles) {
 }
 
 async function getLiveNews(env) {
+  let freshError = null;
+
   try {
-    // 사이트가 요청할 때 최신 뉴스를 직접 수집
     const fresh = await collectNews();
     const saved = await saveNews(env, fresh);
 
     return {
       articles: buildCategories(saved.articles),
       updatedAt: saved.updatedAt,
-      live: true
+      live: true,
+      warning: null
     };
   } catch (error) {
+    freshError = error;
     console.error("실시간 뉴스 수집 실패:", error);
+  }
 
-    // 실시간 수집에 실패하면 기존 저장된 뉴스를 보여 줌
+  try {
     const saved = await readNews(env);
 
     if (saved.articles.length > 0) {
@@ -279,29 +330,44 @@ async function getLiveNews(env) {
         articles: buildCategories(saved.articles),
         updatedAt: saved.updatedAt,
         live: false,
-        warning: "최신 뉴스 수집에 실패해 저장된 뉴스를 표시하고 있어요."
+        warning:
+          "최신 뉴스 수집에 실패해 저장된 뉴스를 표시하고 있어요. " +
+          (freshError?.message || "")
       };
     }
-
-    throw error;
+  } catch (storageError) {
+    console.error("저장된 뉴스 확인 실패:", storageError);
+    throw storageError;
   }
+
+  throw freshError || new Error("뉴스를 가져오지 못했어요.");
 }
 
 async function runTextAI(env, prompt) {
   if (!env.AI) {
-    throw new Error("AI 바인딩이 없어요. Cloudflare Workers AI를 연결해 주세요.");
+    throw new Error(
+      "AI 바인딩이 없어요. Cloudflare Workers AI를 연결해 주세요."
+    );
   }
 
-  const result = await env.AI.run("@cf/meta/llama-3.1-8b-instruct", {
-    messages: [
-      {
-        role: "system",
-        content: "너는 경제 뉴스를 초등학생도 이해하도록 쉽게 설명하는 선생님이야. 제공되지 않은 사실을 지어내지 마."
-      },
-      { role: "user", content: prompt }
-    ],
-    max_tokens: 900
-  });
+  const result = await env.AI.run(
+    "@cf/meta/llama-3.1-8b-instruct",
+    {
+      messages: [
+        {
+          role: "system",
+          content:
+            "너는 경제 뉴스를 초등학생도 이해하도록 쉽게 설명하는 선생님이야. " +
+            "제공되지 않은 사실을 지어내지 마."
+        },
+        {
+          role: "user",
+          content: prompt
+        }
+      ],
+      max_tokens: 900
+    }
+  );
 
   const answer = result?.response || result?.output_text;
 
@@ -398,7 +464,7 @@ export default {
           articles: result.articles,
           updatedAt: result.updatedAt,
           live: result.live,
-          warning: result.warning || null
+          warning: result.warning
         });
       }
 
@@ -420,7 +486,11 @@ export default {
         return await handleImage(request, env);
       }
 
-      return env.ASSETS.fetch(request);
+      if (env.ASSETS) {
+        return env.ASSETS.fetch(request);
+      }
+
+      return new Response("MANGO NEWS is running.", { status: 200 });
     } catch (error) {
       console.error("MANGO NEWS ERROR:", error);
 
@@ -430,3 +500,4 @@ export default {
     }
   }
 };
+```
