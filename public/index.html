@@ -355,18 +355,37 @@
     }
 
     /* 노란색 형광펜 강조 */
-    mark {
-      color: inherit;
-      background: linear-gradient(
-        transparent 42%,
-        rgba(255, 216, 71, .78) 42%,
-        rgba(255, 216, 71, .78) 94%,
-        transparent 94%
-      );
-      padding: 0 .08em;
-      -webkit-box-decoration-break: clone;
-      box-decoration-break: clone;
-    }
+/* 망고 뉴스의 노란색 형광펜 밑줄 */
+mark {
+  color: inherit;
+  background: linear-gradient(
+    to bottom,
+    transparent 58%,
+    #ffe36b 58%,
+    #ffe36b 88%,
+    transparent 88%
+  );
+  background-repeat: no-repeat;
+  padding: 0 2px;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+  border-radius: 2px;
+}
+
+/* 쉬운 설명 속 강조 단어 */
+.easy-article mark,
+.terms-section mark {
+  background: linear-gradient(
+    to bottom,
+    transparent 60%,
+    #ffe36b 60%,
+    #ffe36b 90%,
+    transparent 90%
+  );
+  padding: 0 2px;
+  border-radius: 2px;
+}
+
 
     .news-description {
       margin: 9px 0 0;
