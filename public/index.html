@@ -334,7 +334,6 @@
 
     .news-title:hover { color: #8a6800; }
 
-    /* 노란색 형광펜 밑줄 */
     mark {
       color: inherit;
       background: linear-gradient(
@@ -765,6 +764,7 @@
         "금융": "경제",
         "주식": "주식",
         "증시": "주식",
+        "政治": "정치",
         "정치": "정치",
         "社会": "사회",
         "사회": "사회",
@@ -842,7 +842,6 @@
       return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     }
 
-    /* 제목을 화면에 표시할 때만 주요 단어를 강조합니다. */
     function highlightTitle(title) {
       const safe = escapeHTML(title);
 
@@ -860,7 +859,6 @@
       return safe.replace(pattern, "<mark>$1</mark>");
     }
 
-    /* AI 설명을 문장으로 나누고 주요 단어에 형광펜을 표시합니다. */
     function appendHighlightedExplanation(explanation) {
       elements.easyArticle.replaceChildren();
 
@@ -940,10 +938,19 @@
         const response = await fetch(
           API_IMAGE_SEARCH + "?title=" +
           encodeURIComponent(article.title),
-          { headers: { "Accept": "application/json" } }
+          {
+            method: "GET",
+            cache: "no-store",
+            headers: { "Accept": "application/json" }
+          }
         );
 
         if (!response.ok) {
+          console.warn(
+            "이미지 검색 서버 오류:",
+            response.status,
+            article.title
+          );
           imageCache.set(cacheKey, "");
           return "";
         }
@@ -960,22 +967,76 @@
       }
     }
 
+    /*
+      수정된 홈 화면 이미지 로딩 함수.
+      이미지 이벤트를 먼저 설정한 다음 이미지 주소를 지정합니다.
+    */
     function loadCardImage(img, placeholder, article) {
-      findArticleImage(article).then(url => {
-        if (!url || !img.isConnected) return;
+      let finished = false;
 
-        img.onload = () => {
-          img.hidden = false;
-          placeholder.hidden = true;
-        };
+      function showPlaceholder() {
+        img.hidden = true;
+        placeholder.hidden = false;
+      }
 
-        img.onerror = () => {
-          img.hidden = true;
-          placeholder.hidden = false;
-        };
+      function showImage() {
+        if (!img.naturalWidth) {
+          showPlaceholder();
+          return;
+        }
 
-        img.src = url;
-      });
+        finished = true;
+        img.hidden = false;
+        placeholder.hidden = true;
+      }
+
+      // 이미지 주소를 설정하기 전에 이벤트부터 연결합니다.
+      img.onload = showImage;
+
+      img.onerror = () => {
+        console.warn("홈 화면 이미지 로딩 실패:", article.title, img.src);
+        finished = false;
+        showPlaceholder();
+      };
+
+      // 이미지가 없는 동안에는 망고 표시를 보여 줍니다.
+      showPlaceholder();
+
+      findArticleImage(article)
+        .then(url => {
+          if (!img.isConnected || !url) {
+            showPlaceholder();
+            return;
+          }
+
+          if (finished) return;
+
+          // 주소가 같고 이미 로딩됐다면 바로 표시합니다.
+          if (
+            img.getAttribute("src") === url &&
+            img.complete &&
+            img.naturalWidth > 0
+          ) {
+            showImage();
+            return;
+          }
+
+          // 이미지가 실제로 로딩되면 onload에서 화면에 표시합니다.
+          img.src = url;
+
+          // 브라우저가 캐시된 이미지를 이미 로딩한 경우도 확인합니다.
+          if (img.complete) {
+            if (img.naturalWidth > 0) {
+              showImage();
+            } else {
+              showPlaceholder();
+            }
+          }
+        })
+        .catch(error => {
+          console.warn("홈 화면 이미지 처리 오류:", error);
+          showPlaceholder();
+        });
     }
 
     function makeCard(article) {
@@ -996,13 +1057,11 @@
       const image = document.createElement("img");
       image.className = "card-image";
       image.alt = article.title;
-      image.loading = "lazy";
-      image.hidden = true;
 
-      image.onerror = () => {
-        image.hidden = true;
-        placeholder.hidden = false;
-      };
+      // 진단을 위해 lazy 로딩을 사용하지 않습니다.
+      image.loading = "eager";
+      image.decoding = "async";
+      image.hidden = true;
 
       imageButton.append(placeholder, image);
       loadCardImage(image, placeholder, article);
@@ -1165,6 +1224,8 @@
       elements.detailImage.hidden = true;
       elements.detailImage.removeAttribute("src");
       elements.detailImage.alt = article.title;
+      elements.detailImage.onload = null;
+      elements.detailImage.onerror = null;
 
       elements.easyArticle.replaceChildren();
       elements.termsList.replaceChildren();
@@ -1195,7 +1256,9 @@
         }
 
         elements.detailImage.onload = () => {
-          elements.detailImage.hidden = false;
+          if (thisImageRequest === imageRequestId) {
+            elements.detailImage.hidden = false;
+          }
         };
 
         elements.detailImage.onerror = () => {
@@ -1203,6 +1266,13 @@
         };
 
         elements.detailImage.src = imageUrl;
+
+        if (
+          elements.detailImage.complete &&
+          elements.detailImage.naturalWidth > 0
+        ) {
+          elements.detailImage.hidden = false;
+        }
       });
 
       try {
@@ -1213,8 +1283,6 @@
             title: article.originalTitle || article.title,
             originalTitle: article.originalTitle || article.title,
             description: article.description || "",
-
-            /* Worker가 이 지시를 AI 프롬프트에 포함해야 합니다. */
             language: "Korean",
             audience: "초등학생",
             instructions:
