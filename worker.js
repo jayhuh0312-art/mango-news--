@@ -1,14 +1,40 @@
 
-const CACHE_KEY = "mango-news-articles-v1";
-const MAX_ARTICLES = 300;
+const CACHE_KEY = "mango-news-articles-v2";
+const MAX_ARTICLES = 500;
+const CATEGORY_LIMIT = 10;
+const UPDATE_INTERVAL = 30 * 60 * 1000;
 
 const CATEGORIES = [
-  { id: "stock", name: "주식·투자", words: ["주식", "증시", "코스피", "코스닥", "주가", "투자", "상장", "나스닥", "반도체"] },
-  { id: "finance", name: "금융·은행", words: ["금리", "은행", "대출", "금융", "환율", "원화", "달러", "예금", "한국은행"] },
-  { id: "prices", name: "물가·생활경제", words: ["물가", "소비자물가", "가격", "휘발유", "기름값", "생활비", "식품", "소비"] },
-  { id: "business", name: "기업·산업", words: ["기업", "산업", "삼성전자", "현대차", "실적", "매출", "공장", "수출"] },
-  { id: "global", name: "국제경제·무역", words: ["미국", "중국", "일본", "유럽", "무역", "관세", "수입", "세계경제", "유가"] },
-  { id: "jobs", name: "부동산·일자리·정책", words: ["부동산", "아파트", "집값", "전세", "월세", "취업", "일자리", "고용", "정부", "정책", "주택"] }
+  {
+    id: "stock",
+    name: "주식·투자",
+    words: ["주식", "증시", "코스피", "코스닥", "주가", "투자", "상장", "나스닥", "반도체", "주주", "증권"]
+  },
+  {
+    id: "finance",
+    name: "금융·은행",
+    words: ["금리", "은행", "대출", "금융", "환율", "원화", "달러", "예금", "한국은행", "채권", "이자"]
+  },
+  {
+    id: "prices",
+    name: "물가·생활경제",
+    words: ["물가", "소비자물가", "가격", "휘발유", "기름값", "생활비", "식품", "소비", "장바구니", "인플레이션"]
+  },
+  {
+    id: "business",
+    name: "기업·산업",
+    words: ["기업", "산업", "삼성전자", "현대차", "실적", "매출", "공장", "수출", "제조업", "반도체", "배터리"]
+  },
+  {
+    id: "global",
+    name: "국제경제·무역",
+    words: ["미국", "중국", "일본", "유럽", "무역", "관세", "수입", "세계경제", "유가", "수출", "국제"]
+  },
+  {
+    id: "jobs",
+    name: "부동산·일자리·정책",
+    words: ["부동산", "아파트", "집값", "전세", "월세", "취업", "일자리", "고용", "정부", "정책", "주택", "청년"]
+  }
 ];
 
 function json(data, status = 200) {
@@ -32,7 +58,7 @@ function clean(value) {
 }
 
 function classify(article) {
-  const text = `${article.title} ${article.description}`.toLowerCase();
+  const text = `${article.title} ${article.description || ""}`.toLowerCase();
 
   return CATEGORIES
     .filter(category =>
@@ -41,14 +67,25 @@ function classify(article) {
     .map(category => category.id);
 }
 
+function articleDate(item) {
+  if (item.seendate) {
+    const parsed = new Date(item.seendate);
+    if (!Number.isNaN(parsed.getTime())) {
+      return parsed.toISOString();
+    }
+  }
+
+  return new Date().toISOString();
+}
+
 function importance(article) {
-  const age = Math.max(
-    0,
-    (Date.now() - new Date(article.date || Date.now()).getTime()) / 3600000
-  );
+  const parsed = new Date(article.date || Date.now()).getTime();
+  const age = Number.isNaN(parsed)
+    ? 24
+    : Math.max(0, (Date.now() - parsed) / 3600000);
 
   let score = Math.max(0, 100 - age * 1.5);
-  const text = `${article.title} ${article.description}`.toLowerCase();
+  const text = `${article.title} ${article.description || ""}`.toLowerCase();
 
   for (const word of [
     "급등", "급락", "사상 최대", "기준금리", "파산",
@@ -60,37 +97,40 @@ function importance(article) {
   return score;
 }
 
-async function collectNews() {
-  const query = encodeURIComponent(
-    '(경제 OR 주식 OR 금융 OR 물가 OR 기업 OR 부동산 OR 금리 OR 무역) sourcelang:korean'
+function makeQuery(words) {
+  return `(${words.join(" OR ")}) sourcelang:korean`;
+}
+
+async function fetchGdelt(query, maxRecords = 250) {
+  const params = new URLSearchParams({
+    query,
+    mode: "ArtList",
+    format: "json",
+    sort: "DateDesc",
+    maxrecords: String(maxRecords)
+  });
+
+  const response = await fetch(
+    `https://api.gdeltproject.org/api/v2/doc/doc?${params.toString()}`,
+    {
+      headers: { "Accept": "application/json" },
+      signal: AbortSignal.timeout(20000)
+    }
   );
 
-  const endpoint =
-    `https://api.gdeltproject.org/api/v2/doc/doc?query=${query}` +
-    "&mode=ArtList&format=json&sort=DateDesc&maxrecords=250";
-
-  const response = await fetch(endpoint);
-
   if (!response.ok) {
-    throw new Error(`뉴스 제공처 오류: HTTP ${response.status}`);
+    throw new Error(`GDELT 뉴스 수집 오류: HTTP ${response.status}`);
   }
 
   const data = await response.json();
 
-  const articles = (data.articles || []).map(item => {
-    let date = new Date().toISOString();
-
-    if (item.seendate) {
-      const parsed = new Date(item.seendate);
-      if (!Number.isNaN(parsed.getTime())) date = parsed.toISOString();
-    }
-
+  return (data.articles || []).map(item => {
     const article = {
       title: clean(item.title),
       description: "",
       url: item.url || "",
       source: item.domain || "뉴스 제공처",
-      date,
+      date: articleDate(item),
       image: item.socialimage || ""
     };
 
@@ -98,13 +138,58 @@ async function collectNews() {
     article.score = importance(article);
     return article;
   }).filter(article => article.title && article.url);
+}
 
-  return [...new Map(articles.map(a => [a.url, a])).values()];
+async function collectNews() {
+  const queries = [
+    makeQuery([
+      "경제", "주식", "금융", "물가", "기업",
+      "부동산", "금리", "무역", "투자", "환율"
+    ]),
+    makeQuery(["주식", "증시", "코스피", "코스닥", "투자", "증권"]),
+    makeQuery(["금리", "은행", "대출", "금융", "환율", "예금"]),
+    makeQuery(["물가", "가격", "소비자물가", "생활비", "소비"]),
+    makeQuery(["기업", "산업", "실적", "매출", "수출", "제조업"]),
+    makeQuery(["국제경제", "무역", "관세", "수입", "세계경제"]),
+    makeQuery(["부동산", "아파트", "취업", "일자리", "고용", "경제정책"])
+  ];
+
+  const results = await Promise.allSettled(
+    queries.map(query => fetchGdelt(query, 250))
+  );
+
+  const collected = [];
+
+  for (const result of results) {
+    if (result.status === "fulfilled") {
+      collected.push(...result.value);
+    } else {
+      console.error("일부 뉴스 검색 실패:", result.reason);
+    }
+  }
+
+  const unique = new Map();
+
+  for (const article of collected) {
+    const previous = unique.get(article.url);
+    if (!previous || new Date(article.date) > new Date(previous.date)) {
+      unique.set(article.url, article);
+    }
+  }
+
+  const articles = [...unique.values()]
+    .sort((a, b) => new Date(b.date) - new Date(a.date));
+
+  if (articles.length === 0) {
+    throw new Error("뉴스를 수집하지 못했어요. 잠시 후 다시 시도해 주세요.");
+  }
+
+  return articles;
 }
 
 async function readNews(env) {
   if (!env.NEWS_KV) {
-    throw new Error("NEWS_KV 바인딩이 없어요. KV 설정을 확인해 주세요.");
+    throw new Error("NEWS_KV 바인딩이 없어요. Cloudflare KV 설정을 확인해 주세요.");
   }
 
   const saved = await env.NEWS_KV.get(CACHE_KEY, "json");
@@ -117,14 +202,29 @@ async function readNews(env) {
 
 async function refreshNews(env) {
   const fresh = await collectNews();
-  const previous = await readNews(env);
+
+  let previous = { articles: [], updatedAt: null };
+
+  try {
+    previous = await readNews(env);
+  } catch (error) {
+    console.error("기존 뉴스 읽기 실패:", error);
+  }
+
   const combined = new Map();
 
   for (const article of [...previous.articles, ...fresh]) {
-    const old = combined.get(article.url);
+    const existing = combined.get(article.url);
 
-    if (!old || new Date(article.date) > new Date(old.date)) {
-      combined.set(article.url, article);
+    if (
+      !existing ||
+      new Date(article.date) > new Date(existing.date)
+    ) {
+      combined.set(article.url, {
+        ...article,
+        categories: classify(article),
+        score: importance(article)
+      });
     }
   }
 
@@ -138,37 +238,56 @@ async function refreshNews(env) {
   };
 
   await env.NEWS_KV.put(CACHE_KEY, JSON.stringify(result));
+
   return result;
 }
 
 function buildDigest(articles) {
   const result = [];
 
+  // 전체 경제: 최신 기사 10개
+  const newest = [...articles]
+    .sort((a, b) => new Date(b.date) - new Date(a.date));
+
+  for (const article of newest.slice(0, CATEGORY_LIMIT)) {
+    result.push({
+      ...article,
+      digestCategory: "all",
+      digestCategoryName: "전체 경제"
+    });
+  }
+
+  // 각 카테고리: 관련 기사를 우선하고 부족하면 다른 최신 경제 기사로 보충
   for (const category of CATEGORIES) {
     const related = articles
       .filter(article => article.categories?.includes(category.id))
-      .sort((a, b) => (b.score ?? importance(b)) - (a.score ?? importance(a)));
-
-    const others = articles
-      .filter(article => !article.categories?.includes(category.id))
       .sort((a, b) => new Date(b.date) - new Date(a.date));
 
+    const selected = [];
     const seen = new Set();
-    let count = 0;
 
-    for (const article of [...related, ...others]) {
-      const key = article.url || article.title;
-      if (seen.has(key)) continue;
-      seen.add(key);
+    for (const article of related) {
+      if (seen.has(article.url)) continue;
+      seen.add(article.url);
+      selected.push(article);
+      if (selected.length >= CATEGORY_LIMIT) break;
+    }
 
+    if (selected.length < CATEGORY_LIMIT) {
+      for (const article of newest) {
+        if (seen.has(article.url)) continue;
+        seen.add(article.url);
+        selected.push(article);
+        if (selected.length >= CATEGORY_LIMIT) break;
+      }
+    }
+
+    for (const article of selected) {
       result.push({
         ...article,
         digestCategory: category.id,
         digestCategoryName: category.name
       });
-
-      count++;
-      if (count >= 5) break;
     }
   }
 
@@ -194,6 +313,7 @@ async function runTextAI(env, prompt) {
   const answer = result?.response || result?.output_text;
 
   if (!answer) throw new Error("AI가 설명을 반환하지 않았어요.");
+
   return answer;
 }
 
@@ -202,7 +322,9 @@ async function handleSummary(request, env) {
   const title = clean(body.title);
   const description = clean(body.description);
 
-  if (!title) return json({ error: "기사 제목이 필요해요." }, 400);
+  if (!title) {
+    return json({ error: "기사 제목이 필요해요." }, 400);
+  }
 
   const article = await runTextAI(env, `
 다음 경제 뉴스를 초등학생도 이해할 수 있게 설명해 줘.
@@ -223,8 +345,13 @@ async function handleImage(request, env) {
   const title = clean(body.title);
   const description = clean(body.description);
 
-  if (!title) return json({ error: "기사 제목이 필요해요." }, 400);
-  if (!env.AI) return json({ error: "AI 바인딩이 없어요." }, 503);
+  if (!title) {
+    return json({ error: "기사 제목이 필요해요." }, 400);
+  }
+
+  if (!env.AI) {
+    return json({ error: "AI 바인딩이 없어요." }, 503);
+  }
 
   const result = await env.AI.run(
     "@cf/black-forest-labs/flux-1-schnell",
@@ -241,7 +368,16 @@ async function handleImage(request, env) {
     throw new Error("AI 그림 데이터가 비어 있어요.");
   }
 
-  return json({ image: result.image });
+  const imageBytes = result.image;
+  let binary = "";
+
+  for (let i = 0; i < imageBytes.length; i++) {
+    binary += String.fromCharCode(imageBytes[i]);
+  }
+
+  return json({
+    image: `data:image/png;base64,${btoa(binary)}`
+  });
 }
 
 export default {
@@ -263,19 +399,63 @@ export default {
         const mode = url.searchParams.get("mode") || "digest";
         let saved = await readNews(env);
 
+        // 첫 방문 또는 저장된 뉴스가 없으면 즉시 수집을 시도
         if (!saved.articles.length) {
-          saved = await refreshNews(env);
+          try {
+            saved = await refreshNews(env);
+          } catch (error) {
+            console.error("최초 뉴스 수집 실패:", error);
+
+            return json({
+              mode,
+              articles: [],
+              updatedAt: null,
+              nextUpdateAt: Date.now() + UPDATE_INTERVAL,
+              error: "최초 뉴스를 수집하지 못했어요. 잠시 후 새로고침해 주세요."
+            }, 503);
+          }
         }
 
         if (mode === "live") {
-          const articles = await collectNews();
+          // 화면에 최신 뉴스 요청이 오면 실시간 수집을 시도
+          try {
+            const liveArticles = await collectNews();
 
-          return json({
-            mode: "live",
-            articles,
-            updatedAt: new Date().toISOString(),
-            nextUpdateAt: Date.now() + 30 * 60 * 1000
-          });
+            // 최신 수집 결과도 KV에 저장하여 다음 방문 때 활용
+            const merged = new Map(
+              saved.articles.map(article => [article.url, article])
+            );
+
+            for (const article of liveArticles) {
+              merged.set(article.url, article);
+            }
+
+            const updated = {
+              articles: [...merged.values()]
+                .sort((a, b) => new Date(b.date) - new Date(a.date))
+                .slice(0, MAX_ARTICLES),
+              updatedAt: new Date().toISOString()
+            };
+
+            await env.NEWS_KV.put(CACHE_KEY, JSON.stringify(updated));
+
+            return json({
+              mode: "live",
+              articles: updated.articles,
+              updatedAt: updated.updatedAt,
+              nextUpdateAt: Date.now() + UPDATE_INTERVAL
+            });
+          } catch (error) {
+            console.error("실시간 수집 실패, 저장된 뉴스 표시:", error);
+
+            return json({
+              mode: "live",
+              articles: saved.articles,
+              updatedAt: saved.updatedAt,
+              nextUpdateAt: Date.now() + UPDATE_INTERVAL,
+              warning: "실시간 수집에 실패해 저장된 뉴스를 표시하고 있어요."
+            });
+          }
         }
 
         return json({
@@ -283,8 +463,8 @@ export default {
           articles: buildDigest(saved.articles),
           updatedAt: saved.updatedAt,
           nextUpdateAt: saved.updatedAt
-            ? new Date(saved.updatedAt).getTime() + 30 * 60 * 1000
-            : Date.now() + 30 * 60 * 1000
+            ? new Date(saved.updatedAt).getTime() + UPDATE_INTERVAL
+            : Date.now() + UPDATE_INTERVAL
         });
       }
 
@@ -309,7 +489,10 @@ export default {
       return env.ASSETS.fetch(request);
     } catch (error) {
       console.error("MANGO NEWS ERROR:", error);
-      return json({ error: error.message || "서버 오류가 발생했어요." }, 500);
+
+      return json({
+        error: error.message || "서버 오류가 발생했어요."
+      }, 500);
     }
   },
 
