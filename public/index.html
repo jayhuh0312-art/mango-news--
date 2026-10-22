@@ -5,567 +5,740 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#ffc928">
-<title>MANGO NEWS | 경제와 주식을 쉽게 읽다</title>
+<title>MANGO NEWS | 뉴스를 쉽게 읽다</title>
 <style>
-:root{--mango:#ffc928;--mango-light:#fff2b8;--ink:#28251e;--muted:#817b6e;--paper:#fffdf7;--white:#fff;--line:#eee7d7;--radius:18px}
-*{box-sizing:border-box}
-body{margin:0;color:var(--ink);background:var(--paper);font-family:Arial,"Malgun Gothic","맑은 고딕",sans-serif;line-height:1.65}
-button,input{font:inherit}button{cursor:pointer}a{color:inherit}[hidden]{display:none!important}
-.top-strip{height:7px;background:var(--mango)}
-.site-header{background:var(--white);border-bottom:1px solid var(--line)}
-.header-inner{max-width:1120px;margin:auto;padding:20px 22px;display:flex;justify-content:space-between;align-items:center;gap:15px}
-.brand{border:0;padding:0;background:transparent;text-align:left;color:var(--ink)}
-.brand-name{display:block;font-size:30px;line-height:1.2;font-weight:950;letter-spacing:-1.2px}
-.brand-name span{color:#e8a900}
-.brand-subtitle{display:block;margin-top:4px;color:var(--muted);font-size:12px}
-.header-badge{background:var(--mango-light);padding:7px 12px;border-radius:99px;font-size:12px;font-weight:800;white-space:nowrap}
-main{max-width:1120px;min-height:70vh;padding:26px 22px 60px;margin:auto}
-.hero{position:relative;overflow:hidden;display:grid;grid-template-columns:1.4fr .6fr;align-items:center;gap:20px;padding:30px;border-radius:24px;background:var(--mango);margin-bottom:30px}
-.hero-content,.hero-image-wrap{position:relative;z-index:1;min-width:0}
-.hero-label{display:inline-block;padding:4px 11px;border-radius:99px;background:rgba(255,255,255,.7);font-size:11px;font-weight:900;letter-spacing:1px}
-.hero h1{margin:13px 0 10px;font-size:clamp(27px,4vw,40px);line-height:1.3;letter-spacing:-1.5px}
-.hero p{max-width:580px;margin:0;color:#5c4a17;font-size:14px}
-.hero-image{display:block;width:100%;height:205px;object-fit:cover;border:5px solid rgba(255,255,255,.65);border-radius:20px;background:#ffe28a}
-.hero-image-fallback,.image-placeholder{display:grid;width:100%;height:100%;place-items:center;background:linear-gradient(135deg,#fff3c5,#ffe28a);color:#8a6b17;font-size:65px}
-.hero-image-fallback{height:205px;border-radius:20px}
-.section-heading{display:flex;align-items:end;justify-content:space-between;gap:12px;margin:27px 0 16px}
-.section-heading h2{margin:0;font-size:23px;letter-spacing:-.6px}
-.section-heading p{margin:3px 0 0;color:var(--muted);font-size:13px}
-.refresh-button,.back-button{border:1px solid var(--line);border-radius:12px;padding:9px 13px;background:var(--white);font-size:13px;font-weight:800}
-.refresh-button:hover,.back-button:hover{background:var(--mango-light)}
-button:disabled{opacity:.6;cursor:wait}
-.category-list{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:22px}
-.category-button{padding:8px 15px;border:1px solid var(--line);border-radius:99px;background:var(--white);color:#625d51;font-size:13px;font-weight:800}
-.category-button.active{border-color:var(--mango);background:var(--mango);color:var(--ink)}
-.status{padding:22px 16px;margin:15px 0;border:1px dashed #e6d8b1;border-radius:var(--radius);background:#fffaf0;color:#655a3b;text-align:center;font-size:14px;overflow-wrap:anywhere}
-.status.error{color:#a32b2b;background:#fff5f3;border-color:#f0c9c3}
-.news-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
-.news-card{min-width:0;overflow:hidden;border:1px solid var(--line);border-radius:var(--radius);background:var(--white);transition:transform .15s ease,box-shadow .15s ease}
-.news-card:hover{transform:translateY(-2px);box-shadow:0 8px 22px rgba(100,77,12,.08)}
-.card-image-button{display:block;width:100%;height:210px;padding:0;overflow:hidden;border:0;background:#fff2c9}
-.card-image{display:block;width:100%;height:100%;object-fit:cover;transition:transform .25s ease}
-.card-image-button:hover .card-image{transform:scale(1.035)}
-.card-image-button .image-placeholder{font-size:48px}
-.card-body{padding:17px 18px 16px}
-.card-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px}
-.category-tag{display:inline-block;padding:4px 9px;border-radius:7px;background:var(--mango-light);font-size:11px;font-weight:900;white-space:nowrap}
-.source-name{overflow:hidden;color:var(--muted);font-size:11px;text-overflow:ellipsis;white-space:nowrap}
-.news-title{display:block;width:100%;padding:0;border:0;background:transparent;color:var(--ink);font-size:17px;font-weight:900;line-height:1.55;text-align:left;overflow-wrap:anywhere}
-.news-title:hover{color:#8a6800}
-mark{color:inherit;background:linear-gradient(to bottom,transparent 58%,#ffe36b 58%,#ffe36b 88%,transparent 88%);background-repeat:no-repeat;padding:0 2px;-webkit-box-decoration-break:clone;box-decoration-break:clone;border-radius:2px}
-.easy-article mark,.terms-section mark{background:linear-gradient(to bottom,transparent 60%,#ffe36b 60%,#ffe36b 90%,transparent 90%);padding:0 2px;border-radius:2px}
-.news-description{margin:9px 0 0;color:#777164;font-size:13px;line-height:1.7;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden}
-.card-footer{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:14px;padding-top:11px;border-top:1px solid #f3eee2}
-.news-date{color:#8c8679;font-size:11px}
-.read-more{color:#8b6800;font-size:12px;font-weight:900;white-space:nowrap}
-.detail-view{max-width:850px;margin:0 auto}
-.detail-paper{margin-top:17px;padding:clamp(18px,4vw,36px);border:1px solid var(--line);border-radius:22px;background:var(--white)}
-.detail-image{display:block;width:100%;max-height:430px;object-fit:cover;border-radius:16px;background:#fff2c9;margin-bottom:23px}
-.detail-meta{display:flex;flex-wrap:wrap;align-items:center;gap:9px;margin-bottom:14px;color:var(--muted);font-size:12px}
-.detail-title{margin:0 0 17px;font-size:clamp(24px,4vw,35px);line-height:1.45;letter-spacing:-.8px;overflow-wrap:anywhere}
-.detail-description{padding:15px 17px;border-radius:12px;background:#fffaf0;color:#6e6655;font-size:14px;overflow-wrap:anywhere;white-space:pre-wrap}
-.detail-divider{height:1px;margin:24px 0;background:var(--line)}
-.easy-heading{display:flex;align-items:center;gap:10px;margin:0 0 15px;font-size:20px}
-.easy-heading .emoji{display:grid;width:40px;height:40px;place-items:center;flex-shrink:0;border-radius:12px;background:var(--mango-light)}
-.easy-article{color:#39372f;font-size:16px;line-height:2;overflow-wrap:anywhere}
-.easy-article p{margin:0 0 14px}
-.terms-section{margin-top:28px;padding:18px;border-radius:15px;background:#fffaf0}
-.terms-section h3{margin:0 0 12px;font-size:16px}
-.term-item{padding:11px 0;border-top:1px solid #eee4cb;font-size:13px}
-.term-item strong{display:block;margin-bottom:3px;color:#8b6800}
-.original-link{display:inline-flex;margin-top:22px;padding:11px 15px;border-radius:11px;background:var(--mango);color:var(--ink);text-decoration:none;font-size:13px;font-weight:900}
-.original-link:hover{background:#f0b900}
-.detail-bottom{margin-top:18px}
-.footer{padding:25px 20px;border-top:1px solid var(--line);background:#fffaf0;color:#827965;text-align:center;font-size:12px}
-@media(max-width:700px){
-.header-inner{padding:17px 15px}.brand-name{font-size:25px}
-.header-badge{font-size:10px;padding:6px 8px}
-main{padding:18px 14px 40px}.hero{grid-template-columns:1fr;padding:23px 20px}
-.hero-image,.hero-image-fallback{height:175px}.news-grid{grid-template-columns:1fr}
-.card-image-button{height:205px}.category-button{padding:7px 12px}
+:root {
+  --mango: #ffc928;
+  --ink: #262626;
+  --paper: #fffdf6;
+  --line: #eee5cf;
+  --muted: #737373;
 }
-@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important}}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: Arial, "Malgun Gothic", sans-serif;
+  line-height: 1.6;
+}
+button { font: inherit; cursor: pointer; }
+header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--mango);
+  border-bottom: 1px solid #e7b21b;
+}
+.header-inner {
+  max-width: 1150px;
+  margin: auto;
+  padding: 12px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.logo {
+  font-size: 24px;
+  font-weight: 1000;
+  cursor: pointer;
+}
+.logo small {
+  display: block;
+  font-size: 11px;
+}
+.actions { display: flex; gap: 7px; }
+.btn {
+  padding: 8px 13px;
+  border: 1px solid #333;
+  border-radius: 999px;
+  background: white;
+  font-weight: 800;
+}
+.btn.dark { background: #292929; color: white; }
+main {
+  max-width: 1150px;
+  margin: auto;
+  padding: 22px 18px 50px;
+}
+.hero {
+  display: grid;
+  grid-template-columns: 1.4fr .6fr;
+  gap: 18px;
+  align-items: center;
+  padding: 26px;
+  border: 1px solid #e7bd32;
+  border-radius: 23px;
+  background: linear-gradient(120deg, #ffedab, #ffc928);
+}
+.eyebrow { font-size: 12px; font-weight: 900; letter-spacing: 1px; }
+.hero h1 { font-size: clamp(30px, 5vw, 46px); line-height: 1.15; margin: 8px 0; }
+.hero p { margin: 0; }
+.hero-art {
+  display: grid;
+  place-items: center;
+  min-height: 155px;
+  border-radius: 18px;
+  background: #fff4c8;
+  font-size: 95px;
+}
+.status {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 18px 0 10px;
+  color: var(--muted);
+  font-size: 13px;
+}
+.tabs {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 4px 0 15px;
+}
+.tab {
+  flex: 0 0 auto;
+  padding: 8px 15px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: white;
+  font-weight: 800;
+}
+.tab.active { background: #292929; color: white; }
+.section-head { margin: 6px 0 14px; }
+.section-head h2 { margin: 0; font-size: 24px; }
+.section-head p { margin: 0; font-size: 13px; color: var(--muted); }
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+.card {
+  min-width: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--line);
+  border-radius: 17px;
+  background: white;
+  cursor: pointer;
+}
+.card-image {
+  height: 190px;
+  position: relative;
+  overflow: hidden;
+  background: #ffe8a0;
+}
+.card-image img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.fallback {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, #fff0b0, #ffc928);
+  font-size: 58px;
+}
+.region {
+  position: absolute;
+  top: 9px;
+  left: 9px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: white;
+  font-size: 11px;
+  font-weight: 900;
+}
+.card-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 14px;
+}
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  color: var(--muted);
+  font-size: 11px;
+}
+.pill {
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: #fff2bc;
+  color: #614900;
+  font-weight: 900;
+}
+.card h3 { margin: 9px 0; font-size: 18px; line-height: 1.4; }
+.card p {
+  margin: 0 0 14px;
+  color: #606060;
+  font-size: 13px;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.read {
+  width: 100%;
+  margin-top: auto;
+  padding: 9px;
+  border: 0;
+  border-radius: 10px;
+  background: #fff2bc;
+  font-weight: 900;
+}
+.empty, .error {
+  padding: 25px;
+  border: 1px dashed #decf9e;
+  border-radius: 15px;
+  background: white;
+  text-align: center;
+}
+.detail { display: none; }
+.detail.visible { display: block; }
+.home.hidden { display: none; }
+.back { margin-bottom: 16px; }
+.detail-panel {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: white;
+}
+.detail-image {
+  width: 100%;
+  max-height: 430px;
+  object-fit: cover;
+  background: #ffe8a0;
+}
+.detail-body {
+  max-width: 850px;
+  margin: auto;
+  padding: clamp(18px, 4vw, 38px);
+}
+.detail-body h1 { font-size: clamp(25px, 4vw, 39px); line-height: 1.3; }
+.description {
+  padding: 12px 15px;
+  border-left: 4px solid var(--mango);
+  border-radius: 0 10px 10px 0;
+  background: #fffaf0;
+  color: #565656;
+}
+.ai-box {
+  margin-top: 24px;
+  padding: 18px;
+  border: 1px solid #f0d77d;
+  border-radius: 16px;
+  background: #fffaf0;
+}
+.ai-box h2 { margin: 0 0 8px; font-size: 21px; }
+.ai-text { white-space: pre-wrap; }
+.term { padding: 10px 0; border-top: 1px solid var(--line); }
+.term strong { color: #735400; }
+.source-link { display: inline-block; margin-top: 18px; font-weight: 900; }
+footer { padding: 28px 12px; color: var(--muted); font-size: 12px; text-align: center; }
+[hidden] { display: none !important; }
+@media (max-width: 800px) {
+  .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .hero { grid-template-columns: 1fr; }
+}
+@media (max-width: 540px) {
+  main { padding: 15px 11px 35px; }
+  .header-inner { padding: 10px; }
+  .logo { font-size: 19px; }
+  .grid { grid-template-columns: 1fr; }
+  .card-image { height: 215px; }
+  .hero { padding: 20px; }
+  .hero-art { display: none; }
+}
 </style>
 </head>
 <body>
-<div class="top-strip"></div>
-<header class="site-header">
-<div class="header-inner">
-<button class="brand" id="homeBrand" type="button">
-<span class="brand-name">🥭 MANGO <span>NEWS</span></span>
-<span class="brand-subtitle">경제와 뉴스를 쉽게 읽다</span>
-</button>
-<span class="header-badge">어린이를 위한 쉬운 뉴스</span>
-</div>
+<header>
+  <div class="header-inner">
+    <div class="logo" id="homeLogo">
+      🥭 MANGO NEWS
+      <small>경제와 뉴스를 쉽게 읽다</small>
+    </div>
+    <div class="actions">
+      <button class="btn" id="refreshButton">↻ 새로고침</button>
+      <button class="btn dark" id="homeButton">홈으로</button>
+    </div>
+  </div>
 </header>
+
 <main>
-<section id="homeView">
-<section class="hero">
-<div class="hero-content">
-<span class="hero-label">MANGO NEWS</span>
-<h1>어려운 뉴스도<br><mark>쉽고 재미있게!</mark></h1>
-<p>세상에서 일어나는 일을 알아봐요. 뉴스 제목을 누르면 쉬운 설명과 어려운 단어의 뜻을 읽을 수 있어요.</p>
-</div>
-<div class="hero-image-wrap">
-<img id="heroImage" class="hero-image" src="https://images.unsplash.com/photo-1553279768-865429fa0078?auto=format&fit=crop&w=900&q=80" alt="노란 망고" loading="lazy">
-</div>
-</section>
-<div class="section-heading">
-<div><h2>오늘의 뉴스 <mark>핵심 모아보기</mark></h2><p id="updateText">최신 뉴스를 불러오고 있어요.</p></div>
-<button class="refresh-button" id="refreshButton" type="button">↻ 새로고침</button>
-</div>
-<nav class="category-list" id="categoryList" aria-label="뉴스 카테고리">
-<button class="category-button active" data-category="전체" type="button">전체</button>
-<button class="category-button" data-category="경제" type="button">경제</button>
-<button class="category-button" data-category="주식" type="button">주식</button>
-<button class="category-button" data-category="정치" type="button">정치</button>
-<button class="category-button" data-category="사회" type="button">사회</button>
-<button class="category-button" data-category="국제" type="button">국제</button>
-<button class="category-button" data-category="기술" type="button">기술</button>
-<button class="category-button" data-category="일반" type="button">일반</button>
-</nav>
-<div id="newsStatus" class="status" role="status">최신 뉴스를 불러오고 있어요.</div>
-<section id="newsGrid" class="news-grid" aria-label="뉴스 목록"></section>
-<p style="color:var(--muted);font-size:12px;margin-top:25px;line-height:1.8">뉴스 제목과 출처는 외부 뉴스 데이터에서 제공됩니다. 쉬운 설명은 AI가 작성하므로 원문과 차이가 있을 수 있습니다. 중요한 정보는 원문 기사에서도 확인해 주세요.</p>
-</section>
-<section id="detailView" class="detail-view" hidden>
-<button id="backButton" class="back-button" type="button">← 홈으로 돌아가기</button>
-<article class="detail-paper">
-<img id="detailImage" class="detail-image" alt="" hidden>
-<div class="detail-meta">
-<span id="detailCategory" class="category-tag">일반</span>
-<span id="detailSource"></span><span id="detailDate"></span>
-</div>
-<h1 id="detailTitle" class="detail-title"></h1>
-<div id="detailDescription" class="detail-description" hidden></div>
-<div class="detail-divider"></div>
-<section aria-labelledby="easyTitle">
-<h2 class="easy-heading" id="easyTitle"><span class="emoji">💡</span><span>초등학생도 이해하는 쉬운 설명</span></h2>
-<div id="summaryStatus" class="status" role="status">기사를 쉽게 설명하고 있어요.</div>
-<div id="easyArticle" class="easy-article"></div>
-<section id="termsSection" class="terms-section" hidden>
-<h3>📖 어려운 단어 알아보기</h3><div id="termsList"></div>
-</section>
-</section>
-<a id="originalLink" class="original-link" href="#" target="_blank" rel="noopener noreferrer">원문 기사 보기 ↗</a>
-</article>
-<div class="detail-bottom"><button id="backButtonBottom" class="back-button" type="button">← 뉴스 목록으로</button></div>
-</section>
+  <section class="home" id="homeView">
+    <div class="hero">
+      <div>
+        <div class="eyebrow">NEWS MADE SIMPLE</div>
+        <h1>어려운 뉴스도<br>망고처럼 쉽게!</h1>
+        <p>국내와 해외 뉴스를 읽고, 어려운 내용은 AI의 쉬운 설명으로 알아봐요.</p>
+      </div>
+      <div class="hero-art">🥭</div>
+    </div>
+
+    <div class="status">
+      <span id="newsStatus">뉴스를 불러오는 중이에요…</span>
+      <span id="regionStatus">국내 · 해외 뉴스</span>
+    </div>
+
+    <div class="tabs" id="categoryTabs">
+      <button class="tab active" data-category="전체">전체</button>
+      <button class="tab" data-category="경제">경제</button>
+      <button class="tab" data-category="주식">주식</button>
+      <button class="tab" data-category="정치">정치</button>
+      <button class="tab" data-category="사회">사회</button>
+      <button class="tab" data-category="국제">국제</button>
+      <button class="tab" data-category="기술">기술</button>
+      <button class="tab" data-category="일반">일반</button>
+    </div>
+
+    <div class="section-head">
+      <h2 id="listTitle">오늘의 뉴스</h2>
+      <p id="listDescription">기사를 누르면 쉬운 설명을 읽을 수 있어요.</p>
+    </div>
+
+    <div class="grid" id="newsGrid"></div>
+    <div class="empty" id="emptyMessage" hidden>
+      이 카테고리의 뉴스가 아직 없어요. 다른 카테고리도 확인해 주세요.
+    </div>
+  </section>
+
+  <section class="detail" id="detailView">
+    <button class="btn back" id="backButton">← 뉴스 목록으로</button>
+    <article class="detail-panel">
+      <img id="detailImage" class="detail-image" alt="기사 이미지" hidden>
+      <div class="detail-body">
+        <div class="meta">
+          <span class="pill" id="detailCategory">뉴스</span>
+          <span id="detailMeta"></span>
+        </div>
+        <h1 id="detailTitle"></h1>
+        <p class="description" id="detailDescription"></p>
+
+        <div class="ai-box">
+          <h2>🍋 AI로 쉽게 설명하기</h2>
+          <p id="aiStatus">기사를 쉬운 말로 바꾸고 있어요…</p>
+          <div id="aiArticle" class="ai-text"></div>
+          <div id="aiTerms"></div>
+          <button class="btn" id="retryAI" hidden>↻ 다시 시도하기</button>
+        </div>
+
+        <a class="source-link" id="sourceLink" target="_blank" rel="noopener noreferrer">
+          원문 기사 읽기 ↗
+        </a>
+      </div>
+    </article>
+  </section>
 </main>
-<footer class="footer">🥭 MANGO NEWS · 어려운 뉴스를 쉽고 바르게 이해해요.</footer>
+
+<footer>MANGO NEWS · 기사를 이해하기 쉽게 돕는 뉴스 안내 사이트입니다.</footer>
 
 <script>
 "use strict";
 
-const API_NEWS="/api/news";
-const API_SUMMARIZE="/api/summarize";
-const API_IMAGE_SEARCH="/api/image-search";
+const API_NEWS = "/api/news";
+const API_SUMMARIZE = "/api/summarize";
+const API_IMAGE_SEARCH = "/api/image-search";
+const MAX_ARTICLES = 100;
 
-const NEWS_TIMEOUT_MS=12000;
-const SUMMARY_TIMEOUT_MS=25000;
-const IMAGE_TIMEOUT_MS=8000;
-const MAX_ARTICLES=15;
-const IMAGE_CONCURRENCY=3;
+const $ = id => document.getElementById(id);
 
-const elements={
-homeView:document.getElementById("homeView"),
-detailView:document.getElementById("detailView"),
-newsGrid:document.getElementById("newsGrid"),
-newsStatus:document.getElementById("newsStatus"),
-updateText:document.getElementById("updateText"),
-categoryList:document.getElementById("categoryList"),
-refreshButton:document.getElementById("refreshButton"),
-homeBrand:document.getElementById("homeBrand"),
-backButton:document.getElementById("backButton"),
-backButtonBottom:document.getElementById("backButtonBottom"),
-detailImage:document.getElementById("detailImage"),
-detailCategory:document.getElementById("detailCategory"),
-detailSource:document.getElementById("detailSource"),
-detailDate:document.getElementById("detailDate"),
-detailTitle:document.getElementById("detailTitle"),
-detailDescription:document.getElementById("detailDescription"),
-summaryStatus:document.getElementById("summaryStatus"),
-easyArticle:document.getElementById("easyArticle"),
-termsSection:document.getElementById("termsSection"),
-termsList:document.getElementById("termsList"),
-originalLink:document.getElementById("originalLink"),
-heroImage:document.getElementById("heroImage")
+const state = {
+  articles: [],
+  category: "전체",
+  currentArticle: null,
+  imageCache: new Map()
 };
 
-let allArticles=[];
-let selectedCategory="전체";
-let summaryRequestId=0;
-let imageRequestId=0;
-let newsController=null;
-
-const imageCache=new Map();
-const imageInFlight=new Map();
-const imageQueue=[];
-let activeImageRequests=0;
-
-function cleanText(value){
-const replacements={
-"突然":"갑자기","警察":"경찰","重傷":"심한 상처",
-"救護措置":"피해자를 돕는 조치","救護":"구호","措置":"조치",
-"事件":"사건","事故":"사고","原因":"원인","影響":"영향",
-"政府":"정부","經濟":"경제","株式":"주식","價格":"가격",
-"增加":"증가","減少":"감소","確認":"확인","發生":"발생",
-"決定":"결정","調査":"조사","急発進":"급출발","入件":"입건"
-};
-let result=String(value||"").replace(/[\u200B-\u200D\uFEFF]/g,"");
-for(const [from,to] of Object.entries(replacements))result=result.replaceAll(from,to);
-return result.trim();
+function escapeHTML(value) {
+  return String(value ?? "").replace(/[&<>"']/g, char => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;"
+  }[char]));
 }
 
-function safeURL(value){
-try{
-const url=new URL(value,location.origin);
-return url.protocol==="https:"||url.protocol==="http:"?url.href:"";
-}catch(_){return "";}
+function formatDate(value) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return new Intl.DateTimeFormat("ko-KR", {
+    month: "long",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit"
+  }).format(date);
 }
 
-function formatDate(value){
-if(!value)return "날짜 정보 없음";
-const date=new Date(value);
-if(Number.isNaN(date.getTime()))return String(value);
-return new Intl.DateTimeFormat("ko-KR",{
-year:"numeric",month:"long",day:"numeric",hour:"2-digit",minute:"2-digit"
-}).format(date);
+function guessCategory(article) {
+  const text = (
+    (article.title || "") + " " + (article.description || "")
+  ).toLowerCase();
+
+  if (/주식|증시|코스피|코스닥|상장|주가|배당|나스닥|stock market|shares|stocks/.test(text)) return "주식";
+  if (/경제|금리|물가|환율|은행|금융|수출|수입|무역|부동산|고용|실업|inflation|interest rate|economy|business/.test(text)) return "경제";
+  if (/대통령|국회|국회의원|정당|선거|정부|장관|정치|법안|president|election|parliament|politics/.test(text)) return "정치";
+  if (/인공지능|\bai\b|반도체|로봇|스마트폰|컴퓨터|인터넷|우주|과학|기술|소프트웨어|technology|artificial intelligence|science/.test(text)) return "기술";
+  if (/사건|사고|경찰|법원|학교|학생|교육|병원|건강|환경|화재|교통|범죄|시민|지역|school|court|health|environment/.test(text)) return "사회";
+  if (/미국|중국|일본|북한|유럽|러시아|우크라이나|중동|전쟁|국제|세계|해외|international|world|united states|china|japan|europe/.test(text)) return "국제";
+  return "일반";
 }
 
-function getCategory(article){
-const supplied=cleanText(article.category||article.section);
-const aliases={"经济":"경제","경제":"경제","금융":"경제","주식":"주식","증시":"주식","政治":"정치","정치":"정치","社会":"사회","사회":"사회","국제":"국제","세계":"국제","기술":"기술","과학":"기술","IT":"기술","일반":"일반"};
-if(aliases[supplied])return aliases[supplied];
-const title=((article.originalTitle||article.title||"")+" "+(article.description||"")).toLowerCase();
-if(/주식|증시|코스피|코스닥|상장|주가|주주|배당|nasdaq|stock market/.test(title))return "주식";
-if(/경제|금리|물가|환율|은행|금융|수출|수입|무역|부동산|경기|고용|실업|inflation|interest rate/.test(title))return "경제";
-if(/대통령|국회|국회의원|정당|선거|정부|장관|정치|법안|president|election|parliament/.test(title))return "정치";
-if(/인공지능|\bai\b|반도체|로봇|스마트폰|컴퓨터|인터넷|우주|과학|기술|소프트웨어|technology|artificial intelligence/.test(title))return "기술";
-if(/미국|중국|일본|한국|북한|유럽|러시아|우크라이나|중동|전쟁|국제|세계|해외|international|world news|united states/.test(title))return "국제";
-if(/사건|사고|경찰|법원|학교|학생|교육|병원|건강|환경|화재|교통|범죄|시민|지역|사회|school|court/.test(title))return "사회";
-return "일반";
+function normalise(article) {
+  const title = String(article.title || article.originalTitle || "").trim();
+
+  return {
+    ...article,
+    title,
+    originalTitle: article.originalTitle || title,
+    description: String(article.description || "").trim(),
+    url: String(article.url || article.link || "").trim(),
+    domain: article.domain || article.source || "뉴스",
+    date: article.date || article.pubDate || "",
+    image: article.image || "",
+    region: article.region || "국내",
+    category: article.category || guessCategory(article)
+  };
 }
 
-function normalise(article){
-const title=cleanText(article.originalTitle||article.title||"제목 없음");
-return {
-...article,title,originalTitle:title,
-description:cleanText(article.description||""),
-url:safeURL(article.url||article.link||""),
-domain:cleanText(article.domain||article.source||"뉴스"),
-date:cleanText(article.date||article.pubDate||""),
-image:safeURL(article.image||article.imageUrl||""),
-category:getCategory(article)
-};
+function fallbackEmoji(category) {
+  const icons = {
+    경제: "💹",
+    주식: "📈",
+    정치: "🏛️",
+    사회: "🏙️",
+    국제: "🌏",
+    기술: "🤖",
+    일반: "🥭"
+  };
+  return icons[category] || "🥭";
 }
 
-function escapeHTML(value){
-return String(value??"").replace(/[&<>"']/g,char=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[char]));
-}
-function escapeRegExp(value){return value.replace(/[.*+?^${}()|[\]\\]/g,"\\$&");}
-
-function highlightTitle(title){
-const safe=escapeHTML(title);
-const keywords=["긴급","속보","급등","급락","금리","물가","주식","경제","인공지능","AI","전쟁","선거","수출","수입","반도체","기후","환경"];
-const pattern=new RegExp("("+keywords.map(escapeRegExp).join("|")+")","gi");
-return safe.replace(pattern,"<mark>$1</mark>");
+function makeFallback(category) {
+  const div = document.createElement("div");
+  div.className = "fallback";
+  div.textContent = fallbackEmoji(category);
+  div.setAttribute("aria-label", "대체 이미지");
+  return div;
 }
 
-function appendHighlightedExplanation(explanation){
-elements.easyArticle.replaceChildren();
-const keywords=["경제","주식","금리","물가","환율","수출","수입","투자","기업","정부","인공지능","반도체","환경","기후","증가","감소","상승","하락","이유","결과","영향","핵심","중요","시장","주가","은행","수익","손실","가격","소비","생산","일자리","기술","정책"];
-const pattern=new RegExp("("+keywords.sort((a,b)=>b.length-a.length).map(escapeRegExp).join("|")+")","g");
-const paragraphs=String(explanation).split(/\n+/).map(line=>line.trim()).filter(Boolean);
-for(const text of paragraphs){
-const paragraph=document.createElement("p");
-let lastIndex=0;
-for(const match of text.matchAll(pattern)){
-if(match.index>lastIndex)paragraph.appendChild(document.createTextNode(text.slice(lastIndex,match.index)));
-const mark=document.createElement("mark");mark.textContent=match[0];paragraph.appendChild(mark);
-lastIndex=match.index+match[0].length;
-}
-if(lastIndex<text.length)paragraph.appendChild(document.createTextNode(text.slice(lastIndex)));
-elements.easyArticle.appendChild(paragraph);
-}
+async function getArticleImage(article) {
+  if (article.image && /^https?:\/\//i.test(article.image)) {
+    return article.image;
+  }
+
+  if (state.imageCache.has(article.url)) {
+    return state.imageCache.get(article.url);
+  }
+
+  try {
+    const response = await fetch(
+      API_IMAGE_SEARCH + "?title=" + encodeURIComponent(article.title)
+    );
+
+    if (!response.ok) return "";
+
+    const data = await response.json();
+    const image = data.image || "";
+
+    if (!/^https:\/\/upload\.wikimedia\.org\//i.test(image)) {
+      state.imageCache.set(article.url, "");
+      return "";
+    }
+
+    state.imageCache.set(article.url, image);
+    return image;
+  } catch {
+    state.imageCache.set(article.url, "");
+    return "";
+  }
 }
 
-function makeImagePlaceholder(){
-const placeholder=document.createElement("div");
-placeholder.className="image-placeholder";placeholder.textContent="🥭";
-return placeholder;
+function prepareCardImage(imageArea, article) {
+  imageArea.replaceChildren(makeFallback(article.category));
+
+  const region = document.createElement("span");
+  region.className = "region";
+  region.textContent = article.region === "해외" ? "해외 뉴스" : "국내 뉴스";
+  imageArea.appendChild(region);
+
+  const observer = new IntersectionObserver(entries => {
+    if (!entries.some(entry => entry.isIntersecting)) return;
+    observer.disconnect();
+
+    getArticleImage(article).then(url => {
+      if (!imageArea.isConnected || !url) return;
+
+      const img = document.createElement("img");
+      img.alt = article.title + " 이미지";
+      img.loading = "lazy";
+      img.src = url;
+
+      img.onerror = () => {
+        img.replaceWith(makeFallback(article.category));
+      };
+
+      imageArea.prepend(img);
+    });
+  }, { rootMargin: "250px" });
+
+  observer.observe(imageArea);
 }
 
-/* 이미지 검색 결과를 캐시하고 같은 기사 요청은 하나로 합칩니다. */
-function findArticleImage(article){
-if(article.image)return Promise.resolve(article.image);
-if(!article.title)return Promise.resolve("");
-const key=article.title;
-if(imageCache.has(key))return Promise.resolve(imageCache.get(key));
-if(imageInFlight.has(key))return imageInFlight.get(key);
+function renderNews() {
+  const grid = $("newsGrid");
+  grid.replaceChildren();
 
-const promise=(async()=>{
-const controller=new AbortController();
-const timer=setTimeout(()=>controller.abort(),IMAGE_TIMEOUT_MS);
-try{
-const response=await fetch(API_IMAGE_SEARCH+"?title="+encodeURIComponent(key),{
-signal:controller.signal,headers:{"Accept":"application/json"}
+  const filtered = state.category === "전체"
+    ? state.articles
+    : state.articles.filter(
+        article => article.category === state.category
+      );
+
+  $("listTitle").textContent = state.category === "전체"
+    ? "오늘의 뉴스"
+    : state.category + " 뉴스";
+
+  $("listDescription").textContent =
+    "총 " + filtered.length +
+    "개 · 기사를 누르면 쉬운 설명을 읽을 수 있어요.";
+
+  $("emptyMessage").hidden = filtered.length > 0;
+
+  const fragment = document.createDocumentFragment();
+
+  filtered.slice(0, MAX_ARTICLES).forEach(article => {
+    const card = document.createElement("article");
+    card.className = "card";
+
+    const imageArea = document.createElement("div");
+    imageArea.className = "card-image";
+    prepareCardImage(imageArea, article);
+
+    const content = document.createElement("div");
+    content.className = "card-content";
+
+    const meta = document.createElement("div");
+    meta.className = "meta";
+
+    const category = document.createElement("span");
+    category.className = "pill";
+    category.textContent = article.category;
+
+    const source = document.createElement("span");
+    source.textContent = article.domain;
+
+    const date = document.createElement("span");
+    date.textContent = formatDate(article.date);
+
+    meta.append(category, source, date);
+
+    const title = document.createElement("h3");
+    title.textContent = article.title;
+
+    const description = document.createElement("p");
+    description.textContent = article.description ||
+      "기사 설명이 없어요. 기사를 열어 쉬운 설명을 확인해 보세요.";
+
+    const button = document.createElement("button");
+    button.className = "read";
+    button.textContent = "쉬운 설명 읽기 →";
+    button.addEventListener("click", event => {
+      event.stopPropagation();
+      showArticle(article);
+    });
+
+    content.append(meta, title, description, button);
+    card.append(imageArea, content);
+    card.addEventListener("click", () => showArticle(article));
+
+    fragment.appendChild(card);
+  });
+
+  grid.appendChild(fragment);
+}
+
+async function loadNews(force = false) {
+  $("newsStatus").textContent = "뉴스를 불러오는 중이에요…";
+  $("refreshButton").disabled = true;
+
+  try {
+    const response = await fetch(
+      API_NEWS + (force ? "?refresh=1" : ""),
+      { cache: "no-store" }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok || !Array.isArray(data.articles)) {
+      throw new Error(data.error || "뉴스를 불러오지 못했어요.");
+    }
+
+    state.articles = data.articles
+      .map(normalise)
+      .filter(article => article.title && article.url);
+
+    $("newsStatus").textContent =
+      "뉴스 " + state.articles.length + "개 · " +
+      (data.updatedAt ? "업데이트 " + formatDate(data.updatedAt) : "최신 뉴스");
+
+    const domestic = state.articles.filter(a => a.region === "국내").length;
+    const international = state.articles.filter(a => a.region === "해외").length;
+
+    $("regionStatus").textContent =
+      "국내 " + domestic + "개 · 해외 " + international + "개";
+
+    renderNews();
+  } catch (error) {
+    $("newsStatus").textContent = "뉴스를 불러오지 못했어요.";
+    $("newsGrid").replaceChildren();
+
+    const message = document.createElement("div");
+    message.className = "error";
+    message.textContent =
+      "뉴스를 불러오지 못했어요. " +
+      (error.message || "") + " ";
+
+    const retry = document.createElement("button");
+    retry.className = "btn";
+    retry.textContent = "다시 시도";
+    retry.addEventListener("click", () => loadNews(true));
+
+    message.appendChild(retry);
+    $("newsGrid").appendChild(message);
+  } finally {
+    $("refreshButton").disabled = false;
+  }
+}
+
+async function showArticle(article) {
+  state.currentArticle = article;
+
+  $("homeView").classList.add("hidden");
+  $("detailView").classList.add("visible");
+
+  $("detailTitle").textContent = article.title;
+  $("detailCategory").textContent = article.category;
+  $("detailMeta").textContent =
+    article.domain + " · " + formatDate(article.date);
+  $("detailDescription").textContent =
+    article.description || "출처에서 별도의 설명을 제공하지 않았어요.";
+
+  $("sourceLink").href = article.url;
+  $("aiStatus").textContent = "AI가 쉬운 설명을 만들고 있어요…";
+  $("aiArticle").textContent = "";
+  $("aiTerms").replaceChildren();
+  $("retryAI").hidden = true;
+  $("detailImage").hidden = true;
+
+  window.scrollTo(0, 0);
+
+  getArticleImage(article).then(url => {
+    if (state.currentArticle?.url !== article.url || !url) return;
+
+    $("detailImage").src = url;
+    $("detailImage").hidden = false;
+    $("detailImage").onerror = () => {
+      $("detailImage").hidden = true;
+    };
+  });
+
+  await summarize(article);
+}
+
+async function summarize(article) {
+  $("aiStatus").textContent = "AI가 쉬운 설명을 만들고 있어요…";
+  $("retryAI").hidden = true;
+
+  try {
+    const response = await fetch(API_SUMMARIZE, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        title: article.title,
+        originalTitle: article.originalTitle || article.title,
+        description: article.description
+      })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || "AI 설명을 만들지 못했어요.");
+    }
+
+    if (state.currentArticle?.url !== article.url) return;
+
+    $("aiStatus").textContent =
+      data.titleKo && data.titleKo !== article.title
+        ? data.titleKo
+        : "쉬운 설명";
+
+    $("aiArticle").textContent =
+      data.article || "설명을 만들지 못했어요.";
+
+    $("aiTerms").replaceChildren();
+
+    if (Array.isArray(data.terms) && data.terms.length) {
+      const heading = document.createElement("h3");
+      heading.textContent = "어려운 단어 풀이";
+      $("aiTerms").appendChild(heading);
+
+      data.terms.forEach(item => {
+        const row = document.createElement("div");
+        row.className = "term";
+
+        const term = document.createElement("strong");
+        term.textContent = item.term || "";
+
+        const definition = document.createElement("div");
+        definition.textContent = item.definition || "";
+
+        row.append(term, definition);
+        $("aiTerms").appendChild(row);
+      });
+    }
+  } catch (error) {
+    $("aiStatus").textContent =
+      error.message || "AI 설명을 만들지 못했어요.";
+    $("retryAI").hidden = false;
+  }
+}
+
+function showHome() {
+  $("detailView").classList.remove("visible");
+  $("homeView").classList.remove("hidden");
+  state.currentArticle = null;
+  window.scrollTo(0, 0);
+}
+
+$("categoryTabs").addEventListener("click", event => {
+  const button = event.target.closest("[data-category]");
+  if (!button) return;
+
+  state.category = button.dataset.category;
+
+  document.querySelectorAll(".tab").forEach(tab => {
+    tab.classList.toggle("active", tab === button);
+  });
+
+  renderNews();
 });
-if(!response.ok)throw new Error("이미지 검색 오류: "+response.status);
-const data=await response.json();
-const url=safeURL(data.image||"");
-imageCache.set(key,url);
-return url;
-}catch(error){
-console.warn("이미지 검색 실패:",key,error);
-imageCache.set(key,"");
-return "";
-}finally{
-clearTimeout(timer);
-imageInFlight.delete(key);
-}
-})();
-imageInFlight.set(key,promise);
-return promise;
-}
 
-/* 한 번에 너무 많은 이미지 API를 호출하지 않습니다. */
-function queueImageTask(task){
-return new Promise(resolve=>{
-imageQueue.push(async()=>{
-try{resolve(await task());}
-catch(_){resolve("");}
-});
-runImageQueue();
-});
-}
-function runImageQueue(){
-while(activeImageRequests<IMAGE_CONCURRENCY&&imageQueue.length){
-const task=imageQueue.shift();
-activeImageRequests++;
-Promise.resolve().then(task).finally(()=>{
-activeImageRequests--;
-runImageQueue();
-});
-}
-}
-
-function scheduleCardImage(img,placeholder,article){
-function showPlaceholder(){img.hidden=true;placeholder.hidden=false;}
-function showImage(){
-if(!img.naturalWidth){showPlaceholder();return;}
-img.hidden=false;placeholder.hidden=true;
-}
-img.onload=showImage;
-img.onerror=showPlaceholder;
-showPlaceholder();
-
-const load=async()=>{
-const url=await findArticleImage(article);
-if(!img.isConnected||!url)return "";
-img.src=url;
-if(img.complete&&img.naturalWidth>0)showImage();
-return url;
-};
-
-if("IntersectionObserver"in window){
-const observer=new IntersectionObserver(entries=>{
-if(entries.some(entry=>entry.isIntersecting)){
-observer.disconnect();
-queueImageTask(load);
-}
-},{rootMargin:"250px"});
-observer.observe(img);
-}else{
-queueImageTask(load);
-}
-}
-
-function makeCard(article){
-const card=document.createElement("article");card.className="news-card";
-const imageButton=document.createElement("button");imageButton.type="button";imageButton.className="card-image-button";
-imageButton.setAttribute("aria-label","기사 열기: "+article.title);
-imageButton.addEventListener("click",()=>showArticle(article));
-const placeholder=makeImagePlaceholder();
-const image=document.createElement("img");image.className="card-image";image.alt=article.title;
-image.loading="lazy";image.decoding="async";image.hidden=true;
-imageButton.append(placeholder,image);
-scheduleCardImage(image,placeholder,article);
-
-const body=document.createElement("div");body.className="card-body";
-const top=document.createElement("div");top.className="card-top";
-const tag=document.createElement("span");tag.className="category-tag";tag.textContent=article.category;
-const source=document.createElement("span");source.className="source-name";source.textContent=article.domain;
-top.append(tag,source);
-const title=document.createElement("button");title.type="button";title.className="news-title";
-title.innerHTML=highlightTitle(article.title);title.addEventListener("click",()=>showArticle(article));
-const description=document.createElement("p");description.className="news-description";
-description.textContent=article.description||"제목을 눌러 이 뉴스의 쉬운 설명을 읽어 보세요.";
-const footer=document.createElement("div");footer.className="card-footer";
-const date=document.createElement("span");date.className="news-date";date.textContent=formatDate(article.date);
-const more=document.createElement("span");more.className="read-more";more.textContent="쉽게 읽기 →";
-footer.append(date,more);body.append(top,title,description,footer);card.append(imageButton,body);
-return card;
-}
-
-function renderNews(){
-elements.newsGrid.replaceChildren();
-const filtered=selectedCategory==="전체"?allArticles:allArticles.filter(a=>a.category===selectedCategory);
-if(!filtered.length){
-elements.newsStatus.hidden=false;elements.newsStatus.classList.remove("error");
-elements.newsStatus.textContent=allArticles.length
-?"이 카테고리에는 아직 기사가 없어요. 다른 카테고리를 눌러 보세요."
-:"표시할 뉴스가 없어요. 잠시 후 새로고침해 주세요.";
-return;
-}
-elements.newsStatus.hidden=true;
-const fragment=document.createDocumentFragment();
-filtered.slice(0,MAX_ARTICLES).forEach(article=>fragment.appendChild(makeCard(article)));
-elements.newsGrid.appendChild(fragment);
-}
-
-async function fetchJSON(url,options={},timeoutMs=NEWS_TIMEOUT_MS){
-const controller=new AbortController();
-const timer=setTimeout(()=>controller.abort(),timeoutMs);
-try{
-const response=await fetch(url,{...options,signal:controller.signal});
-let data;
-try{data=await response.json();}
-catch(_){throw new Error("서버가 올바른 JSON 데이터를 보내지 않았어요.");}
-if(!response.ok)throw new Error(data.error||"서버 오류 ("+response.status+")");
-return data;
-}catch(error){
-if(error.name==="AbortError")throw new Error("응답 시간이 너무 길어요. 잠시 후 다시 시도해 주세요.");
-throw error;
-}finally{clearTimeout(timer);}
-}
-
-async function loadNews(){
-if(newsController)newsController.abort();
-newsController=new AbortController();
-const thisController=newsController;
-elements.refreshButton.disabled=true;elements.refreshButton.textContent="불러오는 중…";
-elements.newsStatus.hidden=false;elements.newsStatus.classList.remove("error");
-elements.newsStatus.textContent="최신 뉴스를 불러오고 있어요.";
-try{
-const timer=setTimeout(()=>thisController.abort(),NEWS_TIMEOUT_MS);
-let response,data;
-try{
-response=await fetch(API_NEWS,{method:"GET",headers:{"Accept":"application/json"},signal:thisController.signal});
-try{data=await response.json();}
-catch(_){throw new Error("뉴스 서버 응답을 읽을 수 없어요.");}
-}finally{clearTimeout(timer);}
-if(thisController!==newsController)return;
-if(!response.ok)throw new Error(data.error||"뉴스 서버에 연결하지 못했어요.");
-const articles=Array.isArray(data.articles)?data.articles:Array.isArray(data)?data:[];
-allArticles=articles.map(normalise).filter(a=>a.title&&a.url);
-if(!allArticles.length){
-elements.newsStatus.textContent=data.error||"가져온 뉴스가 없어요. 잠시 후 다시 시도해 주세요.";
-elements.newsStatus.classList.add("error");elements.updateText.textContent="뉴스를 불러오지 못했어요.";return;
-}
-elements.updateText.textContent=allArticles.length+"개의 뉴스 · 마지막 확인 "+(data.updatedAt?formatDate(data.updatedAt):"방금");
-renderNews();
-}catch(error){
-if(thisController!==newsController)return;
-console.error("뉴스 불러오기 오류:",error);
-elements.newsStatus.textContent=error.name==="AbortError"
-?"뉴스 서버 응답이 너무 오래 걸려 요청을 중단했어요. 잠시 후 다시 시도해 주세요."
-:"뉴스를 불러오지 못했어요. 연결과 배포 상태를 확인해 주세요. ("+(error.message||"연결 오류")+")";
-elements.newsStatus.classList.add("error");elements.updateText.textContent="뉴스 연결에 문제가 있어요.";
-}finally{
-if(thisController===newsController){
-elements.refreshButton.disabled=false;elements.refreshButton.textContent="↻ 새로고침";
-}
-}
-}
-
-async function showArticle(article){
-const requestId=++summaryRequestId;
-const thisImageRequest=++imageRequestId;
-elements.homeView.hidden=true;elements.detailView.hidden=false;
-elements.detailCategory.textContent=article.category;
-elements.detailSource.textContent=article.domain;
-elements.detailDate.textContent=formatDate(article.date);
-elements.detailTitle.innerHTML=highlightTitle(article.title);
-elements.detailDescription.textContent=article.description;
-elements.detailDescription.hidden=!article.description;
-elements.detailImage.hidden=true;elements.detailImage.removeAttribute("src");
-elements.detailImage.alt=article.title;elements.detailImage.onload=null;elements.detailImage.onerror=null;
-elements.easyArticle.replaceChildren();elements.termsList.replaceChildren();elements.termsSection.hidden=true;
-elements.originalLink.href=article.url||"#";elements.originalLink.hidden=!article.url;
-elements.summaryStatus.hidden=false;elements.summaryStatus.classList.remove("error");
-elements.summaryStatus.textContent="기사를 쉬운 말로 설명하고 있어요. 잠시만 기다려 주세요.";
-history.pushState({view:"article",url:article.url},"","#article");
-window.scrollTo({top:0,behavior:"smooth"});
-
-queueImageTask(()=>findArticleImage(article)).then(url=>{
-if(thisImageRequest!==imageRequestId||!url)return;
-elements.detailImage.onload=()=>{if(thisImageRequest===imageRequestId)elements.detailImage.hidden=false;};
-elements.detailImage.onerror=()=>{elements.detailImage.hidden=true;};
-elements.detailImage.src=url;
-if(elements.detailImage.complete&&elements.detailImage.naturalWidth>0)elements.detailImage.hidden=false;
+$("refreshButton").addEventListener("click", () => loadNews(true));
+$("homeButton").addEventListener("click", showHome);
+$("homeLogo").addEventListener("click", showHome);
+$("backButton").addEventListener("click", showHome);
+$("retryAI").addEventListener("click", () => {
+  if (state.currentArticle) summarize(state.currentArticle);
 });
 
-try{
-const data=await fetchJSON(API_SUMMARIZE,{
-method:"POST",headers:{"Content-Type":"application/json"},
-body:JSON.stringify({
-title:article.originalTitle||article.title,
-originalTitle:article.originalTitle||article.title,
-description:article.description||"",
-language:"Korean",audience:"초등학생",
-instructions:"반드시 자연스럽고 쉬운 한국어로 설명하세요. 한자, 일본어 및 일본어 가나를 사용하지 마세요. 외국어 표현은 필요한 경우 자연스러운 한국어로 바꾸세요. 어려운 경제 용어는 초등학생도 이해할 수 있도록 풀어 쓰세요. 기사에 없는 사실을 만들어 내지 마세요. 핵심 사실과 수치, 인물, 날짜를 가능한 한 정확하게 유지하세요. 기사 핵심 내용을 문단별로 설명하고 어려운 단어는 쉬운 한국어로 정의하세요. 입건은 유죄가 확정됐다는 뜻이 아니라고 구분하세요."
-})
-},SUMMARY_TIMEOUT_MS);
-if(requestId!==summaryRequestId)return;
-const explanation=cleanText(data.article||data.summary||data.explanation||"");
-if(!explanation)throw new Error("AI가 설명을 반환하지 않았어요.");
-elements.summaryStatus.hidden=true;
-appendHighlightedExplanation(explanation);
-const terms=Array.isArray(data.terms)?data.terms:[];
-terms.slice(0,5).forEach(item=>{
-if(!item||!item.term||!item.definition)return;
-const row=document.createElement("div");row.className="term-item";
-const term=document.createElement("strong");term.textContent=cleanText(item.term);
-const definition=document.createElement("span");definition.textContent=cleanText(item.definition);
-row.append(term,definition);elements.termsList.appendChild(row);
-});
-elements.termsSection.hidden=!elements.termsList.childElementCount;
-}catch(error){
-if(requestId!==summaryRequestId)return;
-console.error("AI 쉬운 설명 오류:",error);
-elements.summaryStatus.hidden=false;elements.summaryStatus.classList.add("error");
-elements.summaryStatus.textContent="쉬운 설명을 불러오지 못했어요. ("+(error.message||"AI 요청 오류")+")";
-}
-}
-
-function showHome(){
-summaryRequestId++;imageRequestId++;
-elements.detailView.hidden=true;elements.homeView.hidden=false;
-if(location.hash!=="#home")history.pushState({view:"home"},"","#home");
-window.scrollTo({top:0,behavior:"smooth"});
-}
-
-elements.categoryList.addEventListener("click",event=>{
-const button=event.target.closest("[data-category]");if(!button)return;
-selectedCategory=button.dataset.category;
-elements.categoryList.querySelectorAll(".category-button").forEach(item=>item.classList.toggle("active",item===button));
-renderNews();
-});
-elements.refreshButton.addEventListener("click",loadNews);
-elements.homeBrand.addEventListener("click",showHome);
-elements.backButton.addEventListener("click",showHome);
-elements.backButtonBottom.addEventListener("click",showHome);
-window.addEventListener("popstate",()=>{
-summaryRequestId++;imageRequestId++;
-elements.detailView.hidden=true;elements.homeView.hidden=false;
-window.scrollTo({top:0,behavior:"smooth"});
-});
-elements.heroImage.addEventListener("error",()=>{
-const fallback=document.createElement("div");
-fallback.className="hero-image-fallback";fallback.textContent="🥭";fallback.setAttribute("aria-label","망고");
-elements.heroImage.replaceWith(fallback);
-});
 loadNews();
 </script>
 </body>
