@@ -76,8 +76,6 @@
       font-weight: bold;
     }
 
-    .refresh-button:hover { background: #444; }
-
     main {
       max-width: 1120px;
       margin: 0 auto;
@@ -181,7 +179,6 @@
     }
 
     .card-image-placeholder span:last-child { font-size: 14px; }
-
     .card-content { padding: 16px; }
 
     .card-source {
@@ -230,7 +227,6 @@
     }
 
     .back-button:hover { background: var(--mango-light); }
-
     .detail { max-width: 850px; margin: 0 auto; }
 
     .detail-panel {
@@ -270,7 +266,6 @@
     }
 
     .image-credit a { color: #765800; }
-
     .easy-title { margin: 0 0 12px; font-size: 23px; }
 
     .summary-intro {
@@ -306,12 +301,7 @@
     }
 
     .terms-panel h3 { margin: 0 0 14px; font-size: 20px; }
-
-    .terms-list {
-      list-style: none;
-      padding: 0;
-      margin: 0;
-    }
+    .terms-list { list-style: none; padding: 0; margin: 0; }
 
     .terms-list li {
       padding: 12px 0;
@@ -330,7 +320,6 @@
     }
 
     .term-definition { display: block; color: #4e4838; }
-
     .loading { color: #876700; padding: 14px 0; }
 
     .error-message {
@@ -351,8 +340,6 @@
       font-weight: bold;
       text-decoration: none;
     }
-
-    .retry-button:hover, .original-button:hover { background: #f1b800; }
 
     footer {
       border-top: 1px solid var(--border);
@@ -438,7 +425,7 @@
           </div>
 
           <p class="summary-intro">
-            노란색 형광펜으로 표시된 단어는 아래에서 따로 알아볼 수 있어요.
+            노란색으로 강조된 단어는 아래에서 뜻을 확인할 수 있어요.
           </p>
 
           <div id="summaryStatus" class="loading" aria-live="polite">
@@ -482,7 +469,7 @@
       imageSearchCache: new Map()
     };
 
-    const $ = (id) => document.getElementById(id);
+    const $ = id => document.getElementById(id);
 
     const homeView = $("homeView");
     const detailView = $("detailView");
@@ -531,9 +518,18 @@
       return article.category || "all";
     }
 
+    function isHttpUrl(value) {
+      try {
+        const url = new URL(value);
+        return url.protocol === "https:" || url.protocol === "http:";
+      } catch {
+        return false;
+      }
+    }
+
     function createPlaceholder(label = "관련 사진을 찾지 못했어요") {
-      const placeholder = document.createElement("div");
-      placeholder.className = "card-image-placeholder";
+      const box = document.createElement("div");
+      box.className = "card-image-placeholder";
 
       const mango = document.createElement("span");
       mango.textContent = "🥭";
@@ -541,22 +537,13 @@
       const text = document.createElement("span");
       text.textContent = label;
 
-      placeholder.append(mango, text);
-      return placeholder;
-    }
-
-    function isHttpUrl(value) {
-      try {
-        const parsed = new URL(value);
-        return parsed.protocol === "https:" || parsed.protocol === "http:";
-      } catch {
-        return false;
-      }
+      box.append(mango, text);
+      return box;
     }
 
     async function getArticleImage(article) {
       if (article.image && isHttpUrl(article.image)) {
-        return { image: article.image, page: article.url || "" };
+        return { image: article.image, page: "" };
       }
 
       if (state.imageSearchCache.has(article.title)) {
@@ -566,8 +553,7 @@
       const promise = (async () => {
         try {
           const response = await fetch(
-            "/api/image-search?title=" + encodeURIComponent(article.title),
-            { cache: "force-cache" }
+            "/api/image-search?title=" + encodeURIComponent(article.title)
           );
 
           if (!response.ok) return { image: "", page: "" };
@@ -579,7 +565,7 @@
             page: isHttpUrl(data.page || "") ? data.page : ""
           };
         } catch (error) {
-          console.warn("관련 사진 검색 실패:", error);
+          console.warn("사진 검색 실패:", error);
           return { image: "", page: "" };
         }
       })();
@@ -588,13 +574,12 @@
       return promise;
     }
 
-    async function loadCardImage(article, openButton) {
+    async function loadCardImage(article, button) {
       const placeholder = createPlaceholder("관련 사진을 찾는 중...");
-      openButton.prepend(placeholder);
+      button.prepend(placeholder);
 
       const result = await getArticleImage(article);
-
-      if (!openButton.isConnected) return;
+      if (!button.isConnected) return;
 
       if (!result.image) {
         placeholder.replaceWith(createPlaceholder());
@@ -606,7 +591,6 @@
       image.alt = "";
       image.loading = "lazy";
       image.src = result.image;
-
       image.onerror = () => {
         if (image.isConnected) image.replaceWith(createPlaceholder());
       };
@@ -618,10 +602,10 @@
       newsGrid.replaceChildren();
       newsMessage.classList.add("hidden");
 
-      const filtered = state.articles.filter(article => {
-        return state.category === "all" ||
-          inferCategory(article) === state.category;
-      });
+      const filtered = state.articles.filter(article =>
+        state.category === "all" ||
+        inferCategory(article) === state.category
+      );
 
       if (!filtered.length) {
         newsMessage.textContent = state.articles.length
@@ -635,10 +619,10 @@
         const card = document.createElement("article");
         card.className = "news-card";
 
-        const openButton = document.createElement("button");
-        openButton.className = "card-open";
-        openButton.type = "button";
-        openButton.setAttribute("aria-label", article.title);
+        const button = document.createElement("button");
+        button.className = "card-open";
+        button.type = "button";
+        button.setAttribute("aria-label", article.title);
 
         const content = document.createElement("div");
         content.className = "card-content";
@@ -661,19 +645,18 @@
         date.textContent = safeDate(article.date);
 
         content.append(source, title, description, date);
-        openButton.appendChild(content);
-        openButton.addEventListener("click", () => openArticle(article));
+        button.appendChild(content);
+        button.addEventListener("click", () => openArticle(article));
 
-        card.appendChild(openButton);
+        card.appendChild(button);
         newsGrid.appendChild(card);
 
-        // 실제 RSS 사진이 있으면 사용하고, 없으면 Wikimedia Commons에서 검색합니다.
-        loadCardImage(article, openButton);
+        loadCardImage(article, button);
       }
     }
 
     async function loadNews() {
-      const thisRequest = ++state.requestId;
+      const request = ++state.requestId;
 
       newsStatus.textContent = "뉴스를 불러오는 중...";
       newsMessage.classList.add("hidden");
@@ -684,34 +667,32 @@
           cache: "no-store"
         });
 
-        if (!response.ok) {
-          throw new Error("뉴스 서버 응답 오류 (" + response.status + ")");
-        }
-
         const data = await response.json();
 
-        if (thisRequest !== state.requestId) return;
+        if (!response.ok) {
+          throw new Error(data.error || "뉴스 서버 응답 오류");
+        }
 
-        const rawArticles = Array.isArray(data)
+        if (request !== state.requestId) return;
+
+        const articles = Array.isArray(data)
           ? data
           : (data.articles || data.news || []);
 
-        state.articles = rawArticles.map(normalise);
+        state.articles = articles.map(normalise);
         renderNews();
 
-        newsStatus.textContent = state.articles.length
-          ? "뉴스 " + state.articles.length + "개"
-          : "새 뉴스가 없어요";
+        newsStatus.textContent = "뉴스 " + state.articles.length + "개";
       } catch (error) {
-        if (thisRequest !== state.requestId) return;
+        if (request !== state.requestId) return;
 
-        console.error("뉴스 불러오기 오류:", error);
+        console.error("뉴스 오류:", error);
         newsStatus.textContent = "뉴스를 불러오지 못했어요";
         newsMessage.textContent =
-          "뉴스 서버에 연결하지 못했어요. 인터넷 연결이나 Cloudflare 배포 상태를 확인한 뒤 다시 시도해 주세요.";
+          "뉴스 서버에 연결하지 못했어요. 잠시 후 다시 시도해 주세요.";
         newsMessage.classList.remove("hidden");
       } finally {
-        if (thisRequest === state.requestId) {
+        if (request === state.requestId) {
           $("refreshButton").disabled = false;
         }
       }
@@ -749,33 +730,28 @@
 
       const result = await getArticleImage(article);
 
-      if (requestId !== state.detailRequestId) return;
+      if (requestId !== state.detailRequestId || !result.image) return;
 
-      if (!result.image) return;
-
-      image.src = result.image;
-      image.alt = "기사 관련 사진";
       image.onload = () => {
         if (requestId === state.detailRequestId) {
           image.classList.remove("hidden");
         }
       };
-      image.onerror = () => {
-        image.classList.add("hidden");
-      };
 
-      if (result.page && result.page !== article.url) {
+      image.onerror = () => image.classList.add("hidden");
+      image.src = result.image;
+
+      if (result.page) {
         const link = document.createElement("a");
         link.href = result.page;
         link.target = "_blank";
         link.rel = "noopener noreferrer";
-        link.textContent = "사진 출처 및 라이선스 확인 (Wikimedia Commons)";
+        link.textContent = "사진 출처 및 라이선스 확인";
         credit.appendChild(link);
         credit.classList.remove("hidden");
       }
     }
 
-    // 본문은 안전하게 텍스트로 넣고, 어려운 단어만 <mark>로 강조합니다.
     function renderHighlightedSummary(text, terms) {
       const container = $("easyArticle");
       container.replaceChildren();
@@ -788,31 +764,31 @@
         .filter(Boolean)
         .sort((a, b) => b.length - a.length);
 
-      // 모델이 줄바꿈을 넣지 않은 경우에도 문장 단위로 나눕니다.
-      let lines = cleanText
-        .split(/\n+/)
-        .map(line => line.trim())
-        .filter(Boolean);
+      let lines = cleanText.split(/\n+/).map(s => s.trim()).filter(Boolean);
 
       if (lines.length <= 1) {
         lines = cleanText.match(/[^.!?。！？]+[.!?。！？]?/g) || [cleanText];
-        lines = lines.map(line => line.trim()).filter(Boolean);
+        lines = lines.map(s => s.trim()).filter(Boolean);
       }
+
+      const escaped = termNames.map(term =>
+        term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+      );
+
+      const pattern = escaped.length
+        ? new RegExp(escaped.join("|"), "giu")
+        : null;
 
       for (const line of lines) {
         const paragraph = document.createElement("p");
 
-        if (!termNames.length) {
+        if (!pattern) {
           paragraph.textContent = line;
           container.appendChild(paragraph);
           continue;
         }
 
-        const escapedTerms = termNames.map(term =>
-          term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
-        );
-
-        const pattern = new RegExp(escapedTerms.join("|"), "gi");
+        pattern.lastIndex = 0;
         let lastIndex = 0;
         let match;
 
@@ -829,6 +805,8 @@
           paragraph.appendChild(mark);
 
           lastIndex = match.index + match[0].length;
+
+          if (!match[0].length) pattern.lastIndex++;
         }
 
         if (lastIndex < line.length) {
@@ -872,23 +850,22 @@
       $("detailSource").textContent = article.domain;
       $("detailTitle").textContent = article.title;
       $("detailDate").textContent = safeDate(article.date);
-
-      const originalLink = $("originalLink");
-      originalLink.href = isHttpUrl(article.url) ? article.url : "#";
+      $("originalLink").href = isHttpUrl(article.url) ? article.url : "#";
 
       $("easyArticle").replaceChildren();
       $("termsList").replaceChildren();
       $("summaryContent").classList.add("hidden");
       $("termsSection").classList.add("hidden");
       $("retrySummaryButton").classList.add("hidden");
-      setSummaryStatus("쉬운 설명을 준비하고 있어요...");
+
+      setSummaryStatus("AI가 한국어 번역과 쉬운 설명을 준비하고 있어요...");
 
       showDetailImage(article, requestId);
       await loadSummary(article, requestId);
     }
 
     async function loadSummary(article, requestId) {
-      setSummaryStatus("AI가 뉴스를 쉬운 말로 설명하고 있어요...");
+      setSummaryStatus("AI가 기사를 한국어로 번역하고 쉽게 설명하고 있어요...");
       $("retrySummaryButton").classList.add("hidden");
       $("summaryContent").classList.add("hidden");
 
@@ -915,7 +892,12 @@
         const articleText = data.article || data.summary || data.explanation;
 
         if (!articleText) {
-          throw new Error("AI가 설명 내용을 반환하지 않았어요.");
+          throw new Error("AI 응답에 설명 내용이 없어요.");
+        }
+
+        // 외국어 원문 제목 대신 AI가 반환한 한국어 제목을 표시합니다.
+        if (data.titleKo) {
+          $("detailTitle").textContent = data.titleKo;
         }
 
         const terms = Array.isArray(data.terms) ? data.terms : [];
@@ -925,7 +907,7 @@
 
         $("summaryContent").classList.remove("hidden");
         $("summaryStatus").className = "loading";
-        $("summaryStatus").textContent = "쉬운 설명을 완성했어요!";
+        $("summaryStatus").textContent = "한국어 쉬운 설명을 완성했어요!";
       } catch (error) {
         if (requestId !== state.detailRequestId) return;
 
