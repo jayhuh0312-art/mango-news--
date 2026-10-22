@@ -6,11 +6,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#ffc928">
   <title>MANGO NEWS | 경제를 쉽게 읽다</title>
-
   <style>
     :root {
       --mango: #ffc928;
-      --mango-light: #fff3bf;
       --ink: #242424;
       --paper: #fffdf5;
       --muted: #777;
@@ -18,7 +16,6 @@
     }
 
     * { box-sizing: border-box; }
-
     body {
       margin: 0;
       font-family: Arial, "Malgun Gothic", sans-serif;
@@ -26,9 +23,7 @@
       background: var(--paper);
       line-height: 1.65;
     }
-
     button { font: inherit; cursor: pointer; }
-
     button:focus-visible, a:focus-visible {
       outline: 3px solid #765800;
       outline-offset: 3px;
@@ -39,17 +34,15 @@
       padding: 18px 20px;
       border-bottom: 3px solid #f1b800;
     }
-
     .header-inner {
       max-width: 1120px;
-      margin: 0 auto;
+      margin: auto;
       display: flex;
       justify-content: space-between;
       align-items: center;
       gap: 16px;
       flex-wrap: wrap;
     }
-
     .logo {
       border: 0;
       background: transparent;
@@ -57,16 +50,8 @@
       color: var(--ink);
       text-align: left;
     }
-
-    .logo h1 {
-      margin: 0;
-      font-size: 29px;
-      font-weight: 900;
-      letter-spacing: -1px;
-    }
-
+    .logo h1 { margin: 0; font-size: 29px; font-weight: 900; }
     .logo p { margin: 0; font-size: 13px; }
-
     .refresh-button {
       background: var(--ink);
       color: white;
@@ -76,22 +61,15 @@
       font-weight: bold;
     }
 
-    main {
-      max-width: 1120px;
-      margin: 0 auto;
-      padding: 24px 20px 60px;
-    }
-
+    main { max-width: 1120px; margin: auto; padding: 24px 20px 60px; }
     .welcome {
       padding: 22px;
       border-radius: 18px;
       background: #fff4c9;
       margin-bottom: 25px;
     }
-
     .welcome h2 { margin: 0 0 7px; font-size: 25px; }
     .welcome p { margin: 0; color: #5f5129; }
-
     .section-heading {
       display: flex;
       align-items: center;
@@ -100,17 +78,10 @@
       margin: 24px 0 14px;
       flex-wrap: wrap;
     }
-
     .section-heading h2 { margin: 0; font-size: 23px; }
     #newsStatus { color: var(--muted); font-size: 13px; }
 
-    .categories {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin-bottom: 22px;
-    }
-
+    .categories { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 22px; }
     .category-button {
       background: white;
       border: 1px solid var(--border);
@@ -118,7 +89,6 @@
       padding: 8px 14px;
       color: #514a38;
     }
-
     .category-button.active {
       background: var(--mango);
       border-color: var(--mango);
@@ -131,7 +101,6 @@
       grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 20px;
     }
-
     .news-card {
       min-width: 0;
       overflow: hidden;
@@ -139,14 +108,7 @@
       border: 1px solid var(--border);
       border-radius: 16px;
       box-shadow: 0 3px 12px #00000008;
-      transition: transform 0.15s, box-shadow 0.15s;
     }
-
-    .news-card:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 8px 20px #00000012;
-    }
-
     .card-open {
       display: block;
       width: 100%;
@@ -156,18 +118,12 @@
       color: inherit;
       text-align: left;
     }
-
     .card-image, .card-image-placeholder {
       display: block;
       width: 100%;
       height: 190px;
     }
-
-    .card-image {
-      object-fit: cover;
-      background: #fff3bf;
-    }
-
+    .card-image { object-fit: cover; background: #fff3bf; }
     .card-image-placeholder {
       display: flex;
       align-items: center;
@@ -177,24 +133,10 @@
       color: #795900;
       font-size: 35px;
     }
-
     .card-image-placeholder span:last-child { font-size: 14px; }
     .card-content { padding: 16px; }
-
-    .card-source {
-      color: #876700;
-      font-size: 12px;
-      font-weight: bold;
-      margin-bottom: 7px;
-    }
-
-    .card-title {
-      margin: 0 0 10px;
-      font-size: 18px;
-      line-height: 1.45;
-      overflow-wrap: anywhere;
-    }
-
+    .card-source { color: #876700; font-size: 12px; font-weight: bold; margin-bottom: 7px; }
+    .card-title { margin: 0 0 10px; font-size: 18px; line-height: 1.45; overflow-wrap: anywhere; }
     .card-description {
       margin: 0;
       color: #666;
@@ -204,7 +146,6 @@
       -webkit-box-orient: vertical;
       overflow: hidden;
     }
-
     .card-date { margin-top: 13px; color: #888; font-size: 12px; }
 
     .message {
@@ -215,7 +156,6 @@
       text-align: center;
       color: #666;
     }
-
     .hidden { display: none !important; }
 
     .back-button {
@@ -225,10 +165,7 @@
       padding: 9px 14px;
       margin-bottom: 20px;
     }
-
-    .back-button:hover { background: var(--mango-light); }
-    .detail { max-width: 850px; margin: 0 auto; }
-
+    .detail { max-width: 850px; margin: auto; }
     .detail-panel {
       background: white;
       border: 1px solid var(--border);
@@ -236,18 +173,9 @@
       padding: 24px;
       margin-bottom: 20px;
     }
-
     .detail-source { color: #876700; font-weight: bold; font-size: 13px; }
-
-    .detail-title {
-      font-size: 30px;
-      line-height: 1.4;
-      margin: 10px 0;
-      overflow-wrap: anywhere;
-    }
-
+    .detail-title { font-size: 30px; line-height: 1.4; margin: 10px 0; overflow-wrap: anywhere; }
     .detail-date { color: #888; font-size: 13px; margin-bottom: 20px; }
-
     .detail-image {
       display: block;
       width: 100%;
@@ -257,29 +185,11 @@
       border-radius: 12px;
       margin: 18px 0 8px;
     }
-
-    .image-credit {
-      font-size: 12px;
-      color: #777;
-      margin: 0 0 22px;
-      overflow-wrap: anywhere;
-    }
-
+    .image-credit { font-size: 12px; color: #777; margin: 0 0 22px; overflow-wrap: anywhere; }
     .image-credit a { color: #765800; }
     .easy-title { margin: 0 0 12px; font-size: 23px; }
-
-    .summary-intro {
-      color: #777;
-      font-size: 14px;
-      margin: 0 0 14px;
-    }
-
-    .easy-article {
-      font-size: 17px;
-      line-height: 2;
-      overflow-wrap: anywhere;
-    }
-
+    .summary-intro { color: #777; font-size: 14px; margin: 0 0 14px; }
+    .easy-article { font-size: 17px; line-height: 2; overflow-wrap: anywhere; }
     .easy-article p { margin: 0 0 12px; }
 
     .term-highlight {
@@ -291,7 +201,6 @@
       -webkit-box-decoration-break: clone;
       box-decoration-break: clone;
     }
-
     .terms-panel {
       margin-top: 28px;
       padding: 20px;
@@ -299,17 +208,10 @@
       border: 1px solid #f2dfa0;
       border-radius: 14px;
     }
-
     .terms-panel h3 { margin: 0 0 14px; font-size: 20px; }
     .terms-list { list-style: none; padding: 0; margin: 0; }
-
-    .terms-list li {
-      padding: 12px 0;
-      border-bottom: 1px solid #eee2b9;
-    }
-
+    .terms-list li { padding: 12px 0; border-bottom: 1px solid #eee2b9; }
     .terms-list li:last-child { border-bottom: 0; padding-bottom: 0; }
-
     .term-name {
       display: inline-block;
       font-weight: 800;
@@ -318,17 +220,14 @@
       padding: 1px 7px;
       margin: 0 0 5px;
     }
-
     .term-definition { display: block; color: #4e4838; }
     .loading { color: #876700; padding: 14px 0; }
-
     .error-message {
       color: #b32c21;
       background: #fff0ed;
       border-radius: 10px;
       padding: 12px;
     }
-
     .retry-button, .original-button {
       display: inline-block;
       margin-top: 10px;
@@ -340,7 +239,6 @@
       font-weight: bold;
       text-decoration: none;
     }
-
     footer {
       border-top: 1px solid var(--border);
       padding: 24px 20px;
@@ -352,7 +250,6 @@
     @media (max-width: 850px) {
       .news-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     }
-
     @media (max-width: 560px) {
       .header { padding: 15px; }
       main { padding: 18px 14px 40px; }
@@ -374,10 +271,7 @@
         <h1>🥭 MANGO NEWS</h1>
         <p>경제와 세상을 쉽게 읽다</p>
       </button>
-
-      <button class="refresh-button" id="refreshButton">
-        ↻ 최신 뉴스 불러오기
-      </button>
+      <button class="refresh-button" id="refreshButton">↻ 최신 뉴스 불러오기</button>
     </div>
   </header>
 
@@ -423,18 +317,12 @@
           <div class="section-heading">
             <h2 class="easy-title">🥭 AI로 쉽게 설명하기</h2>
           </div>
+          <p class="summary-intro">노란색으로 강조된 단어는 아래에서 뜻을 확인할 수 있어요.</p>
 
-          <p class="summary-intro">
-            노란색으로 강조된 단어는 아래에서 뜻을 확인할 수 있어요.
-          </p>
-
-          <div id="summaryStatus" class="loading" aria-live="polite">
-            쉬운 설명을 준비하고 있어요...
-          </div>
+          <div id="summaryStatus" class="loading" aria-live="polite">쉬운 설명을 준비하고 있어요...</div>
 
           <div id="summaryContent" class="hidden">
             <div class="easy-article" id="easyArticle"></div>
-
             <section id="termsSection" class="terms-panel hidden">
               <h3>📚 어려운 단어 알아보기</h3>
               <ul class="terms-list" id="termsList"></ul>
@@ -442,12 +330,7 @@
           </div>
 
           <button class="retry-button hidden" id="retrySummaryButton">↻ 다시 설명하기</button>
-
-          <p>
-            <a id="originalLink" class="original-button" href="#" target="_blank" rel="noopener noreferrer">
-              원문 뉴스 보기 ↗
-            </a>
-          </p>
+          <p><a id="originalLink" class="original-button" href="#" target="_blank" rel="noopener noreferrer">원문 뉴스 보기 ↗</a></p>
         </article>
       </div>
     </section>
@@ -471,12 +354,6 @@
 
     const $ = id => document.getElementById(id);
 
-    const homeView = $("homeView");
-    const detailView = $("detailView");
-    const newsGrid = $("newsGrid");
-    const newsStatus = $("newsStatus");
-    const newsMessage = $("newsMessage");
-
     function normalise(article) {
       return {
         title: article.title || "제목 없는 뉴스",
@@ -489,24 +366,18 @@
       };
     }
 
-    function safeDate(dateString) {
-      if (!dateString) return "";
-
-      const date = new Date(dateString);
+    function safeDate(value) {
+      if (!value) return "";
+      const date = new Date(value);
       if (Number.isNaN(date.getTime())) return "";
-
       return date.toLocaleString("ko-KR", {
-        year: "numeric",
-        month: "2-digit",
-        day: "2-digit",
-        hour: "2-digit",
-        minute: "2-digit"
+        year: "numeric", month: "2-digit", day: "2-digit",
+        hour: "2-digit", minute: "2-digit"
       });
     }
 
     function inferCategory(article) {
       const text = (article.title + " " + article.description).toLowerCase();
-
       if (/주식|증시|코스피|코스닥|상장|주가|투자|배당/.test(text)) return "stock";
       if (/은행|금리|대출|예금|금융|환율|원화/.test(text)) return "finance";
       if (/물가|가격|소비자물가|생활비|장바구니|인플레이션/.test(text)) return "prices";
@@ -514,7 +385,6 @@
       if (/무역|수출|수입|미국|중국|일본|유럽|국제|세계 경제/.test(text)) return "world";
       if (/부동산|아파트|집값|일자리|취업|정부 정책|국회|세금/.test(text)) return "policy";
       if (/경제|시장|성장|경기|소비|고용|기업/.test(text)) return "economy";
-
       return article.category || "all";
     }
 
@@ -530,13 +400,10 @@
     function createPlaceholder(label = "관련 사진을 찾지 못했어요") {
       const box = document.createElement("div");
       box.className = "card-image-placeholder";
-
       const mango = document.createElement("span");
       mango.textContent = "🥭";
-
       const text = document.createElement("span");
       text.textContent = label;
-
       box.append(mango, text);
       return box;
     }
@@ -555,11 +422,8 @@
           const response = await fetch(
             "/api/image-search?title=" + encodeURIComponent(article.title)
           );
-
           if (!response.ok) return { image: "", page: "" };
-
           const data = await response.json();
-
           return {
             image: isHttpUrl(data.image || "") ? data.image : "",
             page: isHttpUrl(data.page || "") ? data.page : ""
@@ -594,24 +458,23 @@
       image.onerror = () => {
         if (image.isConnected) image.replaceWith(createPlaceholder());
       };
-
       placeholder.replaceWith(image);
     }
 
     function renderNews() {
-      newsGrid.replaceChildren();
-      newsMessage.classList.add("hidden");
+      const grid = $("newsGrid");
+      grid.replaceChildren();
+      $("newsMessage").classList.add("hidden");
 
       const filtered = state.articles.filter(article =>
-        state.category === "all" ||
-        inferCategory(article) === state.category
+        state.category === "all" || inferCategory(article) === state.category
       );
 
       if (!filtered.length) {
-        newsMessage.textContent = state.articles.length
+        $("newsMessage").textContent = state.articles.length
           ? "이 카테고리에 해당하는 뉴스가 아직 없어요. 다른 카테고리도 확인해 보세요."
           : "표시할 뉴스가 없어요. 잠시 후 다시 불러와 주세요.";
-        newsMessage.classList.remove("hidden");
+        $("newsMessage").classList.remove("hidden");
         return;
       }
 
@@ -637,8 +500,7 @@
 
         const description = document.createElement("p");
         description.className = "card-description";
-        description.textContent = article.description ||
-          "기사를 열어 쉬운 설명을 확인해 보세요.";
+        description.textContent = article.description || "기사를 열어 쉬운 설명을 확인해 보세요.";
 
         const date = document.createElement("div");
         date.className = "card-date";
@@ -647,9 +509,8 @@
         content.append(source, title, description, date);
         button.appendChild(content);
         button.addEventListener("click", () => openArticle(article));
-
         card.appendChild(button);
-        newsGrid.appendChild(card);
+        grid.appendChild(card);
 
         loadCardImage(article, button);
       }
@@ -657,65 +518,51 @@
 
     async function loadNews() {
       const request = ++state.requestId;
-
-      newsStatus.textContent = "뉴스를 불러오는 중...";
-      newsMessage.classList.add("hidden");
+      $("newsStatus").textContent = "뉴스를 불러오는 중...";
+      $("newsMessage").classList.add("hidden");
       $("refreshButton").disabled = true;
 
       try {
         const response = await fetch("/api/news?mode=live&t=" + Date.now(), {
           cache: "no-store"
         });
-
         const data = await response.json();
 
-        if (!response.ok) {
-          throw new Error(data.error || "뉴스 서버 응답 오류");
-        }
-
+        if (!response.ok) throw new Error(data.error || "뉴스 서버 응답 오류");
         if (request !== state.requestId) return;
 
-        const articles = Array.isArray(data)
-          ? data
-          : (data.articles || data.news || []);
-
+        const articles = Array.isArray(data) ? data : (data.articles || data.news || []);
         state.articles = articles.map(normalise);
         renderNews();
-
-        newsStatus.textContent = "뉴스 " + state.articles.length + "개";
+        $("newsStatus").textContent = "뉴스 " + state.articles.length + "개";
       } catch (error) {
         if (request !== state.requestId) return;
-
         console.error("뉴스 오류:", error);
-        newsStatus.textContent = "뉴스를 불러오지 못했어요";
-        newsMessage.textContent =
-          "뉴스 서버에 연결하지 못했어요. 잠시 후 다시 시도해 주세요.";
-        newsMessage.classList.remove("hidden");
+        $("newsStatus").textContent = "뉴스를 불러오지 못했어요";
+        $("newsMessage").textContent = "뉴스 서버에 연결하지 못했어요. 잠시 후 다시 시도해 주세요.";
+        $("newsMessage").classList.remove("hidden");
       } finally {
-        if (request === state.requestId) {
-          $("refreshButton").disabled = false;
-        }
+        if (request === state.requestId) $("refreshButton").disabled = false;
       }
     }
 
     function showHome() {
       state.detailRequestId++;
       state.currentArticle = null;
-      detailView.classList.add("hidden");
-      homeView.classList.remove("hidden");
+      $("detailView").classList.add("hidden");
+      $("homeView").classList.remove("hidden");
       window.scrollTo({ top: 0, behavior: "auto" });
     }
 
     function showDetail() {
-      homeView.classList.add("hidden");
-      detailView.classList.remove("hidden");
+      $("homeView").classList.add("hidden");
+      $("detailView").classList.remove("hidden");
       window.scrollTo({ top: 0, behavior: "auto" });
     }
 
     function setSummaryStatus(message, isError = false) {
-      const status = $("summaryStatus");
-      status.textContent = message;
-      status.className = isError ? "error-message" : "loading";
+      $("summaryStatus").textContent = message;
+      $("summaryStatus").className = isError ? "error-message" : "loading";
     }
 
     async function showDetailImage(article, requestId) {
@@ -724,20 +571,15 @@
 
       image.classList.add("hidden");
       image.removeAttribute("src");
-      image.onerror = null;
       credit.classList.add("hidden");
       credit.replaceChildren();
 
       const result = await getArticleImage(article);
-
       if (requestId !== state.detailRequestId || !result.image) return;
 
       image.onload = () => {
-        if (requestId === state.detailRequestId) {
-          image.classList.remove("hidden");
-        }
+        if (requestId === state.detailRequestId) image.classList.remove("hidden");
       };
-
       image.onerror = () => image.classList.add("hidden");
       image.src = result.image;
 
@@ -752,6 +594,90 @@
       }
     }
 
+    /*
+     * 서버가 객체 대신 JSON 문자열을 반환한 경우에도 객체로 바꿉니다.
+     * 실제 기사 설명 문자열 안에 JSON이 포함된 경우도 구분합니다.
+     */
+    function normaliseAIResponse(data) {
+      let result = data;
+
+      for (let i = 0; i < 3; i++) {
+        if (typeof result !== "string") break;
+
+        const text = result.trim();
+        if (!text.startsWith("{") && !text.startsWith("```")) break;
+
+        const cleaned = text
+          .replace(/^```(?:json)?\s*/i, "")
+          .replace(/\s*```$/i, "")
+          .trim();
+
+        try {
+          result = JSON.parse(cleaned);
+        } catch {
+          // 서버에서 파싱을 못 한 JSON 문자열도 최대한 복구합니다.
+          const titleMatch = cleaned.match(/"titleKo"\s*:\s*"((?:\\.|[^"\\])*)"/);
+          const articleStart = cleaned.match(/"article"\s*:\s*"/);
+
+          if (articleStart && articleStart.index !== undefined) {
+            const start = articleStart.index + articleStart[0].length;
+            const termsIndex = cleaned.indexOf('"terms"', start);
+            let article = (termsIndex >= 0
+              ? cleaned.slice(start, termsIndex)
+              : cleaned.slice(start)
+            ).trim().replace(/"\s*,?\s*$/, "");
+
+            article = article
+              .replace(/\\n/g, "\n")
+              .replace(/\\r/g, "")
+              .replace(/\\"/g, '"')
+              .replace(/\\\\/g, "\\");
+
+            let terms = [];
+            const termsMatch = cleaned.match(/"terms"\s*:\s*(\[[\s\S]*\])/);
+            if (termsMatch) {
+              try { terms = JSON.parse(termsMatch[1]); } catch { terms = []; }
+            }
+
+            result = {
+              titleKo: titleMatch ? titleMatch[1] : "",
+              article,
+              terms
+            };
+          } else {
+            throw new Error("AI 응답이 올바른 형식이 아니에요.");
+          }
+        }
+      }
+
+      if (typeof result === "string") {
+        return { titleKo: "", article: result, terms: [] };
+      }
+
+      if (!result || typeof result !== "object") {
+        throw new Error("AI 응답에 설명이 없어요.");
+      }
+
+      // article 안에 JSON 전체가 들어 있는 경우도 다시 분리합니다.
+      if (typeof result.article === "string") {
+        const inner = result.article.trim();
+        if (inner.startsWith("{") && inner.includes('"article"')) {
+          try {
+            const parsed = JSON.parse(inner);
+            result = { ...result, ...parsed };
+          } catch {
+            // 이미 설명 텍스트라면 그대로 사용합니다.
+          }
+        }
+      }
+
+      return {
+        titleKo: String(result.titleKo || result.title_ko || "").trim(),
+        article: String(result.article || result.summary || result.explanation || "").trim(),
+        terms: Array.isArray(result.terms) ? result.terms : []
+      };
+    }
+
     function renderHighlightedSummary(text, terms) {
       const container = $("easyArticle");
       container.replaceChildren();
@@ -764,20 +690,18 @@
         .filter(Boolean)
         .sort((a, b) => b.length - a.length);
 
-      let lines = cleanText.split(/\n+/).map(s => s.trim()).filter(Boolean);
+      let lines = cleanText.split(/\n+/).map(line => line.trim()).filter(Boolean);
 
       if (lines.length <= 1) {
         lines = cleanText.match(/[^.!?。！？]+[.!?。！？]?/g) || [cleanText];
-        lines = lines.map(s => s.trim()).filter(Boolean);
+        lines = lines.map(line => line.trim()).filter(Boolean);
       }
 
       const escaped = termNames.map(term =>
         term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
       );
 
-      const pattern = escaped.length
-        ? new RegExp(escaped.join("|"), "giu")
-        : null;
+      const pattern = escaped.length ? new RegExp(escaped.join("|"), "giu") : null;
 
       for (const line of lines) {
         const paragraph = document.createElement("p");
@@ -794,9 +718,7 @@
 
         while ((match = pattern.exec(line)) !== null) {
           if (match.index > lastIndex) {
-            paragraph.appendChild(
-              document.createTextNode(line.slice(lastIndex, match.index))
-            );
+            paragraph.appendChild(document.createTextNode(line.slice(lastIndex, match.index)));
           }
 
           const mark = document.createElement("mark");
@@ -805,14 +727,11 @@
           paragraph.appendChild(mark);
 
           lastIndex = match.index + match[0].length;
-
           if (!match[0].length) pattern.lastIndex++;
         }
 
         if (lastIndex < line.length) {
-          paragraph.appendChild(
-            document.createTextNode(line.slice(lastIndex))
-          );
+          paragraph.appendChild(document.createTextNode(line.slice(lastIndex)));
         }
 
         container.appendChild(paragraph);
@@ -824,11 +743,12 @@
       list.replaceChildren();
 
       for (const term of terms) {
-        const li = document.createElement("li");
+        if (!term || !term.term) continue;
 
+        const li = document.createElement("li");
         const name = document.createElement("span");
         name.className = "term-name";
-        name.textContent = term.term || "용어";
+        name.textContent = term.term;
 
         const definition = document.createElement("span");
         definition.className = "term-definition";
@@ -838,7 +758,7 @@
         list.appendChild(li);
       }
 
-      $("termsSection").classList.toggle("hidden", terms.length === 0);
+      $("termsSection").classList.toggle("hidden", list.children.length === 0);
     }
 
     async function openArticle(article) {
@@ -846,7 +766,6 @@
       const requestId = ++state.detailRequestId;
 
       showDetail();
-
       $("detailSource").textContent = article.domain;
       $("detailTitle").textContent = article.title;
       $("detailDate").textContent = safeDate(article.date);
@@ -859,7 +778,6 @@
       $("retrySummaryButton").classList.add("hidden");
 
       setSummaryStatus("AI가 한국어 번역과 쉬운 설명을 준비하고 있어요...");
-
       showDetailImage(article, requestId);
       await loadSummary(article, requestId);
     }
@@ -881,29 +799,31 @@
           })
         });
 
-        const data = await response.json().catch(() => ({}));
+        const raw = await response.text();
+        let payload;
+
+        try {
+          payload = JSON.parse(raw);
+        } catch {
+          throw new Error("서버가 JSON 응답을 보내지 않았어요. Worker 배포 상태를 확인해 주세요.");
+        }
 
         if (!response.ok) {
-          throw new Error(data.error || "AI 설명 서버 오류 (" + response.status + ")");
+          throw new Error(payload.error || "AI 설명 서버 오류 (" + response.status + ")");
         }
 
         if (requestId !== state.detailRequestId) return;
 
-        const articleText = data.article || data.summary || data.explanation;
+        const data = normaliseAIResponse(payload);
 
-        if (!articleText) {
+        if (!data.article) {
           throw new Error("AI 응답에 설명 내용이 없어요.");
         }
 
-        // 외국어 원문 제목 대신 AI가 반환한 한국어 제목을 표시합니다.
-        if (data.titleKo) {
-          $("detailTitle").textContent = data.titleKo;
-        }
+        if (data.titleKo) $("detailTitle").textContent = data.titleKo;
 
-        const terms = Array.isArray(data.terms) ? data.terms : [];
-
-        renderHighlightedSummary(articleText, terms);
-        renderTerms(terms);
+        renderHighlightedSummary(data.article, data.terms);
+        renderTerms(data.terms);
 
         $("summaryContent").classList.remove("hidden");
         $("summaryStatus").className = "loading";
@@ -935,13 +855,11 @@
     $("refreshButton").addEventListener("click", loadNews);
     $("backButton").addEventListener("click", showHome);
     $("homeLogo").addEventListener("click", showHome);
-
     $("retrySummaryButton").addEventListener("click", () => {
       if (state.currentArticle) {
         loadSummary(state.currentArticle, state.detailRequestId);
       }
     });
-
     $("categories").addEventListener("click", event => {
       const button = event.target.closest(".category-button");
       if (button) selectCategory(button.dataset.category);
