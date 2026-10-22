@@ -18,7 +18,7 @@ function jsonResponse(data, status = 200) {
   });
 }
 
-function decodeXML(text) {
+function decodeXML(text = "") {
   return text
     .replace(/&amp;/g, "&")
     .replace(/&lt;/g, "<")
@@ -26,50 +26,41 @@ function decodeXML(text) {
     .replace(/&quot;/g, '"')
     .replace(/&apos;/g, "'")
     .replace(/&#39;/g, "'")
-    .replace(/&#(\d+);/g, (_, code) => {
-      try { return String.fromCodePoint(Number(code)); }
-      catch { return ""; }
+    .replace(/&#(\d+);/g, (_, n) => {
+      try { return String.fromCodePoint(Number(n)); } catch { return ""; }
     })
-    .replace(/&#x([0-9a-f]+);/gi, (_, code) => {
-      try { return String.fromCodePoint(parseInt(code, 16)); }
-      catch { return ""; }
+    .replace(/&#x([0-9a-f]+);/gi, (_, n) => {
+      try { return String.fromCodePoint(parseInt(n, 16)); } catch { return ""; }
     });
 }
 
 function getTag(item, tag) {
-  const escapedTag = tag.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const safeTag = tag.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
-  const cdataPattern = new RegExp(
-    "<" + escapedTag + "\\b[^>]*>\\s*<!\\[CDATA\\[([\\s\\S]*?)\\]\\]>\\s*</" + escapedTag + "\\s*>",
+  const pattern = new RegExp(
+    "<" + safeTag + "\\b[^>]*>([\\s\\S]*?)</" + safeTag + "\\s*>",
     "i"
   );
 
-  const normalPattern = new RegExp(
-    "<" + escapedTag + "\\b[^>]*>([\\s\\S]*?)</" + escapedTag + "\\s*>",
-    "i"
+  const match = item.match(pattern);
+  if (!match) return "";
+
+  return decodeXML(
+    match[1]
+      .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1")
+      .replace(/<[^>]*>/g, "")
+      .trim()
   );
-
-  const cdataMatch = item.match(cdataPattern);
-  if (cdataMatch) return decodeXML(cdataMatch[1].trim());
-
-  const normalMatch = item.match(normalPattern);
-  if (normalMatch) {
-    return decodeXML(normalMatch[1].replace(/<[^>]*>/g, "").trim());
-  }
-
-  return "";
 }
 
 function getImageUrl(item) {
-  // media:content, media:thumbnail, enclosure는
-  // 이미지 URL이 태그의 url 속성에 들어가는 경우가 많습니다.
-  const tags = [
+  const patterns = [
     /<media:content\b[^>]*>/i,
     /<media:thumbnail\b[^>]*>/i,
     /<enclosure\b[^>]*>/i
   ];
 
-  for (const pattern of tags) {
+  for (const pattern of patterns) {
     const match = item.match(pattern);
     if (!match) continue;
 
@@ -79,34 +70,24 @@ function getImageUrl(item) {
     }
   }
 
-  // 본문 안에 <img src="...">가 있는 RSS도 확인합니다.
-  const htmlImage = item.match(
+  const imageMatch = item.match(
     /<img\b[^>]*\bsrc\s*=\s*["'](https?:\/\/[^"']+)["']/i
   );
 
-  if (htmlImage) return decodeXML(htmlImage[1]);
-
-  return "";
+  return imageMatch ? decodeXML(imageMatch[1]) : "";
 }
 
 function parseRSS(xml, source) {
   const items = xml.match(/<item\b[^>]*>[\s\S]*?<\/item\s*>/gi) || [];
 
-  return items.map((item) => {
-    const title = getTag(item, "title");
-    const link = getTag(item, "link");
-    const description = getTag(item, "description");
-    const pubDate = getTag(item, "pubDate");
-
-    return {
-      title,
-      description: description.slice(0, 1200),
-      url: link,
-      domain: source,
-      date: pubDate,
-      image: getImageUrl(item)
-    };
-  }).filter(article => article.title && article.url);
+  return items.map(item => ({
+    title: getTag(item, "title"),
+    description: getTag(item, "description").slice(0, 2000),
+    url: getTag(item, "link"),
+    domain: source,
+    date: getTag(item, "pubDate"),
+    image: getImageUrl(item)
+  })).filter(article => article.title && article.url);
 }
 
 async function fetchFeed(feed) {
@@ -114,38 +95,21 @@ async function fetchFeed(feed) {
     const response = await fetch(feed.url, {
       headers: {
         "User-Agent": "MANGO-NEWS/1.0",
-        "Accept": "application/rss+xml, application/xml, text/xml, */*"
+        "Accept": "application/rss+xml, application/xml, text/xml"
       },
       signal: AbortSignal.timeout(10000)
     });
 
     if (!response.ok) {
-      console.error("RSS HTTP error:", feed.name, response.status);
+      console.error("RSS 오류:", feed.name, response.status);
       return [];
     }
 
     return parseRSS(await response.text(), feed.name);
   } catch (error) {
-    console.error("RSS feed failed:", feed.name, String(error));
+    console.error("RSS 연결 오류:", feed.name, String(error));
     return [];
   }
-}
-
-async function readRequestBody(request) {
-  try {
-    return await request.json();
-  } catch {
-    throw new Error("요청 내용을 읽지 못했어요. 다시 시도해 주세요.");
-  }
-}
-
-function getArticleInput(body) {
-  const title = String(body?.title || "").trim().slice(0, 500);
-  const description = String(body?.description || "").trim().slice(0, 3000);
-
-  if (!title) throw new Error("기사 제목이 없어요.");
-
-  return { title, description };
 }
 
 function extractAIText(result) {
@@ -156,22 +120,69 @@ function extractAIText(result) {
   if (Array.isArray(result?.choices)) {
     const choice = result.choices[0];
     const content = choice?.message?.content ?? choice?.text;
+
     if (typeof content === "string") return content;
+
+    if (Array.isArray(content)) {
+      return content.map(item => item?.text || "").join("\n");
+    }
   }
 
   if (Array.isArray(result?.content)) {
-    return result.content
-      .map(item => typeof item?.text === "string" ? item.text : "")
-      .filter(Boolean)
-      .join("\n");
+    return result.content.map(item => item?.text || "").join("\n");
   }
 
   return "";
 }
 
+function parseAIResponse(raw) {
+  const cleaned = String(raw || "")
+    .replace(/^\uFEFF/, "")
+    .replace(/```(?:json)?/gi, "")
+    .replace(/```/g, "")
+    .trim();
+
+  // JSON 앞뒤에 불필요한 문장이 있어도 JSON 부분을 찾아봅니다.
+  const start = cleaned.indexOf("{");
+  const end = cleaned.lastIndexOf("}");
+
+  if (start >= 0 && end > start) {
+    try {
+      const parsed = JSON.parse(cleaned.slice(start, end + 1));
+
+      if (typeof parsed.article === "string" && parsed.article.trim()) {
+        return {
+          titleKo: String(parsed.titleKo || "").trim(),
+          article: parsed.article.trim(),
+          terms: Array.isArray(parsed.terms) ? parsed.terms : []
+        };
+      }
+    } catch (error) {
+      console.warn("AI JSON 해석 실패:", String(error));
+    }
+  }
+
+  // JSON이 아니어도 일반 텍스트 설명이 있으면 사용합니다.
+  const plainText = cleaned
+    .replace(/^(쉬운 설명|설명|요약)\s*[:：]\s*/i, "")
+    .trim();
+
+  if (plainText.length >= 20) {
+    return {
+      titleKo: "",
+      article: plainText,
+      terms: []
+    };
+  }
+
+  throw new Error("AI 답변을 읽을 수 없어요. 다시 시도해 주세요.");
+}
+
 async function summarizeArticle(env, article) {
   if (!env.AI) {
-    throw new Error("Cloudflare Workers AI 바인딩 AI를 찾을 수 없어요.");
+    throw new Error(
+      "Cloudflare AI 바인딩 AI를 찾을 수 없어요. Cloudflare 설정을 확인해 주세요."
+    );
   }
 
   const result = await env.AI.run(
@@ -180,104 +191,91 @@ async function summarizeArticle(env, article) {
       messages: [
         {
           role: "system",
-          content: `너는 한국 초등학교 6학년도 이해할 수 있게 뉴스를 설명하는 도우미야.
+          content: `너는 세계의 뉴스를 한국어로 번역하고 쉽게 설명하는 도우미야.
+
 반드시 한국어로 답해.
-기사 제목과 설명에 있는 정보만 사용하고, 기사에 없는 사실을 지어내지 마.
-반드시 JSON 형식으로만 답해. 마크다운이나 코드블록은 쓰지 마.
+입력 언어가 영어, 일본어, 중국어 또는 다른 언어여도 한국어로 번역해.
+기사 제목도 자연스러운 한국어로 번역해.
+기사에 없는 사실을 지어내지 마.
+제공된 제목과 설명에 근거해서 작성해.
 
-출력 형식:
-{"article":"쉬운 설명","terms":[{"term":"어려운 단어","definition":"쉬운 뜻"}]}
+반드시 다음 JSON 형식으로만 답해.
+마크다운이나 코드블록은 쓰지 마.
 
-규칙:
-1. article은 핵심 내용을 최소 7개의 짧은 문장으로 설명해.
-2. 각 문장은 줄바꿈으로 구분해. 한 문장에 너무 많은 내용을 넣지 마.
-3. 초등학교 6학년이 이해할 수 있는 쉬운 표현을 사용해.
-4. 원인과 결과, 관련된 사람이나 기관, 경제에 미치는 영향을 기사에 나온 범위에서 설명해.
-5. 정보가 부족한 부분은 추측하지 마.
-6. terms에는 본문에 실제로 등장하는 어려운 단어를 최대 5개 넣어.
-7. term은 article 안에 실제로 적힌 단어와 똑같이 써야 해. 그래야 본문에서 형광펜으로 강조할 수 있어.
-8. definition은 해당 단어의 뜻을 초등학교 6학년도 이해할 수 있게 설명해.
-9. 적합한 어려운 단어가 없으면 terms는 빈 배열 []로 만들어.
-10. JSON 바깥에는 다른 문장을 쓰지 마.`
+{
+  "titleKo": "한국어 기사 제목",
+  "article": "쉬운 한국어 설명",
+  "terms": [
+    {
+      "term": "본문에 등장하는 어려운 단어",
+      "definition": "초등학교 6학년도 이해할 수 있는 쉬운 뜻"
+    }
+  ]
+}
+
+작성 규칙:
+1. titleKo는 원래 기사 제목을 한국어로 번역한 제목이야.
+2. article은 최소 7개의 짧은 한국어 문장으로 작성해.
+3. 각 문장은 줄바꿈으로 구분해.
+4. 초등학교 6학년도 이해할 수 있는 표현을 사용해.
+5. 어려운 경제·사회 용어는 쉬운 말로 설명해.
+6. 기사에 없는 수치, 인물, 원인, 결과를 만들어 내지 마.
+7. terms에는 본문에 실제로 등장하는 어려운 단어를 최대 5개 넣어.
+8. term은 article에 실제로 등장하는 단어와 똑같이 써.
+9. definition은 한국어로 쉽게 작성해.
+10. 어려운 단어가 없으면 terms는 []로 작성해.
+11. JSON 바깥에는 아무것도 쓰지 마.`
         },
         {
           role: "user",
-          content: `기사 제목: ${article.title}\n기사 설명: ${article.description || "추가 설명 없음"}`
+          content:
+            "기사 제목:\n" + article.title +
+            "\n\n기사 설명:\n" +
+            (article.description || "추가 설명이 없습니다.")
         }
       ],
-      max_tokens: 1200,
-      temperature: 0.2
+      max_tokens: 1800,
+      temperature: 0.1
     }
   );
 
-  const output = extractAIText(result).trim();
-
-  if (!output) {
-    console.error("AI returned no text:", JSON.stringify(result).slice(0, 3000));
-
-    if (result?.success === false && Array.isArray(result?.errors)) {
-      const details = result.errors
-        .map(item => item.message || item.code || "")
-        .filter(Boolean)
-        .join("; ");
-
-      throw new Error(details
-        ? `Cloudflare AI 오류: ${details}`
-        : "Cloudflare AI가 답변하지 않았어요. Worker 로그를 확인해 주세요.");
-    }
-
-    throw new Error("AI가 설명을 반환하지 않았어요.");
+  if (result?.success === false) {
+    console.error("Workers AI 실행 실패:", JSON.stringify(result));
+    throw new Error(
+      "Cloudflare AI 요청이 실패했어요. Worker 로그와 AI 사용량을 확인해 주세요."
+    );
   }
 
-  const cleaned = output
-    .replace(/^```(?:json)?\s*/i, "")
-    .replace(/\s*```$/i, "")
-    .trim();
+  const raw = extractAIText(result);
 
-  const first = cleaned.indexOf("{");
-  const last = cleaned.lastIndexOf("}");
-
-  if (first < 0 || last <= first) {
-    console.error("AI returned non-JSON text:", cleaned.slice(0, 2000));
-    throw new Error("AI 답변 형식이 올바르지 않아요. 다시 시도해 주세요.");
+  if (!raw.trim()) {
+    console.error("AI 응답이 비어 있음:", JSON.stringify(result));
+    throw new Error(
+      "AI 응답이 비어 있어요. Cloudflare Worker 로그를 확인해 주세요."
+    );
   }
 
-  let parsed;
+  const parsed = parseAIResponse(raw);
 
-  try {
-    parsed = JSON.parse(cleaned.slice(first, last + 1));
-  } catch (error) {
-    console.error("AI JSON parse error:", String(error));
-    throw new Error("AI 답변을 읽지 못했어요. 다시 시도해 주세요.");
-  }
-
-  if (typeof parsed.article !== "string" || !parsed.article.trim()) {
-    throw new Error("AI 답변에 쉬운 설명이 들어 있지 않아요.");
-  }
-
-  const terms = Array.isArray(parsed.terms)
-    ? parsed.terms
-        .filter(item =>
-          item &&
-          typeof item.term === "string" &&
-          typeof item.definition === "string" &&
-          item.term.trim() &&
-          item.definition.trim()
-        )
-        .slice(0, 5)
-    : [];
+  const terms = parsed.terms
+    .filter(item =>
+      item &&
+      typeof item.term === "string" &&
+      typeof item.definition === "string" &&
+      item.term.trim() &&
+      item.definition.trim()
+    )
+    .slice(0, 5);
 
   return {
-    article: parsed.article.trim(),
+    titleKo: parsed.titleKo || article.title,
+    article: parsed.article,
     terms
   };
 }
 
-// RSS에 사진이 없을 때 실제 공개 이미지 파일을 검색합니다.
-// 이 기능은 AI 그림을 생성하지 않습니다.
 async function searchArticleImage(title) {
   const query = String(title || "").trim().slice(0, 180);
-
   if (!query) return { image: "", page: "" };
 
   const params = new URLSearchParams({
@@ -305,30 +303,32 @@ async function searchArticleImage(title) {
     );
 
     if (!response.ok) {
-      console.error("Wikimedia image search error:", response.status);
+      console.error("이미지 검색 오류:", response.status);
       return { image: "", page: "" };
     }
 
     const data = await response.json();
     const pages = Object.values(data?.query?.pages || {});
 
-    const candidates = pages
-      .filter(page => {
-        const imageInfo = page.imageinfo?.[0];
-        const imageUrl = imageInfo?.thumburl || imageInfo?.url || "";
+    const candidates = pages.filter(page => {
+      const info = page.imageinfo?.[0];
+      const image = info?.thumburl || info?.url || "";
 
-        return imageUrl &&
-          /^https:\/\/upload\.wikimedia\.org\//i.test(imageUrl) &&
-          /\.(jpg|jpeg|png|webp|gif)(\?|$)/i.test(imageUrl);
-      })
-      .map(page => ({
-        image: page.imageinfo[0].thumburl || page.imageinfo[0].url,
-        page: page.imageinfo[0].descriptionurl || page.canonicalurl || ""
-      }));
+      return image &&
+        /^https:\/\/upload\.wikimedia\.org\//i.test(image) &&
+        /\.(jpg|jpeg|png|webp|gif)(\?|$)/i.test(image);
+    });
 
-    return candidates[0] || { image: "", page: "" };
+    if (!candidates.length) return { image: "", page: "" };
+
+    const info = candidates[0].imageinfo[0];
+
+    return {
+      image: info.thumburl || info.url || "",
+      page: info.descriptionurl || ""
+    };
   } catch (error) {
-    console.error("Wikimedia image search failed:", String(error));
+    console.error("이미지 검색 실패:", String(error));
     return { image: "", page: "" };
   }
 }
@@ -337,7 +337,6 @@ export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
 
-    // 뉴스 목록 API
     if (url.pathname === "/api/news") {
       if (request.method !== "GET") {
         return jsonResponse({ error: "GET 요청만 사용할 수 있어요." }, 405);
@@ -360,9 +359,9 @@ export default {
           });
         }
 
-        const results = await Promise.all(NEWS_FEEDS.map(fetchFeed));
+        const feeds = await Promise.all(NEWS_FEEDS.map(fetchFeed));
 
-        const articles = results
+        const articles = feeds
           .flat()
           .filter((article, index, all) =>
             all.findIndex(other => other.url === article.url) === index
@@ -372,51 +371,36 @@ export default {
           )
           .slice(0, 40);
 
-        if (!articles.length) {
-          return jsonResponse({
-            articles: [],
-            error: "뉴스 RSS 피드에서 기사를 가져오지 못했어요.",
-            updatedAt: new Date().toISOString()
-          }, 502);
-        }
-
         const data = {
           articles,
-          updatedAt: new Date().toISOString(),
-          count: articles.length
+          count: articles.length,
+          updatedAt: new Date().toISOString()
         };
 
-        ctx.waitUntil(
-          cache.put(
-            cacheRequest,
-            new Response(JSON.stringify(data), {
-              headers: {
-                "Content-Type": "application/json; charset=utf-8",
-                "Cache-Control": `public, max-age=${CACHE_SECONDS}`
-              }
-            })
-          )
-        );
+        if (articles.length) {
+          ctx.waitUntil(
+            cache.put(
+              cacheRequest,
+              new Response(JSON.stringify(data), {
+                headers: {
+                  "Content-Type": "application/json; charset=utf-8",
+                  "Cache-Control": "public, max-age=" + CACHE_SECONDS
+                }
+              })
+            )
+          );
+        }
 
-        return new Response(JSON.stringify(data), {
-          headers: {
-            "Content-Type": "application/json; charset=utf-8",
-            "Cache-Control": "no-store",
-            "X-News-Cache": "MISS"
-          }
-        });
+        return jsonResponse(data, articles.length ? 200 : 502);
       } catch (error) {
-        console.error("News API error:", String(error));
-
+        console.error("뉴스 API 오류:", error);
         return jsonResponse({
           articles: [],
-          error: "뉴스를 불러오는 중 문제가 생겼어요.",
-          details: String(error)
+          error: "뉴스를 불러오지 못했어요."
         }, 500);
       }
     }
 
-    // 기사 제목으로 실제 이미지 검색
     if (url.pathname === "/api/image-search") {
       if (request.method !== "GET") {
         return jsonResponse({ error: "GET 요청만 사용할 수 있어요." }, 405);
@@ -428,30 +412,31 @@ export default {
         return jsonResponse({ error: "기사 제목이 필요해요." }, 400);
       }
 
-      const result = await searchArticleImage(title);
-
-      return new Response(JSON.stringify(result), {
-        headers: {
-          "Content-Type": "application/json; charset=utf-8",
-          "Cache-Control": "public, max-age=3600"
-        }
-      });
+      return jsonResponse(await searchArticleImage(title));
     }
 
-    // AI 쉬운 설명 API
     if (url.pathname === "/api/summarize") {
       if (request.method !== "POST") {
         return jsonResponse({ error: "POST 요청만 사용할 수 있어요." }, 405);
       }
 
       try {
-        const body = await readRequestBody(request);
-        const article = getArticleInput(body);
-        const result = await summarizeArticle(env, article);
+        const body = await request.json();
+        const title = String(body?.title || "").trim().slice(0, 500);
+        const description = String(body?.description || "").trim().slice(0, 3000);
+
+        if (!title) {
+          return jsonResponse({ error: "기사 제목이 없어요." }, 400);
+        }
+
+        const result = await summarizeArticle(env, {
+          title,
+          description
+        });
 
         return jsonResponse(result);
       } catch (error) {
-        console.error("Summarize API error:", error?.stack || String(error));
+        console.error("AI 요약 API 오류:", error?.stack || String(error));
 
         return jsonResponse({
           error: String(error?.message || "AI 설명을 만들지 못했어요.")
@@ -459,24 +444,20 @@ export default {
       }
     }
 
-    // AI 그림 생성 API는 더 이상 사용하지 않습니다.
+    // AI 그림 생성은 사용하지 않습니다.
     if (url.pathname === "/api/generate-image") {
       return jsonResponse({
-        error: "AI 그림 생성 기능은 사용하지 않아요. 실제 뉴스 이미지를 검색해 주세요."
+        error: "AI 그림 생성 기능은 사용하지 않아요."
       }, 410);
     }
 
-    // 웹사이트 파일 제공
     if (env.ASSETS) {
       return env.ASSETS.fetch(request);
     }
 
-    return new Response(
-      "ASSETS 바인딩을 찾을 수 없어요. Cloudflare 설정을 확인해 주세요.",
-      {
-        status: 500,
-        headers: { "Content-Type": "text/plain; charset=utf-8" }
-      }
-    );
+    return new Response("ASSETS 바인딩을 찾을 수 없어요.", {
+      status: 500,
+      headers: { "Content-Type": "text/plain; charset=utf-8" }
+    });
   }
 };
