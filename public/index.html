@@ -20,9 +20,7 @@
       --radius: 18px;
     }
 
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
 
     body {
       margin: 0;
@@ -32,21 +30,10 @@
       line-height: 1.65;
     }
 
-    button, input {
-      font: inherit;
-    }
-
-    button {
-      cursor: pointer;
-    }
-
-    a {
-      color: inherit;
-    }
-
-    [hidden] {
-      display: none !important;
-    }
+    button, input { font: inherit; }
+    button { cursor: pointer; }
+    a { color: inherit; }
+    [hidden] { display: none !important; }
 
     .top-strip {
       height: 7px;
@@ -84,9 +71,7 @@
       letter-spacing: -1.2px;
     }
 
-    .brand-name span {
-      color: #e8a900;
-    }
+    .brand-name span { color: #e8a900; }
 
     .brand-subtitle {
       display: block;
@@ -124,9 +109,10 @@
       margin-bottom: 30px;
     }
 
-    .hero-content {
+    .hero-content, .hero-image-wrap {
       position: relative;
       z-index: 1;
+      min-width: 0;
     }
 
     .hero-label {
@@ -153,12 +139,6 @@
       font-size: 14px;
     }
 
-    .hero-image-wrap {
-      position: relative;
-      z-index: 1;
-      min-width: 0;
-    }
-
     .hero-image {
       display: block;
       width: 100%;
@@ -169,14 +149,20 @@
       background: #ffe28a;
     }
 
-    .hero-image-fallback {
+    .hero-image-fallback,
+    .image-placeholder {
       display: grid;
       width: 100%;
-      height: 205px;
+      height: 100%;
       place-items: center;
+      background: linear-gradient(135deg, #fff3c5, #ffe28a);
+      color: #8a6b17;
+      font-size: 65px;
+    }
+
+    .hero-image-fallback {
+      height: 205px;
       border-radius: 20px;
-      background: rgba(255,255,255,.35);
-      font-size: 100px;
     }
 
     .section-heading {
@@ -199,18 +185,22 @@
       font-size: 13px;
     }
 
-    .refresh-button {
+    .refresh-button, .back-button {
       border: 1px solid var(--line);
       border-radius: 12px;
       padding: 9px 13px;
       background: var(--white);
       font-size: 13px;
       font-weight: 800;
-      white-space: nowrap;
     }
 
-    .refresh-button:hover {
+    .refresh-button:hover, .back-button:hover {
       background: var(--mango-light);
+    }
+
+    button:disabled {
+      opacity: .6;
+      cursor: wait;
     }
 
     .category-list {
@@ -271,7 +261,7 @@
 
     .news-card:hover {
       transform: translateY(-2px);
-      box-shadow: 0 8px 22px rgba(100, 77, 12, .08);
+      box-shadow: 0 8px 22px rgba(100,77,12,.08);
     }
 
     .card-image-button {
@@ -296,19 +286,11 @@
       transform: scale(1.035);
     }
 
-    .image-placeholder {
-      display: grid;
-      width: 100%;
-      height: 100%;
-      place-items: center;
-      background: linear-gradient(135deg, #fff3c5, #ffe28a);
-      color: #8a6b17;
+    .card-image-button .image-placeholder {
       font-size: 48px;
     }
 
-    .card-body {
-      padding: 17px 18px 16px;
-    }
+    .card-body { padding: 17px 18px 16px; }
 
     .card-top {
       display: flex;
@@ -350,42 +332,37 @@
       overflow-wrap: anywhere;
     }
 
-    .news-title:hover {
-      color: #8a6800;
+    .news-title:hover { color: #8a6800; }
+
+    /* 노란색 형광펜 밑줄 */
+    mark {
+      color: inherit;
+      background: linear-gradient(
+        to bottom,
+        transparent 58%,
+        #ffe36b 58%,
+        #ffe36b 88%,
+        transparent 88%
+      );
+      background-repeat: no-repeat;
+      padding: 0 2px;
+      -webkit-box-decoration-break: clone;
+      box-decoration-break: clone;
+      border-radius: 2px;
     }
 
-    /* 노란색 형광펜 강조 */
-/* 망고 뉴스의 노란색 형광펜 밑줄 */
-mark {
-  color: inherit;
-  background: linear-gradient(
-    to bottom,
-    transparent 58%,
-    #ffe36b 58%,
-    #ffe36b 88%,
-    transparent 88%
-  );
-  background-repeat: no-repeat;
-  padding: 0 2px;
-  -webkit-box-decoration-break: clone;
-  box-decoration-break: clone;
-  border-radius: 2px;
-}
-
-/* 쉬운 설명 속 강조 단어 */
-.easy-article mark,
-.terms-section mark {
-  background: linear-gradient(
-    to bottom,
-    transparent 60%,
-    #ffe36b 60%,
-    #ffe36b 90%,
-    transparent 90%
-  );
-  padding: 0 2px;
-  border-radius: 2px;
-}
-
+    .easy-article mark,
+    .terms-section mark {
+      background: linear-gradient(
+        to bottom,
+        transparent 60%,
+        #ffe36b 60%,
+        #ffe36b 90%,
+        transparent 90%
+      );
+      padding: 0 2px;
+      border-radius: 2px;
+    }
 
     .news-description {
       margin: 9px 0 0;
@@ -423,19 +400,6 @@ mark {
     .detail-view {
       max-width: 850px;
       margin: 0 auto;
-    }
-
-    .back-button {
-      padding: 9px 14px;
-      border: 1px solid var(--line);
-      border-radius: 11px;
-      background: var(--white);
-      font-size: 13px;
-      font-weight: 900;
-    }
-
-    .back-button:hover {
-      background: var(--mango-light);
     }
 
     .detail-paper {
@@ -481,6 +445,7 @@ mark {
       color: #6e6655;
       font-size: 14px;
       overflow-wrap: anywhere;
+      white-space: pre-wrap;
     }
 
     .detail-divider {
@@ -514,9 +479,7 @@ mark {
       overflow-wrap: anywhere;
     }
 
-    .easy-article p {
-      margin: 0 0 14px;
-    }
+    .easy-article p { margin: 0 0 14px; }
 
     .terms-section {
       margin-top: 28px;
@@ -554,9 +517,9 @@ mark {
       font-weight: 900;
     }
 
-    .original-link:hover {
-      background: #f0b900;
-    }
+    .original-link:hover { background: #f0b900; }
+
+    .detail-bottom { margin-top: 18px; }
 
     .footer {
       padding: 25px 20px;
@@ -568,43 +531,27 @@ mark {
     }
 
     @media (max-width: 700px) {
-      .header-inner {
-        padding: 17px 15px;
-      }
-
-      .brand-name {
-        font-size: 25px;
-      }
+      .header-inner { padding: 17px 15px; }
+      .brand-name { font-size: 25px; }
 
       .header-badge {
         font-size: 10px;
         padding: 6px 8px;
       }
 
-      main {
-        padding: 18px 14px 40px;
-      }
+      main { padding: 18px 14px 40px; }
+      .hero { grid-template-columns: 1fr; padding: 23px 20px; }
 
-      .hero {
-        grid-template-columns: 1fr;
-        padding: 23px 20px;
-      }
+      .hero-image, .hero-image-fallback { height: 175px; }
+      .news-grid { grid-template-columns: 1fr; }
+      .card-image-button { height: 205px; }
+      .category-button { padding: 7px 12px; }
+    }
 
-      .hero-image,
-      .hero-image-fallback {
-        height: 175px;
-      }
-
-      .news-grid {
-        grid-template-columns: 1fr;
-      }
-
-      .card-image-button {
-        height: 205px;
-      }
-
-      .category-button {
-        padding: 7px 12px;
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        scroll-behavior: auto !important;
+        transition: none !important;
       }
     }
   </style>
@@ -671,6 +618,12 @@ mark {
       </div>
 
       <section id="newsGrid" class="news-grid" aria-label="뉴스 목록"></section>
+
+      <p style="color:var(--muted);font-size:12px;margin-top:25px;line-height:1.8">
+        뉴스 제목과 출처는 외부 뉴스 데이터에서 제공됩니다.
+        쉬운 설명은 AI가 작성하므로 원문과 차이가 있을 수 있습니다.
+        중요한 정보는 원문 기사에서도 확인해 주세요.
+      </p>
     </section>
 
     <section id="detailView" class="detail-view" hidden>
@@ -717,7 +670,7 @@ mark {
         </a>
       </article>
 
-      <div style="margin-top:18px">
+      <div class="detail-bottom">
         <button id="backButtonBottom" class="back-button" type="button">
           ← 뉴스 목록으로
         </button>
@@ -763,6 +716,8 @@ mark {
     let selectedCategory = "전체";
     let currentArticle = null;
     let summaryRequestId = 0;
+    let imageRequestId = 0;
+
     const imageCache = new Map();
 
     function cleanText(value) {
@@ -774,10 +729,12 @@ mark {
     function safeURL(value) {
       try {
         const url = new URL(value, location.origin);
+
         if (url.protocol === "https:" || url.protocol === "http:") {
           return url.href;
         }
       } catch (_) {}
+
       return "";
     }
 
@@ -785,7 +742,10 @@ mark {
       if (!value) return "날짜 정보 없음";
 
       const date = new Date(value);
-      if (Number.isNaN(date.getTime())) return value;
+
+      if (Number.isNaN(date.getTime())) {
+        return String(value);
+      }
 
       return new Intl.DateTimeFormat("ko-KR", {
         year: "numeric",
@@ -798,6 +758,7 @@ mark {
 
     function getCategory(article) {
       const supplied = cleanText(article.category || article.section);
+
       const aliases = {
         "经济": "경제",
         "경제": "경제",
@@ -867,26 +828,6 @@ mark {
       };
     }
 
-    /*
-      형광펜은 HTML mark 태그로 표시합니다.
-      제목의 실제 내용은 바꾸지 않고, 화면에 표시할 때만 강조합니다.
-    */
-    function highlightTitle(title) {
-      const safe = escapeHTML(title);
-      const terms = [
-        "긴급", "속보", "급등", "급락", "금리", "물가",
-        "주식", "경제", "인공지능", "AI", "전쟁", "선거",
-        "수출", "수입", "반도체", "기후", "환경"
-      ];
-
-      const pattern = new RegExp(
-        "(" + terms.map(escapeRegExp).join("|") + ")",
-        "gi"
-      );
-
-      return safe.replace(pattern, "<mark>$1</mark>");
-    }
-
     function escapeHTML(value) {
       return String(value ?? "").replace(/[&<>"']/g, char => ({
         "&": "&amp;",
@@ -901,6 +842,83 @@ mark {
       return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     }
 
+    /* 제목을 화면에 표시할 때만 주요 단어를 강조합니다. */
+    function highlightTitle(title) {
+      const safe = escapeHTML(title);
+
+      const keywords = [
+        "긴급", "속보", "급등", "급락", "금리", "물가",
+        "주식", "경제", "인공지능", "AI", "전쟁", "선거",
+        "수출", "수입", "반도체", "기후", "환경"
+      ];
+
+      const pattern = new RegExp(
+        "(" + keywords.map(escapeRegExp).join("|") + ")",
+        "gi"
+      );
+
+      return safe.replace(pattern, "<mark>$1</mark>");
+    }
+
+    /* AI 설명을 문장으로 나누고 주요 단어에 형광펜을 표시합니다. */
+    function appendHighlightedExplanation(explanation) {
+      elements.easyArticle.replaceChildren();
+
+      const keywords = [
+        "경제", "주식", "금리", "물가", "환율",
+        "수출", "수입", "투자", "기업", "정부",
+        "인공지능", "반도체", "환경", "기후",
+        "증가", "감소", "상승", "하락", "이유",
+        "결과", "영향", "핵심", "중요", "시장",
+        "주가", "은행", "수익", "손실", "가격",
+        "소비", "생산", "일자리", "기술", "정책"
+      ];
+
+      const pattern = new RegExp(
+        "(" +
+        keywords
+          .sort((a, b) => b.length - a.length)
+          .map(escapeRegExp)
+          .join("|") +
+        ")",
+        "g"
+      );
+
+      const paragraphs = String(explanation)
+        .split(/\n+/)
+        .map(line => line.trim())
+        .filter(Boolean);
+
+      for (const text of paragraphs) {
+        const paragraph = document.createElement("p");
+        let lastIndex = 0;
+
+        for (const match of text.matchAll(pattern)) {
+          if (match.index > lastIndex) {
+            paragraph.appendChild(
+              document.createTextNode(
+                text.slice(lastIndex, match.index)
+              )
+            );
+          }
+
+          const mark = document.createElement("mark");
+          mark.textContent = match[0];
+          paragraph.appendChild(mark);
+
+          lastIndex = match.index + match[0].length;
+        }
+
+        if (lastIndex < text.length) {
+          paragraph.appendChild(
+            document.createTextNode(text.slice(lastIndex))
+          );
+        }
+
+        elements.easyArticle.appendChild(paragraph);
+      }
+    }
+
     function makeImagePlaceholder() {
       const placeholder = document.createElement("div");
       placeholder.className = "image-placeholder";
@@ -913,11 +931,15 @@ mark {
       if (!article.title) return "";
 
       const cacheKey = article.title;
-      if (imageCache.has(cacheKey)) return imageCache.get(cacheKey);
+
+      if (imageCache.has(cacheKey)) {
+        return imageCache.get(cacheKey);
+      }
 
       try {
         const response = await fetch(
-          API_IMAGE_SEARCH + "?title=" + encodeURIComponent(article.title),
+          API_IMAGE_SEARCH + "?title=" +
+          encodeURIComponent(article.title),
           { headers: { "Accept": "application/json" } }
         );
 
@@ -939,12 +961,6 @@ mark {
     }
 
     function loadCardImage(img, placeholder, article) {
-      if (article.image) {
-        img.src = article.image;
-        img.hidden = false;
-        placeholder.hidden = true;
-      }
-
       findArticleImage(article).then(url => {
         if (!url || !img.isConnected) return;
 
@@ -969,10 +985,14 @@ mark {
       const imageButton = document.createElement("button");
       imageButton.type = "button";
       imageButton.className = "card-image-button";
-      imageButton.setAttribute("aria-label", "기사 열기: " + article.title);
+      imageButton.setAttribute(
+        "aria-label",
+        "기사 열기: " + article.title
+      );
       imageButton.addEventListener("click", () => showArticle(article));
 
       const placeholder = makeImagePlaceholder();
+
       const image = document.createElement("img");
       image.className = "card-image";
       image.alt = article.title;
@@ -1011,8 +1031,8 @@ mark {
 
       const description = document.createElement("p");
       description.className = "news-description";
-      description.textContent =
-        article.description || "제목을 눌러 이 뉴스의 쉬운 설명을 읽어 보세요.";
+      description.textContent = article.description ||
+        "제목을 눌러 이 뉴스의 쉬운 설명을 읽어 보세요.";
 
       const footer = document.createElement("div");
       footer.className = "card-footer";
@@ -1043,13 +1063,17 @@ mark {
 
       if (!filtered.length) {
         elements.newsStatus.hidden = false;
+        elements.newsStatus.classList.remove("error");
+
         elements.newsStatus.textContent = allArticles.length
           ? "이 카테고리에는 아직 기사가 없어요. 다른 카테고리를 눌러 보세요."
           : "표시할 뉴스가 없어요. 잠시 후 새로고침해 주세요.";
+
         return;
       }
 
       elements.newsStatus.hidden = true;
+
       const fragment = document.createDocumentFragment();
 
       filtered.forEach(article => {
@@ -1076,7 +1100,9 @@ mark {
         const data = await response.json();
 
         if (!response.ok) {
-          throw new Error(data.error || "뉴스 서버에 연결하지 못했어요.");
+          throw new Error(
+            data.error || "뉴스 서버에 연결하지 못했어요."
+          );
         }
 
         const articles = Array.isArray(data.articles)
@@ -1091,7 +1117,9 @@ mark {
 
         if (!allArticles.length) {
           elements.newsStatus.textContent =
-            data.error || "가져온 뉴스가 없어요. 잠시 후 다시 시도해 주세요.";
+            data.error ||
+            "가져온 뉴스가 없어요. 잠시 후 다시 시도해 주세요.";
+
           elements.newsStatus.classList.add("error");
           elements.updateText.textContent = "뉴스를 불러오지 못했어요.";
           return;
@@ -1104,9 +1132,11 @@ mark {
         renderNews();
       } catch (error) {
         console.error("뉴스 불러오기 오류:", error);
+
         elements.newsStatus.textContent =
           "뉴스를 불러오지 못했어요. 연결과 배포 상태를 확인해 주세요. (" +
           (error.message || "연결 오류") + ")";
+
         elements.newsStatus.classList.add("error");
         elements.updateText.textContent = "뉴스 연결에 문제가 있어요.";
       } finally {
@@ -1117,7 +1147,9 @@ mark {
 
     async function showArticle(article) {
       currentArticle = article;
+
       const requestId = ++summaryRequestId;
+      const thisImageRequest = ++imageRequestId;
 
       elements.homeView.hidden = true;
       elements.detailView.hidden = false;
@@ -1139,6 +1171,7 @@ mark {
       elements.termsSection.hidden = true;
 
       elements.originalLink.href = article.url || "#";
+      elements.originalLink.hidden = !article.url;
 
       elements.summaryStatus.hidden = false;
       elements.summaryStatus.classList.remove("error");
@@ -1154,7 +1187,12 @@ mark {
       window.scrollTo({ top: 0, behavior: "smooth" });
 
       findArticleImage(article).then(imageUrl => {
-        if (requestId !== summaryRequestId || !imageUrl) return;
+        if (
+          thisImageRequest !== imageRequestId ||
+          !imageUrl
+        ) {
+          return;
+        }
 
         elements.detailImage.onload = () => {
           elements.detailImage.hidden = false;
@@ -1174,15 +1212,30 @@ mark {
           body: JSON.stringify({
             title: article.originalTitle || article.title,
             originalTitle: article.originalTitle || article.title,
-            description: article.description || ""
+            description: article.description || "",
+
+            /* Worker가 이 지시를 AI 프롬프트에 포함해야 합니다. */
+            language: "Korean",
+            audience: "초등학생",
+            instructions:
+              "반드시 자연스럽고 쉬운 한국어로 설명하세요. " +
+              "한자와 일본어 및 일본어 가나를 사용하지 마세요. " +
+              "외국어 표현은 필요한 경우 자연스러운 한국어로 바꾸세요. " +
+              "어려운 경제 용어는 초등학생도 이해할 수 있도록 풀어 쓰세요. " +
+              "기사에 없는 사실을 만들어 내지 마세요. " +
+              "핵심 사실과 수치, 인물, 날짜를 가능한 한 정확하게 유지하세요. " +
+              "기사의 핵심 내용을 문단별로 설명하고, 어려운 단어는 쉬운 한국어로 정의하세요."
           })
         });
 
         const data = await response.json();
 
         if (requestId !== summaryRequestId) return;
+
         if (!response.ok) {
-          throw new Error(data.error || "AI 설명을 만들지 못했어요.");
+          throw new Error(
+            data.error || "AI 설명을 만들지 못했어요."
+          );
         }
 
         const explanation = cleanText(
@@ -1195,20 +1248,7 @@ mark {
 
         elements.summaryStatus.hidden = true;
 
-        explanation.split(/\n+/).forEach(line => {
-          const text = line.trim();
-          if (!text) return;
-
-          const paragraph = document.createElement("p");
-          paragraph.textContent = text;
-          elements.easyArticle.appendChild(paragraph);
-        });
-
-        if (!elements.easyArticle.childElementCount) {
-          const paragraph = document.createElement("p");
-          paragraph.textContent = explanation;
-          elements.easyArticle.appendChild(paragraph);
-        }
+        appendHighlightedExplanation(explanation);
 
         const terms = Array.isArray(data.terms) ? data.terms : [];
 
@@ -1234,6 +1274,7 @@ mark {
         if (requestId !== summaryRequestId) return;
 
         console.error("AI 쉬운 설명 오류:", error);
+
         elements.summaryStatus.hidden = false;
         elements.summaryStatus.classList.add("error");
         elements.summaryStatus.textContent =
@@ -1244,6 +1285,7 @@ mark {
 
     function showHome() {
       summaryRequestId++;
+      imageRequestId++;
       currentArticle = null;
 
       elements.detailView.hidden = true;
@@ -1262,7 +1304,8 @@ mark {
 
       selectedCategory = button.dataset.category;
 
-      elements.categoryList.querySelectorAll(".category-button")
+      elements.categoryList
+        .querySelectorAll(".category-button")
         .forEach(item => {
           item.classList.toggle("active", item === button);
         });
@@ -1276,19 +1319,22 @@ mark {
     elements.backButtonBottom.addEventListener("click", showHome);
 
     window.addEventListener("popstate", () => {
-      if (history.state?.view === "article" && currentArticle) {
-        showArticle(currentArticle);
-      } else {
-        elements.detailView.hidden = true;
-        elements.homeView.hidden = false;
-        summaryRequestId++;
-      }
+      summaryRequestId++;
+      imageRequestId++;
+
+      elements.detailView.hidden = true;
+      elements.homeView.hidden = false;
+      currentArticle = null;
+
+      window.scrollTo({ top: 0, behavior: "smooth" });
     });
 
     elements.heroImage.addEventListener("error", () => {
       const fallback = document.createElement("div");
       fallback.className = "hero-image-fallback";
       fallback.textContent = "🥭";
+      fallback.setAttribute("aria-label", "망고");
+
       elements.heroImage.replaceWith(fallback);
     });
 
