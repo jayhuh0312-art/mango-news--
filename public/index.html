@@ -198,7 +198,7 @@
 
     .status.error { color: #a72b22; }
 
-    /* 공통 AI 진행 게이지 */
+    /* AI 진행 애니메이션 */
     .ai-progress {
       margin: 16px 0 20px;
       padding: 15px 16px;
@@ -337,6 +337,53 @@
       border-radius: 6px;
       padding: 3px 7px;
       font-weight: 850;
+    }
+
+    /* 뉴스 카테고리 */
+    .category-tag {
+      display: inline-block;
+      background: #f0f0f0;
+      color: #454545;
+      border-radius: 6px;
+      padding: 3px 8px;
+      font-size: 11px;
+      font-weight: 850;
+      white-space: nowrap;
+    }
+
+    .category-tag[data-category="경제"] {
+      background: #fff0c2;
+      color: #795500;
+    }
+
+    .category-tag[data-category="주식"] {
+      background: #dff5e5;
+      color: #176b39;
+    }
+
+    .category-tag[data-category="정치"] {
+      background: #e8e5ff;
+      color: #5140a0;
+    }
+
+    .category-tag[data-category="사회"] {
+      background: #e1efff;
+      color: #205d9b;
+    }
+
+    .category-tag[data-category="국제"] {
+      background: #fbe4ee;
+      color: #9b315d;
+    }
+
+    .category-tag[data-category="기술"] {
+      background: #e2f5f5;
+      color: #176d70;
+    }
+
+    .category-tag[data-category="일반"] {
+      background: #eeeeee;
+      color: #555555;
     }
 
     .card-title-button {
@@ -646,17 +693,6 @@
         <span class="news-count" id="newsCount">불러오는 중</span>
       </div>
 
-      <div class="ai-progress" id="titleProgress" hidden role="status" aria-live="polite">
-        <div class="progress-top">
-          <span class="progress-mango">🥭</span>
-          <span>AI가 뉴스 제목을 쉽게 바꾸고 있어요</span>
-        </div>
-        <div class="progress-track" aria-hidden="true">
-          <div class="progress-bar"></div>
-        </div>
-        <p class="progress-caption">잠시만 기다려 주세요. 실제 진행률을 나타내는 숫자는 아니에요.</p>
-      </div>
-
       <p class="status" id="newsStatus" role="status" aria-live="polite">
         🥭 최신 뉴스를 불러오고 있어요...
       </p>
@@ -668,6 +704,7 @@
 
       <article class="article">
         <div class="article-meta">
+          <span class="category-tag" id="detailCategory" data-category="일반">일반</span>
           <span class="source-tag" id="detailSource">뉴스</span>
           <time id="detailDate"></time>
         </div>
@@ -743,9 +780,9 @@
     const newsGrid = document.getElementById("newsGrid");
     const newsStatus = document.getElementById("newsStatus");
     const newsCount = document.getElementById("newsCount");
-    const titleProgress = document.getElementById("titleProgress");
     const summaryProgress = document.getElementById("summaryProgress");
 
+    const detailCategory = document.getElementById("detailCategory");
     const detailSource = document.getElementById("detailSource");
     const detailDate = document.getElementById("detailDate");
     const detailTitle = document.getElementById("detailTitle");
@@ -783,13 +820,136 @@
       return {
         ...article,
         originalTitle,
-        title: article.title || originalTitle,
+        // 제목 요약을 사용하지 않고 원래 제목을 표시해요.
+        title: originalTitle,
         description: article.description || article.summary || "",
         link: article.link || article.url || "",
         source: article.source || article.domain || "뉴스",
         pubDate: article.pubDate || article.publishedAt || article.date || "",
-        image: article.image || article.imageUrl || article.image_url || ""
+        image: article.image || article.imageUrl || article.image_url || "",
+        category: getCategory(article)
       };
+    }
+
+    function getCategory(article) {
+      const suppliedCategory =
+        article.category ||
+        article.categoryName ||
+        article.category_name ||
+        article.section ||
+        "";
+
+      if (typeof suppliedCategory === "string" && suppliedCategory.trim()) {
+        return normaliseCategory(suppliedCategory.trim());
+      }
+
+      const text = [
+        article.originalTitle,
+        article.original_title,
+        article.title,
+        article.description,
+        article.summary,
+        article.source
+      ].filter(Boolean).join(" ").toLowerCase();
+
+      const rules = [
+        {
+          category: "주식",
+          words: [
+            "주식", "코스피", "코스닥", "증시", "상장", "주가",
+            "주주", "배당", "공모주", "나스닥", "다우존스", "s&p 500",
+            "stock", "shares", "nasdaq"
+          ]
+        },
+        {
+          category: "경제",
+          words: [
+            "경제", "금리", "물가", "인플레이션", "환율", "수출",
+            "수입", "무역", "부동산", "집값", "고용", "실업",
+            "한국은행", "연준", "gdp", "소비자물가", "경기",
+            "economy", "inflation", "interest rate"
+          ]
+        },
+        {
+          category: "정치",
+          words: [
+            "대통령", "국회", "국회의원", "정당", "선거", "정부",
+            "장관", "의원", "총리", "정치", "법안", "여당", "야당",
+            "politics", "election", "parliament"
+          ]
+        },
+        {
+          category: "국제",
+          words: [
+            "미국", "중국", "일본", "유럽", "러시아", "우크라이나",
+            "북한", "국제", "해외", "유엔", "나토", "외교", "전쟁",
+            "정상회담", "백악관", "world", "international", "global"
+          ]
+        },
+        {
+          category: "기술",
+          words: [
+            "인공지능", "ai", "반도체", "로봇", "스마트폰",
+            "소프트웨어", "테크", "기술", "데이터", "클라우드",
+            "전기차", "배터리", "technology", "artificial intelligence"
+          ]
+        },
+        {
+          category: "사회",
+          words: [
+            "사건", "사고", "경찰", "법원", "교육", "학교",
+            "복지", "환경", "건강", "의료", "노동", "범죄",
+            "재판", "시민", "사회", "society", "education"
+          ]
+        }
+      ];
+
+      for (const rule of rules) {
+        if (rule.words.some(word => text.includes(word))) {
+          return rule.category;
+        }
+      }
+
+      return "일반";
+    }
+
+    function normaliseCategory(value) {
+      const category = String(value || "").trim().toLowerCase();
+
+      const aliases = {
+        economy: "경제",
+        business: "경제",
+        finance: "경제",
+        financial: "경제",
+        stock: "주식",
+        stocks: "주식",
+        market: "주식",
+        politics: "정치",
+        political: "정치",
+        society: "사회",
+        social: "사회",
+        world: "국제",
+        international: "국제",
+        technology: "기술",
+        tech: "기술",
+        general: "일반",
+        news: "일반",
+        "경제": "경제",
+        "금융": "경제",
+        "산업": "경제",
+        "기업": "경제",
+        "증권": "주식",
+        "정치": "정치",
+        "사회": "사회",
+        "국제": "국제",
+        "세계": "국제",
+        "과학": "기술",
+        "IT": "기술",
+        "기술": "기술",
+        "일반": "일반"
+      };
+
+      return aliases[category] || value || "일반";
     }
 
     function formatDate(value) {
@@ -940,6 +1100,14 @@
       }
     }
 
+    function makeCategoryTag(category) {
+      const tag = document.createElement("span");
+      tag.className = "category-tag";
+      tag.dataset.category = category;
+      tag.textContent = category;
+      return tag;
+    }
+
     function makeCard(article) {
       const card = document.createElement("article");
       card.className = "news-card";
@@ -960,6 +1128,8 @@
       const meta = document.createElement("div");
       meta.className = "card-meta";
 
+      const category = makeCategoryTag(article.category);
+
       const source = document.createElement("span");
       source.className = "source-tag";
       source.textContent = article.source || "뉴스";
@@ -967,12 +1137,12 @@
       const date = document.createElement("time");
       date.textContent = formatDate(article.pubDate);
 
-      meta.append(source, date);
+      meta.append(category, source, date);
 
       const title = document.createElement("button");
       title.className = "card-title-button";
       title.type = "button";
-      title.textContent = article.title || "제목 없음";
+      title.textContent = article.originalTitle || article.title || "제목 없음";
       title.addEventListener("click", () => showArticle(article));
 
       const description = document.createElement("p");
@@ -1026,7 +1196,6 @@
 
       newsStatus.className = "status";
       newsStatus.textContent = "🥭 최신 경제 뉴스를 불러오고 있어요...";
-      titleProgress.hidden = false;
       refreshButton.disabled = true;
 
       try {
@@ -1075,7 +1244,6 @@
         newsCount.textContent = "확인 필요";
       } finally {
         if (thisRequest === newsRequestNumber) {
-          titleProgress.hidden = true;
           refreshButton.disabled = false;
         }
       }
@@ -1314,9 +1482,12 @@
 
       setHomeMode(false);
 
+      detailCategory.textContent = currentArticle.category;
+      detailCategory.dataset.category = currentArticle.category;
       detailSource.textContent = currentArticle.source || "뉴스";
       detailDate.textContent = formatDate(currentArticle.pubDate);
-      detailTitle.textContent = currentArticle.title || "제목 없음";
+      detailTitle.textContent =
+        currentArticle.originalTitle || currentArticle.title || "제목 없음";
 
       detailDescription.textContent =
         currentArticle.description ||
