@@ -160,7 +160,7 @@ async function summarizeArticle(env, article) {
 
   // 먼저 비교적 가벼운 텍스트 모델을 사용합니다.
   const result = await env.AI.run(
-    "@cf/meta/llama-3.1-8b-instruct",
+    "@cf/meta/llama-3.3-70b-instruct-fp8-fast",
     {
       messages: [
         {
